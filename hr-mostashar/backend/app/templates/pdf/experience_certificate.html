@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% set title = "شهادة خبرة" %}
+
+{% block content %}
+
+<h1 class="document-title">شهادة خبرة</h1>
+
+<div class="doc-ref">
+    الرقم المرجعي: {{ reference_number }}<br>
+    التاريخ: {{ certificate_date }}
+</div>
+
+<div class="section">
+    <p class="body-text">
+        تحية طيبة وبعد،،،
+    </p>
+    <p class="body-text">
+        تفيد {{ company_name }} بأن السيد(ة):
+    </p>
+</div>
+
+<div class="section no-break">
+    <h2 class="section-title">بيانات الموظف</h2>
+    <table class="info-table">
+        <tr><td class="label">الاسم رباعياً</td><td class="value">{{ employee_full_name }}</td></tr>
+        <tr><td class="label">الرقم القومي</td><td class="value">{{ national_id }}</td></tr>
+        <tr><td class="label">الجنسية</td><td class="value">{{ nationality }}</td></tr>
+    </table>
+</div>
+
+<div class="section no-break">
+    <h2 class="section-title">البيانات الوظيفية</h2>
+    <table class="info-table">
+        <tr><td class="label">آخر مسمى وظيفي</td><td class="value">{{ job_title }}</td></tr>
+        <tr><td class="label">القسم / الإدارة</td><td class="value">{{ department }}</td></tr>
+        <tr><td class="label">تاريخ الالتحاق</td><td class="value">{{ start_date }}</td></tr>
+        <tr><td class="label">تاريخ نهاية الخدمة</td><td class="value">{{ end_date }}</td></tr>
+        <tr><td class="label">مدة الخدمة</td><td class="value">{{ service_duration }}</td></tr>
+        <tr><td class="label">سبب ترك العمل</td><td class="value">{{ reason_for_leaving }}</td></tr>
+    </table>
+</div>
+
+<div class="section">
+    <h2 class="section-title">المهام والمسؤوليات</h2>
+    <p class="body-text">
+        {{ responsibilities_description }}
+    </p>
+</div>
+
+<div class="section">
+    <h2 class="section-title">التقييم العام</h2>
+    <p class="body-text">
+        وقد كان أداء الموظف خلال فترة عمله بالشركة {{ performance_rating }}،
+        ويتمنى له فريق إدارة الموارد البشرية والإدارة العليا دوام التوفيق والنجاح
+        في مسيرته المهنية القادمة.
+    </p>
+    <p class="body-text">
+        أُصدرت هذه الشهادة بناءً على طلب الموظف دون أدني مسؤولية على الشركة
+        تجاه أطراف ثالثة، وذلك للاستخدام المطلوب فقط.
+    </p>
+</div>
+
+<div class="legal-box no-break">
+    <strong>تنويه:</strong>
+    تُعد هذه الشهادة وثيقة رسمية صادرة من إدارة الموارد البشرية بـ {{ company_name }}،
+    ولا يجوز تعديلها أو تزويرها تحت طائلة المسؤولية القانونية وفقاً للقانون المصري.
+</div>
+
+<div class="signatures">
+    <div class="signature-block">
+        <div class="signature-line">
+            <div class="name">{{ legal_representative }}</div>
+            <div class="role">مدير الموارد البشرية</div>
+        </div>
+        <div class="stamp">الختم</div>
+    </div>
+    <div class="signature-block">
+        <div class="signature-line">
+            <div class="name">{{ employee_full_name }}</div>
+            <div class="role">استلام الموظف</div>
+        </div>
+        <div class="stamp">التوقيع</div>
+    </div>
+</div>
+
+<div class="document-meta">
+    <div>تم إصدار هذا المستند بواسطة نظام HR BASEM AZAB</div>
+    <div>تاريخ الإصدار: {{ generation_date }}</div>
+</div>
+
+{% endblock %}

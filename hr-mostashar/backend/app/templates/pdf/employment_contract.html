@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% set title = "عقد عمل" %}
+
+{% block content %}
+
+<h1 class="document-title">عقد عمل</h1>
+
+<div class="doc-ref">
+    رقم العقد: {{ contract_number }}<br>
+    التاريخ: {{ contract_date }}
+</div>
+
+<p class="body-text">
+    إنه في يوم {{ contract_day_arabic }} الموافق {{ contract_date_arabic }}، تم الاتفاق بين كل من:
+</p>
+
+<!-- الطرف الأول -->
+<div class="section no-break">
+    <h2 class="section-title">الطرف الأول (صاحب العمل)</h2>
+    <table class="info-table">
+        <tr><td class="label">اسم الشركة</td><td class="value">{{ company_name }}</td></tr>
+        <tr><td class="label">السجل التجاري</td><td class="value">{{ commercial_register }}</td></tr>
+        <tr><td class="label">العنوان</td><td class="value">{{ company_address }}</td></tr>
+        <tr><td class="label">الممثل القانوني</td><td class="value">{{ legal_representative }}</td></tr>
+    </table>
+</div>
+
+<!-- الطرف الثاني -->
+<div class="section no-break">
+    <h2 class="section-title">الطرف الثاني (الموظف)</h2>
+    <table class="info-table">
+        <tr><td class="label">الاسم رباعياً</td><td class="value">{{ employee_full_name }}</td></tr>
+        <tr><td class="label">الرقم القومي</td><td class="value">{{ national_id }}</td></tr>
+        <tr><td class="label">الجنسية</td><td class="value">{{ nationality }}</td></tr>
+        <tr><td class="label">العنوان</td><td class="value">{{ employee_address }}</td></tr>
+        <tr><td class="label">رقم الموبايل</td><td class="value">{{ mobile_phone }}</td></tr>
+    </table>
+</div>
+
+<!-- تفاصيل الوظيفة -->
+<div class="section no-break">
+    <h2 class="section-title">تفاصيل الوظيفة</h2>
+    <table class="info-table">
+        <tr><td class="label">المسمى الوظيفي</td><td class="value">{{ job_title }}</td></tr>
+        <tr><td class="label">القسم</td><td class="value">{{ department }}</td></tr>
+        <tr><td class="label">المدير المباشر</td><td class="value">{{ direct_manager }}</td></tr>
+        <tr><td class="label">مكان العمل</td><td class="value">{{ work_location }}</td></tr>
+        <tr><td class="label">تاريخ بدء العمل</td><td class="value">{{ start_date }}</td></tr>
+        <tr><td class="label">نوع العقد</td><td class="value">{{ contract_type }}</td></tr>
+        {% if contract_type == "محدد المدة" and end_date %}
+        <tr><td class="label">تاريخ نهاية العقد</td><td class="value">{{ end_date }}</td></tr>
+        {% endif %}
+    </table>
+</div>
+
+<!-- الأجر والبدلات -->
+<div class="section no-break">
+    <h2 class="section-title">الأجر والبدلات</h2>
+    <table class="info-table">
+        <tr><td class="label">المرتب الأساسي</td><td class="value">{{ basic_salary }} جنيه مصري</td></tr>
+        {% if housing_allowance %}
+        <tr><td class="label">بدل سكن</td><td class="value">{{ housing_allowance }} جنيه مصري</td></tr>
+        {% endif %}
+        {% if transportation_allowance %}
+        <tr><td class="label">بدل انتقالات</td><td class="value">{{ transportation_allowance }} جنيه مصري</td></tr>
+        {% endif %}
+        {% if food_allowance %}
+        <tr><td class="label">بدل طعام</td><td class="value">{{ food_allowance }} جنيه مصري</td></tr>
+        {% endif %}
+        {% if other_allowances %}
+        <tr><td class="label">بدلات أخرى</td><td class="value">{{ other_allowances }} جنيه مصري</td></tr>
+        {% endif %}
+        <tr class="total-row"><td class="label">إجمالي الأجر الشهري</td><td class="value">{{ total_salary }} جنيه مصري</td></tr>
+    </table>
+</div>
+
+<!-- بنود العقد -->
+<div class="section">
+    <h2 class="section-title">بنود العقد</h2>
+    <ol class="article-list">
+        <li>
+            يُعيَّن الطرف الثاني في وظيفة {{ job_title }} بقسم {{ department }}،
+            وتكون مدة هذا العقد {{ contract_duration }} تبدأ من تاريخ {{ start_date }}.
+        </li>
+        <li>
+            ساعات العمل: {{ working_hours_per_day }} ساعات يومياً، بمعدل {{ working_days_per_week }} أيام في الأسبوع،
+            مع راحة أسبوعية يوم {{ weekly_rest_day }}، وذلك وفقاً لأحكام قانون العمل المصري رقم 12 لسنة 2003.
+        </li>
+        <li>
+            يخضع الموظف لفترة اختبار مدتها {{ probation_period }} من تاريخ بدء العمل،
+            وخلالها يجوز لأي من الطرفين إنهاء العقد دون إخطار أو تعويض.
+        </li>
+        <li>
+            يستحق الموظف إجازة سنوية {{ annual_leave_days }} يوم عمل وفقاً للمادة (45) من قانون العمل المصري
+            رقم 12 لسنة 2003، وإجازة مرضية وفقاً لتقرير الهيئة القومية للتأمين الاجتماعي.
+        </li>
+        <li>
+            يلتزم الطرف الأول بسداد المرتب الشهري في موعد أقصاه اليوم الخامس من الشهر التالي
+            عن طريق التحويل البنكي أو النقدي.
+        </li>
+        <li>
+            يلتزم الطرف الأول بتسجيل الموظف في الهيئة القومية للتأمين الاجتماعي وفقاً
+            لأحكام القانون رقم 148 لسنة 2019 اعتباراً من تاريخ مباشرة العمل.
+        </li>
+        <li>
+            يلتزم الطرف الثاني بأداء العمل المسند إليه بكفاءة وأمانة، والمحافظة على أسرار العمل
+            ومعدات الشركة، والالتزام باللوائح الداخلية المعتمدة.
+        </li>
+        <li>
+            لا يجوز للموظف العمل لحساب الغير أو مباشرة أي عمل منافٍ لعمل الشركة
+            دون الحصول على موافقة كتابية مسبقة من صاحب العمل.
+        </li>
+        <li>
+            في حالة رغبة أي من الطرفين في إنهاء العقد بعد انتهاء فترة الاختبار،
+            يجب إخطار الطرف الآخر قبل {{ notice_period }} يوماً على الأقل كتابياً.
+        </li>
+        <li>
+            يخضع هذا العقد لأحكام قانون العمل المصري رقم 12 لسنة 2003 وتعديلاته،
+            وأي نزاع ينشأ عنه يكون من اختصاص المحاكم العمالية في {{ jurisdiction_city }}.
+        </li>
+        <li>
+            يحرر هذا العقد من نسختين لكل منهما نفس القوة الثبوتية، تسلّم نسخة للطرف الأول
+            وأخرى للطرف الثاني للعمل بمقتضاهما.
+        </li>
+    </ol>
+</div>
+
+<!-- التوقيعات -->
+<div class="signatures">
+    <div class="signature-block">
+        <div class="signature-line">
+            <div class="name">{{ legal_representative }}</div>
+            <div class="role">الطرف الأول (صاحب العمل)</div>
+        </div>
+        <div class="stamp">ختم الشركة</div>
+    </div>
+    <div class="signature-block">
+        <div class="signature-line">
+            <div class="name">{{ employee_full_name }}</div>
+            <div class="role">الطرف الثاني (الموظف)</div>
+        </div>
+        <div class="stamp">التوقيع</div>
+    </div>
+</div>
+
+<div class="document-meta">
+    <div>تم إصدار هذا المستند بواسطة نظام HR BASEM AZAB</div>
+    <div>تاريخ الإصدار: {{ generation_date }}</div>
+</div>
+
+{% endblock %}

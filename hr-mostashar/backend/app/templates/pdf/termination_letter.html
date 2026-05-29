@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% set title = "خطاب إنهاء خدمة" %}
+
+{% block content %}
+
+<h1 class="document-title">خطاب إنهاء خدمة</h1>
+
+<div class="doc-ref">
+    الرقم المرجعي: {{ reference_number }}<br>
+    التاريخ: {{ termination_date }}<br>
+    إلى السيد(ة): {{ employee_full_name }}
+</div>
+
+<div class="section">
+    <p class="body-text">
+        تحية طيبة وبعد،،،
+    </p>
+    <p class="body-text">
+        بالإشارة إلى القرار الصادر من إدارة {{ company_name }}،
+        نود إفادتكم بإنهاء خدماتكم بالشركة وفقاً للبيانات والأسباب الموضحة أدناه،
+        وذلك وفقاً لأحكام قانون العمل المصري رقم 12 لسنة 2003 والقانون رقم 148 لسنة 2019
+        بشأن التأمين الاجتماعي.
+    </p>
+</div>
+
+<div class="section no-break">
+    <h2 class="section-title">بيانات الموظف</h2>
+    <table class="info-table">
+        <tr><td class="label">الاسم</td><td class="value">{{ employee_full_name }}</td></tr>
+        <tr><td class="label">الرقم القومي</td><td class="value">{{ national_id }}</td></tr>
+        <tr><td class="label">المسمى الوظيفي</td><td class="value">{{ job_title }}</td></tr>
+        <tr><td class="label">القسم</td><td class="value">{{ department }}</td></tr>
+        <tr><td class="label">تاريخ الالتحاق</td><td class="value">{{ start_date }}</td></tr>
+        <tr><td class="label">تاريخ نهاية الخدمة</td><td class="value">{{ end_date }}</td></tr>
+        <tr><td class="label">مدة الخدمة</td><td class="value">{{ service_duration }}</td></tr>
+    </table>
+</div>
+
+<div class="section">
+    <h2 class="section-title">سبب إنهاء الخدمة</h2>
+    <p class="body-text">
+        {{ termination_reason }}
+    </p>
+</div>
+
+<div class="section no-break">
+    <h2 class="section-title">المستحقات المالية</h2>
+    <table class="info-table">
+        {% if end_of_service_gratuity %}
+        <tr><td class="label">مكافأة نهاية الخدمة</td><td class="value">{{ end_of_service_gratuity }} جنيه مصري</td></tr>
+        {% endif %}
+        {% if unused_leave_balance %}
+        <tr><td class="label">رصيد الإجازات غير المستخدمة</td><td class="value">{{ unused_leave_balance }} جنيه مصري</td></tr>
+        {% endif %}
+        {% if notice_period_pay %}
+        <tr><td class="label">مرتب فترة الإشعار</td><td class="value">{{ notice_period_pay }} جنيه مصري</td></tr>
+        {% endif %}
+        {% if other_entitlements %}
+        <tr><td class="label">مستحقات أخرى</td><td class="value">{{ other_entitlements }} جنيه مصري</td></tr>
+        {% endif %}
+        {% if total_entitlements %}
+        <tr class="total-row"><td class="label">إجمالي المستحقات</td><td class="value">{{ total_entitlements }} جنيه مصري</td></tr>
+        {% endif %}
+    </table>
+</div>
+
+<div class="section">
+    <h2 class="section-title">الأحكام القانونية</h2>
+    <ol class="article-list">
+        <li>
+            يُنهي عقد العمل بناءً على {{ termination_type }} وفقاً لأحكام
+            {{ legal_basis }} من قانون العمل المصري.
+        </li>
+        <li>
+            تُصرف المستحقات المالية المذكورة أعلاه في موعد أقصاه {{ payment_deadline }}
+            من تاريخ نهاية الخدمة وفقاً للمادة (114) من قانون العمل.
+        </li>
+        <li>
+            تلتزم الشركة بإصدار شهادة خبرة وتسليمها للموظف فور انتهاء إجراءات
+            تسوية المستحقات وفقاً للمادة (121) من قانون العمل.
+        </li>
+        <li>
+            يتم إنهاء اشتراك الموظف بالتأمين الاجتماعي وفقاً للقانون رقم 148 لسنة 2019
+            اعتباراً من تاريخ نهاية الخدمة.
+        </li>
+        <li>
+            يلتزم الموظف بتسليم جميع ممتلكات الشركة ومستنداتها وأجهزتها
+            قبل استلام المستحقات المالية.
+        </li>
+        <li>
+            يحق للموظف الطعن على قرار إنهاء الخدمة أمام المحكمة العمالية المختصة
+            خلال {{ appeal_days }} يوماً من تاريخ استلام هذا الخطاب.
+        </li>
+    </ol>
+</div>
+
+<div class="legal-box">
+    <strong>تنبيه:</strong>
+    يجب على الموظف التوقيع على هذا الخطاب استلاماً فقط، ولا يُعد ذلك تنازلاً
+    عن أي من حقوقه القانونية.
+</div>
+
+<div class="signatures">
+    <div class="signature-block">
+        <div class="signature-line">
+            <div class="name">{{ legal_representative }}</div>
+            <div class="role">مدير الموارد البشرية</div>
+        </div>
+        <div class="stamp">الختم</div>
+    </div>
+    <div class="signature-block">
+        <div class="signature-line">
+            <div class="name">{{ employee_full_name }}</div>
+            <div class="role">استلام الموظف</div>
+        </div>
+        <div class="stamp">التوقيع</div>
+    </div>
+</div>
+
+<div class="document-meta">
+    <div>تم إصدار هذا المستند بواسطة نظام HR BASEM AZAB</div>
+    <div>تاريخ الإصدار: {{ generation_date }}</div>
+</div>
+
+{% endblock %}

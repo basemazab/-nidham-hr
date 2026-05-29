@@ -1,0 +1,89 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: hrms-postgres
+    environment:
+      POSTGRES_USER: hrms
+      POSTGRES_PASSWORD: hrms_password
+      POSTGRES_DB: hrms_db
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U hrms -d hrms_db']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: hrms-redis
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio:latest
+    container_name: hrms-minio
+    environment:
+      MINIO_ROOT_USER: hrms_minio
+      MINIO_ROOT_PASSWORD: hrms_minio_password
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: hrms-backend
+    environment:
+      DATABASE_URL: postgresql://hrms:hrms_password@postgres:5432/hrms_db
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: hrms-jwt-secret-change-in-production
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: '9000'
+      MINIO_ACCESS_KEY: hrms_minio
+      MINIO_SECRET_KEY: hrms_minio_password
+      MINIO_BUCKET: hrms-documents
+      NODE_ENV: production
+    ports:
+      - '3001:3001'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_started
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: hrms-frontend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:3001/api
+      NEXTAUTH_URL: http://localhost:3000
+      NEXTAUTH_SECRET: hrms-nextauth-secret-change-in-production
+    ports:
+      - '3000:3000'
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:

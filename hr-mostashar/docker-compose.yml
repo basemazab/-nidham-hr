@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend:/app
+      - ./backend/app/knowledge_base:/app/app/knowledge_base
+    depends_on:
+      - redis
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./frontend/.env.local
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    command: npm run dev
+
+  telegram-bot:
+    build: ./telegram-bot
+    env_file:
+      - ./telegram-bot/.env
+    volumes:
+      - ./telegram-bot:/app
+    depends_on:
+      - backend
+    command: python bot.py
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  db:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: hr_mostashar
+      POSTGRES_USER: hr_user
+      POSTGRES_PASSWORD: hr_password
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+volumes:
+  redis_data:
+  pg_data:

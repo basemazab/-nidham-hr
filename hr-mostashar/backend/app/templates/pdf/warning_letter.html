@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% set title = "خطاب إنذار" %}
+
+{% block content %}
+
+<h1 class="document-title">خطاب إنذار</h1>
+
+<div class="doc-ref">
+    الرقم المرجعي: {{ reference_number }}<br>
+    التاريخ: {{ warning_date }}<br>
+    إلى السيد(ة): {{ employee_full_name }}
+</div>
+
+<div class="section">
+    <p class="body-text">
+        تحية طيبة وبعد،،،
+    </p>
+    <p class="body-text">
+        نشير إلى المخالفة التي تم ارتكابها من جانبكم والموضحة أدناه، والتي تُعد مخالفة
+        للوائح الداخلية للشركة وأحكام قانون العمل المصري رقم 12 لسنة 2003.
+    </p>
+</div>
+
+<div class="section no-break">
+    <h2 class="section-title">بيانات الإنذار</h2>
+    <table class="info-table">
+        <tr><td class="label">اسم الموظف</td><td class="value">{{ employee_full_name }}</td></tr>
+        <tr><td class="label">الرقم الوظيفي</td><td class="value">{{ employee_code }}</td></tr>
+        <tr><td class="label">القسم</td><td class="value">{{ department }}</td></tr>
+        <tr><td class="label">رقم الإنذار</td><td class="value">{{ warning_number }}</td></tr>
+        <tr><td class="label">درجة الإنذار</td><td class="value">{{ warning_level }}</td></tr>
+        <tr><td class="label">تاريخ المخالفة</td><td class="value">{{ violation_date }}</td></tr>
+        <tr><td class="label">مكان المخالفة</td><td class="value">{{ violation_location }}</td></tr>
+    </table>
+</div>
+
+<div class="section">
+    <h2 class="section-title">تفاصيل المخالفة</h2>
+    <p class="body-text">
+        {{ violation_details }}
+    </p>
+</div>
+
+<div class="section">
+    <h2 class="section-title">المادة القانونية</h2>
+    <div class="legal-box">
+        <strong>المادة المرجعية:</strong> {{ legal_article }}<br><br>
+        {{ legal_text }}
+    </div>
+</div>
+
+<div class="section no-break">
+    <h2 class="section-title">الإجراء المتخذ والتوجيهات</h2>
+    <ol class="article-list">
+        <li>
+            يُنذر الموظف/{{ employee_full_name }} كتابياً بهذه المخالفة مع التوجيه
+            بالالتزام التام باللوائح الداخلية وساعات العمل المحددة.
+        </li>
+        <li>
+            في حالة تكرار المخالفة، سيتم اتخاذ إجراءات تأديبية أشد وفقاً للمادة (69)
+            من قانون العمل المصري رقم 12 لسنة 2003، والتي قد تصل إلى الفصل من العمل.
+        </li>
+        <li>
+            يتم قيد هذا الإنذار في ملف الموظف الشخصي لدى إدارة الموارد البشرية.
+        </li>
+        <li>
+            يحق للموظف تقديم تظلم مكتوب إلى إدارة الموارد البشرية خلال {{ appeal_days }} أيام
+            من تاريخ استلام هذا الإنذار.
+        </li>
+    </ol>
+</div>
+
+<div class="signatures">
+    <div class="signature-block">
+        <div class="signature-line">
+            <div class="name">{{ legal_representative }}</div>
+            <div class="role">مدير الموارد البشرية</div>
+        </div>
+        <div class="stamp">الختم</div>
+    </div>
+    <div class="signature-block">
+        <div class="signature-line">
+            <div class="name">{{ employee_full_name }}</div>
+            <div class="role">استلام الموظف</div>
+        </div>
+        <div class="stamp">التوقيع</div>
+    </div>
+</div>
+
+<div class="document-meta">
+    <div>تم إصدار هذا المستند بواسطة نظام HR BASEM AZAB</div>
+    <div>تاريخ الإصدار: {{ generation_date }}</div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,86 @@
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&family=Tajawal:wght@300;400;500;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: #F8F9FA;
+    --foreground: #0D1B2A;
+    --card: #FFFFFF;
+    --card-foreground: #0D1B2A;
+    --primary: #0D1B2A;
+    --primary-foreground: #FFFFFF;
+    --secondary: #C9A84C;
+    --secondary-foreground: #0D1B2A;
+    --muted: #E8EBF0;
+    --muted-foreground: #5C718D;
+    --accent: #C9A84C;
+    --accent-foreground: #0D1B2A;
+    --destructive: #DC2626;
+    --destructive-foreground: #FFFFFF;
+    --border: #E2E8F0;
+    --input: #E2E8F0;
+    --ring: #C9A84C;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: #0D1B2A;
+    --foreground: #F8F9FA;
+    --card: #1C2E50;
+    --card-foreground: #F8F9FA;
+    --primary: #C9A84C;
+    --primary-foreground: #0D1B2A;
+    --secondary: #2D4365;
+    --secondary-foreground: #F8F9FA;
+    --muted: #1C2E50;
+    --muted-foreground: #9FAABB;
+    --accent: #C9A84C;
+    --accent-foreground: #0D1B2A;
+    --destructive: #EF4444;
+    --destructive-foreground: #FFFFFF;
+    --border: #2D4365;
+    --input: #2D4365;
+    --ring: #C9A84C;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-tajawal;
+  }
+}
+
+/* RTL-specific styles */
+[dir="rtl"] .sidebar-icon {
+  margin-left: 0.75rem;
+  margin-right: 0;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--muted);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--muted-foreground);
+  border-radius: 3px;
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+}

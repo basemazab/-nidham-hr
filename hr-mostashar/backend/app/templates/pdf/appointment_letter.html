@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% set title = "خطاب تعيين" %}
+
+{% block content %}
+
+<h1 class="document-title">خطاب تعيين</h1>
+
+<div class="doc-ref">
+    الرقم المرجعي: {{ reference_number }}<br>
+    التاريخ: {{ letter_date }}<br>
+    إلى السيد/ {{ employee_full_name }}
+</div>
+
+<div class="section">
+    <p class="body-text">
+        تحية طيبة وبعد،،،
+    </p>
+    <p class="body-text">
+        يسر إدارة الموارد البشرية في {{ company_name }} أن تتشرف بإبلاغكم بقرار تعيينكم
+        في الشركة بناءً على موافقة الإدارة العليا، وذلك وفقاً للشروط والأحكام التالية:
+    </p>
+</div>
+
+<div class="section no-break">
+    <h2 class="section-title">بيانات التعيين</h2>
+    <table class="info-table">
+        <tr><td class="label">اسم الموظف</td><td class="value">{{ employee_full_name }}</td></tr>
+        <tr><td class="label">الرقم القومي</td><td class="value">{{ national_id }}</td></tr>
+        <tr><td class="label">المسمى الوظيفي</td><td class="value">{{ job_title }}</td></tr>
+        <tr><td class="label">القسم / الإدارة</td><td class="value">{{ department }}</td></tr>
+        <tr><td class="label">الدرجة الوظيفية</td><td class="value">{{ job_grade }}</td></tr>
+        <tr><td class="label">المدير المباشر</td><td class="value">{{ direct_manager }}</td></tr>
+        <tr><td class="label">موقع العمل</td><td class="value">{{ work_location }}</td></tr>
+        <tr><td class="label">تاريخ مباشرة العمل</td><td class="value">{{ start_date }}</td></tr>
+        <tr><td class="label">فترة التجربة</td><td class="value">{{ probation_period }}</td></tr>
+    </table>
+</div>
+
+<div class="section no-break">
+    <h2 class="section-title">المرتبات والبدلات</h2>
+    <table class="info-table">
+        <tr><td class="label">المرتب الأساسي</td><td class="value">{{ basic_salary }} جنيه مصري</td></tr>
+        {% if housing_allowance %}
+        <tr><td class="label">بدل سكن</td><td class="value">{{ housing_allowance }} جنيه مصري</td></tr>
+        {% endif %}
+        {% if transportation_allowance %}
+        <tr><td class="label">بدل انتقالات</td><td class="value">{{ transportation_allowance }} جنيه مصري</td></tr>
+        {% endif %}
+        {% if other_allowances %}
+        <tr><td class="label">بدلات أخرى</td><td class="value">{{ other_allowances }} جنيه مصري</td></tr>
+        {% endif %}
+        <tr class="total-row"><td class="label">إجمالي الدخل الشهري</td><td class="value">{{ total_salary }} جنيه مصري</td></tr>
+    </table>
+</div>
+
+<div class="section no-break">
+    <h2 class="section-title">البنود والشروط</h2>
+    <ol class="article-list">
+        <li>
+            يُعيَّن السيد(ة) {{ employee_full_name }} بوظيفة {{ job_title }} بقسم {{ department }}
+            اعتباراً من {{ start_date }}، وتخضع فترة التجربة لمدة {{ probation_period }}.
+        </li>
+        <li>
+            يلتزم الموظف بالالتزام الكامل باللوائح الداخلية للشركة وساعات العمل المحددة
+            وفقاً لقانون العمل المصري رقم 12 لسنة 2003.
+        </li>
+        <li>
+            يصرف المرتب الشهري في موعد أقصاه الخامس من كل شهر، وتُخصم منه الاشتراكات
+            التأمينية والضريبية وفقاً للقانون.
+        </li>
+        <li>
+            يستحق الموظف الإجازات السنوية والمرضية والاجتماعية وفقاً للوائح الداخلية
+            وأحكام قانون العمل.
+        </li>
+        <li>
+            يحق للإدارة نقل الموظف إلى أي فرع أو موقع آخر بناءً على مقتضيات العمل
+            مع الحفاظ على نفس الدرجة الوظيفية.
+        </li>
+        <li>
+            يُلتزم الموظف بالمحافظة على أسرار العمل وبيانات الشركة وعدم إفشائها
+            لأي طرف ثالث أثناء أو بعد انتهاء الخدمة.
+        </li>
+        <li>
+            يُسجَّل الموظف في الهيئة القومية للتأمين الاجتماعي وفقاً للقانون رقم 148 لسنة 2019
+            اعتباراً من تاريخ مباشرة العمل الفعلي.
+        </li>
+    </ol>
+</div>
+
+<div class="section">
+    <p class="body-text">
+        نرجو التوقيع على نسخة من هذا الخطاب وإعادتها إلى إدارة الموارد البشرية تأكيداً
+        لموافقتكم على الشروط والأحكام المذكورة أعلاه.
+    </p>
+    <p class="body-text">
+        وتفضلوا بقبول فائق الاحترام والتقدير.
+    </p>
+</div>
+
+<div class="signatures">
+    <div class="signature-block">
+        <div class="signature-line">
+            <div class="name">{{ legal_representative }}</div>
+            <div class="role">مدير الموارد البشرية</div>
+        </div>
+        <div class="stamp">الختم</div>
+    </div>
+    <div class="signature-block">
+        <div class="signature-line">
+            <div class="name">{{ employee_full_name }}</div>
+            <div class="role">توقيع الموظف</div>
+        </div>
+        <div class="stamp">التوقيع</div>
+    </div>
+</div>
+
+<div class="document-meta">
+    <div>تم إصدار هذا المستند بواسطة نظام HR BASEM AZAB</div>
+    <div>تاريخ الإصدار: {{ generation_date }}</div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,243 @@
+{
+  "info": {
+    "name": "مستشار HR API",
+    "description": "Postman Collection for مستشار HR - Egyptian Labor Law AI Assistant",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+  },
+  "variable": [
+    {"key": "base_url", "value": "http://localhost:8000", "type": "string"},
+    {"key": "access_token", "value": "", "type": "string"},
+    {"key": "email", "value": "test@example.com", "type": "string"},
+    {"key": "password", "value": "testpassword123", "type": "string"}
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\": \"{{email}}\", \"full_name\": \"Test User\", \"password\": \"{{password}}\"}"
+            },
+            "url": {"raw": "{{base_url}}/api/auth/register", "host": ["{{base_url}}"], "path": ["api", "auth", "register"]}
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.collectionVariables.set('access_token', jsonData.access_token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\": \"{{email}}\", \"password\": \"{{password}}\"}"
+            },
+            "url": {"raw": "{{base_url}}/api/auth/login", "host": ["{{base_url}}"], "path": ["api", "auth", "login"]}
+          }
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}],
+            "url": {"raw": "{{base_url}}/api/auth/me", "host": ["{{base_url}}"], "path": ["api", "auth", "me"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "AI Chat",
+      "item": [
+        {
+          "name": "Ask Question",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{access_token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"message\": \"ما هي مكافأة نهاية الخدمة في قانون العمل المصري؟\"}"
+            },
+            "url": {"raw": "{{base_url}}/api/ai/chat", "host": ["{{base_url}}"], "path": ["api", "ai", "chat"]}
+          }
+        },
+        {
+          "name": "Get Conversations",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}],
+            "url": {"raw": "{{base_url}}/api/ai/conversations", "host": ["{{base_url}}"], "path": ["api", "ai", "conversations"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "Calculators",
+      "item": [
+        {
+          "name": "End of Service",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{access_token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"fields\": {\"start_date\": \"2020-01-01\", \"end_date\": \"2025-12-31\", \"total_salary\": 8000, \"contract_type\": \"unlimited\", \"reason\": \"resignation\"}}"
+            },
+            "url": {"raw": "{{base_url}}/api/calc/end-of-service", "host": ["{{base_url}}"], "path": ["api", "calc", "end-of-service"]}
+          }
+        },
+        {
+          "name": "Insurance",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{access_token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"fields\": {\"gross_salary\": 10000}}"
+            },
+            "url": {"raw": "{{base_url}}/api/calc/insurance", "host": ["{{base_url}}"], "path": ["api", "calc", "insurance"]}
+          }
+        },
+        {
+          "name": "Leaves",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{access_token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"fields\": {\"start_date\": \"2015-01-01\", \"current_date\": \"2025-12-31\", \"taken_days\": 10, \"employee_age\": 35}}"
+            },
+            "url": {"raw": "{{base_url}}/api/calc/leaves", "host": ["{{base_url}}"], "path": ["api", "calc", "leaves"]}
+          }
+        },
+        {
+          "name": "Net Salary",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{access_token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"fields\": {\"gross_salary\": 15000, \"marital_status\": \"married\", \"dependents\": 2}}"
+            },
+            "url": {"raw": "{{base_url}}/api/calc/net-salary", "host": ["{{base_url}}"], "path": ["api", "calc", "net-salary"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "Templates",
+      "item": [
+        {
+          "name": "List All Templates",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}],
+            "url": {"raw": "{{base_url}}/api/templates", "host": ["{{base_url}}"], "path": ["api", "templates"]}
+          }
+        },
+        {
+          "name": "Get Single Template",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}],
+            "url": {"raw": "{{base_url}}/api/templates/employment-fixed", "host": ["{{base_url}}"], "path": ["api", "templates", "employment-fixed"]}
+          }
+        },
+        {
+          "name": "Generate Template (DOCX)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{access_token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"custom_fields\": {\"employee_name\": \"أحمد محمد\", \"company_name\": \"شركة المثال\", \"start_date\": \"2024-01-01\", \"end_date\": \"2025-12-31\", \"salary\": \"10000\", \"job_title\": \"مهندس\"}, \"format\": \"docx\"}"
+            },
+            "url": {"raw": "{{base_url}}/api/templates/employment-fixed/generate", "host": ["{{base_url}}"], "path": ["api", "templates", "employment-fixed", "generate"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "Subscriptions",
+      "item": [
+        {
+          "name": "Get Plans",
+          "request": {
+            "method": "GET",
+            "url": {"raw": "{{base_url}}/api/subscriptions/plans", "host": ["{{base_url}}"], "path": ["api", "subscriptions", "plans"]}
+          }
+        },
+        {
+          "name": "My Subscription",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}],
+            "url": {"raw": "{{base_url}}/api/subscriptions/my-subscription", "host": ["{{base_url}}"], "path": ["api", "subscriptions", "my-subscription"]}
+          }
+        },
+        {
+          "name": "Get Usage",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}],
+            "url": {"raw": "{{base_url}}/api/subscriptions/usage", "host": ["{{base_url}}"], "path": ["api", "subscriptions", "usage"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health & Root",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "url": {"raw": "{{base_url}}/health", "host": ["{{base_url}}"], "path": ["health"]}
+          }
+        },
+        {
+          "name": "Root",
+          "request": {
+            "method": "GET",
+            "url": {"raw": "{{base_url}}/", "host": ["{{base_url}}"], "path": [""]}
+          }
+        }
+      ]
+    }
+  ]
+}

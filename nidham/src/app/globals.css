@@ -1,0 +1,347 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   Tailwind v4 dark-mode wiring.
+   We use class-based switching so next-themes can flip <html class="dark">
+   without touching prefers-color-scheme. The @variant directive teaches
+   utility classes (bg-X, text-X, border-X) to also honor "dark:" prefixes.
+   --------------------------------------------------------------------------- */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  /* Light theme — the default */
+  --background: #ffffff;
+  --foreground: #0a1428;
+  --surface: #ffffff;          /* card / panel bg */
+  --surface-muted: #f8fafc;    /* subtle alt bg (slate-50) */
+  --border-soft: #e2e8f0;      /* slate-200 */
+
+  --brand-navy: #0a1428;
+  --brand-navy-light: #152540;
+  --brand-cyan: #22d3ee;
+  --brand-cyan-dark: #0891b2;
+  --brand-gold: #c9a84c;
+}
+
+.dark {
+  /* Dark theme — applied when <html> has class="dark". next-themes
+     toggles this for us. Values pick a deep slate base + lighter
+     foreground so brand-cyan accents still pop. */
+  --background: #0a1428;
+  --foreground: #e2e8f0;
+  --surface: #152540;
+  --surface-muted: #1e293b;    /* slate-800 */
+  --border-soft: #334155;      /* slate-700 */
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-border-soft: var(--border-soft);
+  --color-brand-navy: var(--brand-navy);
+  --color-brand-navy-light: var(--brand-navy-light);
+  --color-brand-cyan: var(--brand-cyan);
+  --color-brand-cyan-dark: var(--brand-cyan-dark);
+  --color-brand-gold: var(--brand-gold);
+  --font-sans: var(--font-tajawal);
+  --font-display: var(--font-reem-kufi);
+  --font-cairo: var(--font-cairo);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-tajawal), Arial, Helvetica, sans-serif;
+  transition: background-color 200ms ease, color 200ms ease;
+  /* iOS Safari respects safe-area-inset-bottom for the home-indicator
+     bar; without this padding, fixed/sticky bottom nav can be tucked
+     under the gesture area. Also smooths sticky-header behaviour. */
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+/* ---------------------------------------------------------------------------
+   Mobile / Touch polish
+   ---------------------------------------------------------------------------
+   - Disable the gray tap-highlight rectangle iOS draws on Links / buttons.
+     Replaced visually by our own hover / active utility classes (sufficient
+     feedback without the harsh box).
+   - Set a minimum 44×44 touch target on bare <button> + role=button so we
+     don't ship sub-Apple-HIG sized hit areas inadvertently. Components that
+     intentionally render smaller (icon chip in a row, ✕ on a thumbnail) can
+     opt out by adding `.min-touch-none`.
+*/
+@media (hover: none) and (pointer: coarse) {
+  a, button, [role="button"], summary {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Tables — wrap wide ones in <div class="table-scroll"> ... </div>
+   so they scroll horizontally on mobile instead of forcing the entire
+   page to scroll. The thin scrollbar styling makes the affordance
+   visible without dominating the layout.
+   --------------------------------------------------------------------------- */
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+.table-scroll table {
+  min-width: 600px; /* below this, horizontal scroll kicks in */
+}
+
+/* ---------------------------------------------------------------------------
+   Reduced motion — honor users who set prefers-reduced-motion. We don't
+   strip every animation (loading spinners still spin), just the ones
+   that are decorative (hover transforms, theme transition, etc.).
+   --------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ----------------------------------------------------------------------------
+   Print
+   ----------------------------------------------------------------------------
+   The /print/* routes have their own bare layout (no sidebar) so the
+   browser's print preview renders the full payslip / summary cleanly.
+   These rules just whiten the background, force color-exact output,
+   and keep page-breaks from chopping rows mid-cell.
+*/
+@media print {
+  @page {
+    margin: 10mm;
+  }
+
+  body {
+    background: #ffffff !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* Defensive: any leftover sidebar / nav from old / dev routes */
+  aside,
+  nav,
+  header {
+    display: none !important;
+  }
+
+  main {
+    padding: 0 !important;
+    background: #ffffff !important;
+    min-height: auto !important;
+  }
+
+  /* Single payslip card: never break mid-page */
+  article {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Wide tables (payroll summary) -- repeat header on each page,
+     avoid splitting a single row across pages. */
+  thead {
+    display: table-header-group;
+  }
+  tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Blog typography — `prose-ar`
+   ---------------------------------------------------------------------------
+   We don't use @tailwindcss/typography because its defaults don't handle
+   RTL Arabic well (justification, list bullet positions, blockquote borders
+   on the wrong side, etc.). This is a minimal in-house equivalent tuned for
+   our content: Cairo at the body, brand-cyan-dark accents, generous line-
+   height for Arabic readability, RTL-aware blockquotes + lists.
+*/
+.prose-ar {
+  color: #334155;        /* slate-700 */
+  font-size: 1.0625rem;  /* 17px — slightly larger for readability */
+  line-height: 1.95;
+}
+
+.prose-ar > * + * {
+  margin-top: 1.25em;
+}
+
+.prose-ar h2 {
+  font-size: 1.75rem;
+  font-weight: 900;
+  color: #0a1428;
+  margin-top: 2.5em;
+  margin-bottom: 0.75em;
+  line-height: 1.3;
+  scroll-margin-top: 5rem; /* offset for sticky nav when anchor-linking */
+}
+
+.prose-ar h3 {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #0a1428;
+  margin-top: 2em;
+  margin-bottom: 0.6em;
+  line-height: 1.4;
+}
+
+.prose-ar h4 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #0a1428;
+  margin-top: 1.75em;
+  margin-bottom: 0.5em;
+}
+
+.prose-ar p {
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+
+.prose-ar strong {
+  color: #0a1428;
+  font-weight: 700;
+}
+
+.prose-ar a {
+  color: #0891b2;        /* brand-cyan-dark */
+  text-decoration: underline;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
+  font-weight: 500;
+}
+.prose-ar a:hover {
+  color: #0e7490;        /* cyan-700 */
+}
+
+.prose-ar ul,
+.prose-ar ol {
+  padding-inline-start: 1.5em;
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+
+.prose-ar ul {
+  list-style: disc;
+}
+.prose-ar ol {
+  list-style: decimal-leading-zero;
+}
+
+.prose-ar li {
+  margin-top: 0.4em;
+  margin-bottom: 0.4em;
+  padding-inline-start: 0.25em;
+}
+
+.prose-ar li::marker {
+  color: #0891b2;
+}
+
+.prose-ar blockquote {
+  border-inline-start: 4px solid #0891b2;
+  background: #ecfeff;       /* cyan-50 */
+  padding: 1em 1.5em;
+  border-radius: 0.5em;
+  margin: 1.5em 0;
+  font-style: italic;
+  color: #0e7490;
+}
+
+.prose-ar blockquote p {
+  margin: 0;
+}
+
+.prose-ar code {
+  background: #f1f5f9;       /* slate-100 */
+  color: #be185d;            /* pink-700 — accessible vs the background */
+  padding: 0.15em 0.4em;
+  border-radius: 0.25em;
+  font-size: 0.95em;
+  font-family: "Menlo", "SFMono-Regular", monospace;
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+.prose-ar table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5em 0;
+  font-size: 0.95em;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.06);
+}
+
+.prose-ar thead {
+  background: #0a1428;       /* brand-navy */
+  color: #ffffff;
+}
+
+.prose-ar th,
+.prose-ar td {
+  text-align: start;
+  padding: 0.75em 1em;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.prose-ar th {
+  font-weight: 700;
+  font-size: 0.875em;
+}
+
+.prose-ar tbody tr:nth-child(even) {
+  background: #f8fafc;       /* slate-50 — subtle zebra */
+}
+
+.prose-ar tbody tr:hover {
+  background: #f0fdfa;       /* faint cyan tint */
+}
+
+/* Callout box used inside posts for tips / warnings / legal notes */
+.prose-ar .callout {
+  border-inline-start: 4px solid #f59e0b;  /* amber-500 */
+  background: #fffbeb;                     /* amber-50 */
+  border-radius: 0.75em;
+  padding: 1em 1.25em;
+  margin: 1.5em 0;
+}
+.prose-ar .callout-title {
+  font-weight: 800;
+  color: #92400e;        /* amber-900 */
+  margin-bottom: 0.4em;
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}
+.prose-ar .callout p {
+  margin: 0;
+  color: #78350f;        /* amber-950 */
+}
+
+/* "Key takeaway" highlight — useful at the top of long posts */
+.prose-ar .key-takeaway {
+  background: linear-gradient(135deg, #ecfeff 0%, #cffafe 100%);
+  border: 1px solid #67e8f9;
+  border-radius: 1em;
+  padding: 1.25em 1.5em;
+  margin: 1.5em 0 2em;
+}
+.prose-ar .key-takeaway-label {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #0e7490;
+  text-transform: uppercase;
+  margin-bottom: 0.5em;
+}
