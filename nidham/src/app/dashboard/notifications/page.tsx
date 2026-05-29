@@ -79,7 +79,7 @@ export default async function NotificationsPage({
 
         <NotificationsClient
           notifications={notifications ?? []}
-          profileId={profile?.id ?? ""}
+          profileId={profileId}
         />
       </div>
     </main>
