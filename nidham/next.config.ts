@@ -6,6 +6,7 @@
 // ============================================================================
 
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
   // Enable React strict mode for development warnings
@@ -52,4 +53,14 @@ const nextConfig: NextConfig = {
   // Standalone output traces dependencies automatically
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  silent: !process.env.SENTRY_DSN,
+  sourcemaps: {
+    deleteSourcemapsAfterUpload: true,
+  },
+  tunnelRoute: "/monitoring",
+  disableLogger: true,
+});
