@@ -9,9 +9,9 @@ export async function listNotifications() {
   const { data: profile } = await supabase
     .from("profiles")
     .select("id, company_id")
-    .single();
+    .maybeSingle();
 
-  if (!profile) throw new Error("لم يتم العثور على المستخدم");
+  if (!profile) return [];
 
   const { data, error } = await supabase
     .from("notifications")
@@ -21,8 +21,8 @@ export async function listNotifications() {
     .order("created_at", { ascending: false })
     .limit(100);
 
-  if (error) throw new Error(error.message);
-  return data;
+  if (error) return [];
+  return data ?? [];
 }
 
 export async function markAsRead(id: string) {
@@ -42,7 +42,7 @@ export async function markAllAsRead() {
   const { data: profile } = await supabase
     .from("profiles")
     .select("id, company_id")
-    .single();
+    .maybeSingle();
 
   if (!profile) return;
 
@@ -74,7 +74,7 @@ export async function clearAllRead() {
   const { data: profile } = await supabase
     .from("profiles")
     .select("id, company_id")
-    .single();
+    .maybeSingle();
 
   if (!profile) return;
 

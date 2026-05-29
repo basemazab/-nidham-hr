@@ -17,14 +17,21 @@ export default async function NotificationsPage({
   const supabase = await createClient();
   const params = await searchParams;
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("id, company_id")
-    .single();
+  let profileId = "";
+  try {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("id")
+      .maybeSingle();
+    if (profile) profileId = profile.id;
+  } catch {}
 
-  const notifications = await listNotifications();
+  let notifications: any[] = [];
+  try {
+    notifications = (await listNotifications()) ?? [];
+  } catch {}
 
-  const unreadCount = notifications?.filter((n) => !n.read_at).length ?? 0;
+  const unreadCount = notifications.filter((n) => !n.read_at).length ?? 0;
 
   return (
     <main className="flex-1 px-4 md:px-6 py-6 bg-gradient-to-b from-slate-50 via-white to-cyan-50/30 min-h-screen">
