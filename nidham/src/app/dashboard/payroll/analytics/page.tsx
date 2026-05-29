@@ -8,10 +8,16 @@ export const metadata = {
 export default async function PayrollAnalyticsPage() {
   const supabase = await createClient();
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return <div className="p-6">لا يمكن تحميل البيانات</div>;
+
   const { data: profile } = await supabase
     .from("profiles")
     .select("company_id")
-    .single();
+    .eq("id", user.id)
+    .maybeSingle();
 
   if (!profile) return <div className="p-6">لا يمكن تحميل البيانات</div>;
 
