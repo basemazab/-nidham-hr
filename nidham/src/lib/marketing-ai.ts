@@ -834,12 +834,98 @@ ${input.platforms?.length ? `**منصات يفضّلها العميل:** ${input
 
   return callWithFallback(async (picked) => {
     const { object } = await generateObject({
-      maxRetries: 0, // we do our own retry through callWithFallback
+      maxRetries: 0,
       model: picked.model,
       schema: campaignStrategySchema,
       system: CAMPAIGN_SYSTEM,
       prompt: userPrompt,
       temperature: 0.5,
+    });
+    return object;
+  });
+}
+
+// ----------------------------------------------------------------------------
+// 6) AD COPY GENERATOR — platform-specific ad copy with character limits
+// ----------------------------------------------------------------------------
+// MIT-licensed prompt patterns adapted from OpenAdKit.
+// Generates 3 variants per platform with platform-validated character counts.
+
+const PLATFORM_SPECS: Record<string, { primary: number; headline: number; desc: number }> = {
+  meta: { primary: 125, headline: 27, desc: 27 },
+  google: { primary: 90, headline: 30, desc: 90 },
+  tiktok: { primary: 150, headline: 35, desc: 30 },
+  linkedin: { primary: 150, headline: 70, desc: 70 },
+};
+
+const PLATFORM_AD_COPY_SYSTEM = `أنت Senior Copywriter في وكالة إعلانات كبرى، 12 سنة خبرة
+في كتابة إعلانات تحوّل (high-converting ads) للماركات العالمية والعربية.
+خبير في السيكولوجي الإعلاني: pain points, desire triggers, social proof, 
+urgency, FOMO.
+
+مبادئك الأساسية:
+1. أول 125 حرف هي اللي تمسك العميل — front-load the hook
+2. كل platform ليها character limits محددة — تخلفها ممنوع
+3. اكتب 3 variants بزوايا مختلفة: pain → desire → social proof
+4. استخدم لغة السوق المستهدف (عامية / فصحى حسب السياق)
+5. CTA واضح ومباشر — مش عمومي`;
+
+export const adCopyVariantSchema = z.object({
+  angle: z.enum(["pain", "desire", "social-proof", "urgency", "fomo"]).describe("الزاوية التسويقية"),
+  primary_text: z.string().describe("النص الرئيسي — أول 125 حرف لازم يكون hook قوي"),
+  headline: z.string().describe("العنوان"),
+  description: z.string().describe("الوصف"),
+  cta: z.string().describe("زر الحث على الإجراء (مثال: اطلب دلوقتي، اعرف أكتر، اشترك)"),
+  char_counts: z.object({
+    primary: z.number(),
+    headline: z.number(),
+    description: z.number(),
+  }),
+});
+
+export const adCopySchema = z.object({
+  platform_used: z.string(),
+  variants: z.array(adCopyVariantSchema).min(3).max(5),
+});
+
+export type AdCopyResult = z.infer<typeof adCopySchema>;
+
+export async function generatePlatformAdCopy(input: {
+  platform: keyof typeof PLATFORM_SPECS;
+  product: string;
+  objective: string;
+  audience: string;
+  tone: string;
+  cta: string;
+  extra_context?: string;
+}): Promise<AdCopyResult> {
+  const specs = PLATFORM_SPECS[input.platform] ?? PLATFORM_SPECS.meta;
+  const userPrompt = `**المنصة:** ${input.platform}
+**المنتج/الخدمة:** ${input.product}
+**الهدف الإعلاني:** ${input.objective}
+**الجمهور المستهدف:** ${input.audience}
+**نبرة الصوت:** ${input.tone}
+**ـCTA المطلوب:** ${input.cta}
+${input.extra_context ? `\n**سياق إضافي:** ${input.extra_context}` : ""}
+
+**Character Limits للمنصة (${input.platform}):**
+- النص الرئيسي: ${specs.primary} حرف للـ hook, max ${specs.primary * 2}
+- العنوان: ${specs.headline} حرف max
+- الوصف: ${specs.desc} حرف max
+
+اطلب 3 variants بزوايا مختلفة (pain, desire, social-proof). 
+لكل variant: primary_text + headline + description + cta + char_counts اللي تتأكد إنها جوه الـ limits.
+لو أي variant تجاوز الـ limits، اكتب نسخة مختصرة في نفس الحقل.
+Variant الأول يبقى pain-point lead، التاني desire/aspiration، التالت social proof / FOMO.`;
+
+  return callWithFallback(async (picked) => {
+    const { object } = await generateObject({
+      maxRetries: 0,
+      model: picked.model,
+      schema: adCopySchema,
+      system: PLATFORM_AD_COPY_SYSTEM,
+      prompt: userPrompt,
+      temperature: 0.7,
     });
     return object;
   });
