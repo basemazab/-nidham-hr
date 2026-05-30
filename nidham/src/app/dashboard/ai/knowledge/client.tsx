@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { addKnowledgeDocument, deleteKnowledgeDocument } from "@/lib/ai/memory";
-import { Book, Plus, Trash2, FileText, Scale, Building2 } from "lucide-react";
+import { Book, Plus, Trash2, FileText, Scale, Building2, Sparkles } from "lucide-react";
 
 interface Doc {
   id: string;
@@ -43,6 +43,7 @@ export function KnowledgeBaseClient({ docs, companyId }: Props) {
   const [sourceType, setSourceType] = useState<
     "manual" | "policy" | "law_article" | "faq" | "uploaded"
   >("manual");
+  const [embeddingStatus, setEmbeddingStatus] = useState<string | null>(null);
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
@@ -58,23 +59,54 @@ export function KnowledgeBaseClient({ docs, companyId }: Props) {
     router.refresh();
   }
 
+  async function handleGenerateEmbeddings() {
+    setEmbeddingStatus("جاري التضمين...");
+    try {
+      const res = await fetch("/api/ai/knowledge/embeddings", { method: "POST" });
+      const data = await res.json();
+      if (data.error) {
+        setEmbeddingStatus(`خطأ: ${data.error}`);
+      } else {
+        setEmbeddingStatus(data.message);
+        setTimeout(() => { setEmbeddingStatus(null); router.refresh(); }, 2000);
+      }
+    } catch {
+      setEmbeddingStatus("فشل الاتصال");
+    }
+  }
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
           <h1 className="text-2xl font-bold">قاعدة المعرفة (RAG)</h1>
           <p className="text-muted-foreground text-sm mt-1">
             المستندات والمواد القانونية التي يستخدمها AI للإجابة على الأسئلة
           </p>
         </div>
-        <button
-          onClick={() => setShowAdd(!showAdd)}
-          className="flex items-center gap-2 rounded-lg bg-cyan-600 px-4 py-2 text-sm font-medium text-white hover:bg-cyan-700"
-        >
-          <Plus className="h-4 w-4" />
-          إضافة مستند
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleGenerateEmbeddings}
+            className="flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50"
+          >
+            <Sparkles className="h-4 w-4" />
+            تضمين
+          </button>
+          <button
+            onClick={() => setShowAdd(!showAdd)}
+            className="flex items-center gap-2 rounded-lg bg-cyan-600 px-4 py-2 text-sm font-medium text-white hover:bg-cyan-700"
+          >
+            <Plus className="h-4 w-4" />
+            إضافة مستند
+          </button>
+        </div>
       </div>
+
+      {embeddingStatus && (
+        <div className="rounded-xl border border-cyan-200 bg-cyan-50 px-4 py-3 text-sm text-cyan-800">
+          {embeddingStatus}
+        </div>
+      )}
 
       {showAdd && (
         <form onSubmit={handleAdd} className="rounded-xl border bg-white p-6 space-y-4 dark:bg-slate-900">

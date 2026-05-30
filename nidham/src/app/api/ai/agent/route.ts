@@ -38,6 +38,7 @@ import {
   monthsBetween,
 } from "@/lib/retention";
 import { pickAgentModelLargeContext } from "@/lib/ai-models";
+import { searchKnowledgeBase } from "@/lib/ai/memory";
 
 export const maxDuration = 60;
 
@@ -365,10 +366,31 @@ export async function POST(req: Request) {
     .eq("id", profile.company_id)
     .maybeSingle<{ name: string }>();
 
-  const systemPrompt = buildSystemPrompt(
+  let systemPrompt = buildSystemPrompt(
     companyRow?.name ?? "—",
     profile.full_name ?? "المستخدم",
   );
+
+  // Inject knowledge base context (RAG) for the user's latest question
+  try {
+    const lastUserMsg = [...messages].reverse().find((m) => m.role === "user")?.content;
+    if (lastUserMsg && profile.company_id) {
+      const kbDocs = await searchKnowledgeBase(profile.company_id, lastUserMsg, 3);
+      if (kbDocs && kbDocs.length > 0) {
+        systemPrompt += `\n\n## مستندات مرجعية ذات صلة بسؤال المستخدم\n`;
+        systemPrompt += kbDocs
+          .map(
+            (d: any) =>
+              `- [${d.source_type}] ${d.title}:\n  ${(d.content ?? "").slice(0, 600)}`,
+          )
+          .join("\n");
+        systemPrompt +=
+          "\n\nاستخدم المعلومات من المستندات المرجعية فوق — خصوصاً لو السؤال قانوني — وارجع للمادة القانونية المناسبة.";
+      }
+    }
+  } catch {
+    // KB search is non-critical — don't crash the agent
+  }
 
   // --------------------------------------------------------------------
   // TOOLS — defined inline so each `execute` closes over the supabase

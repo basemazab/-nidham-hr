@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { generateEmbedding } from "@/lib/ai/embeddings";
 
 // ──────────────────────────────────────────────────────
 // CONVERSATION MEMORY
@@ -182,6 +183,19 @@ export async function addKnowledgeDocument(params: {
     .single();
 
   if (error) throw new Error(error.message);
+
+  // Generate embedding in the background
+  try {
+    const textToEmbed = `${params.title}\n${(params.content ?? "").slice(0, 2000)}`;
+    const embedding = await generateEmbedding(textToEmbed);
+    await supabase
+      .from("ai_knowledge_base")
+      .update({ embedding: `[${embedding.join(",")}]` })
+      .eq("id", data.id);
+  } catch {
+    // embedding is non-critical; doc works without it
+  }
+
   revalidatePath("/dashboard/ai/knowledge");
   return data;
 }

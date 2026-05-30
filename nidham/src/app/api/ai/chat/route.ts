@@ -2,6 +2,7 @@ import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { streamText } from "ai";
 import { createClient } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { searchKnowledgeBase } from "@/lib/ai/memory";
 
 // Use our env var name (GEMINI_API_KEY) instead of the SDK's default
 // (GOOGLE_GENERATIVE_AI_API_KEY). One provider instance for the whole route.
@@ -280,7 +281,7 @@ export async function POST(req: Request) {
   // company-wide attendance + customer data via the system prompt.
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role")
+    .select("role, company_id")
     .eq("id", user.id)
     .single();
   if (!profile || (profile.role !== "admin" && profile.role !== "manager")) {
@@ -331,7 +332,28 @@ export async function POST(req: Request) {
     );
   }
 
-  const systemPrompt = await buildCompanyContext(supabase);
+  let systemPrompt = await buildCompanyContext(supabase);
+
+  // Inject knowledge base context (RAG) for the user's latest question
+  try {
+    const lastUserMsg = [...messages].reverse().find((m) => m.role === "user")?.content;
+    if (lastUserMsg && profile.company_id) {
+      const kbDocs = await searchKnowledgeBase(profile.company_id, lastUserMsg, 3);
+      if (kbDocs && kbDocs.length > 0) {
+        systemPrompt += `\n\n## مستندات مرجعية ذات صلة بسؤال المستخدم\n`;
+        systemPrompt += kbDocs
+          .map(
+            (d: any) =>
+              `- [${d.source_type}] ${d.title}:\n  ${(d.content ?? "").slice(0, 600)}`,
+          )
+          .join("\n");
+        systemPrompt +=
+          "\n\nاستخدم المعلومات من المستندات المرجعية فوق — خصوصاً لو السؤال قانوني — وارجع للمادة القانونية المناسبة.";
+      }
+    }
+  } catch {
+    // KB search is non-critical — don't crash the chat
+  }
 
   const result = streamText({
     model: google("gemini-2.5-flash"),
