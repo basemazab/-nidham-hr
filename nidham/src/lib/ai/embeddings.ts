@@ -30,8 +30,9 @@ async function generateGeminiEmbedding(text: string): Promise<number[]> {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "models/text-embedding-004",
+      model: "models/gemini-embedding-001",
       content: { parts: [{ text }] },
+      outputDimensionality: 768,
     }),
   });
 
