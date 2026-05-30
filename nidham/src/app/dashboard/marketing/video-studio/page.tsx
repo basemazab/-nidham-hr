@@ -90,7 +90,7 @@ export default async function VideoStudioHubPage() {
         </section>
 
         {/* Quick actions */}
-        <section className="grid md:grid-cols-3 gap-4 mb-6">
+        <section className="grid md:grid-cols-4 gap-4 mb-6">
           <Link
             href="/dashboard/marketing/video-studio/script"
             className="group bg-gradient-to-br from-rose-50 to-orange-50 border-2 border-rose-200 hover:border-rose-400 rounded-2xl p-5 transition hover:shadow-lg"
@@ -119,7 +119,7 @@ export default async function VideoStudioHubPage() {
             </p>
           </Link>
 
-          <Link
+           <Link
             href="/dashboard/marketing/video-studio/plan"
             className="group bg-gradient-to-br from-emerald-50 to-teal-50 border-2 border-emerald-200 hover:border-emerald-400 rounded-2xl p-5 transition hover:shadow-lg"
           >
@@ -130,6 +130,20 @@ export default async function VideoStudioHubPage() {
             <p className="text-[11px] text-slate-600 leading-snug">
               خطة إنتاج كاملة: الـ assets, المعدات, الميزانية, الجدول
               الزمني, قائمة المراجعة
+            </p>
+          </Link>
+
+          <Link
+            href="/dashboard/marketing/video-studio/produce"
+            className="group bg-gradient-to-br from-cyan-50 to-blue-50 border-2 border-cyan-200 hover:border-cyan-400 rounded-2xl p-5 transition hover:shadow-lg"
+          >
+            <div className="text-2xl mb-2">🎞</div>
+            <h3 className="text-sm font-black text-slate-800 group-hover:text-cyan-700 mb-1">
+              إنتاج الفيديو
+            </h3>
+            <p className="text-[11px] text-slate-600 leading-snug">
+              صوّر الفيديو فعلياً — voiceover بالعربي، مؤثرات بصرية، موسيقى
+              خلفية، وتحميل WebM
             </p>
           </Link>
         </section>

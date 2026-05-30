@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getMyProfile } from "@/lib/permissions";
 import { formatDate } from "@/lib/format";
-import { OnboardingChecklistClient } from "./checklist-client";
+import { OnboardingTabsClient } from "./tabs-client";
 
 export const dynamic = "force-dynamic";
 
@@ -44,7 +44,7 @@ export default async function OnboardingChecklistPage({
       )
       .eq("id", id)
       .eq("company_id", callerCompanyId)
-      .single()
+      .maybeSingle()
       .returns<Employee>();
     employee = data;
   } catch {
@@ -105,8 +105,11 @@ export default async function OnboardingChecklistPage({
           </div>
         </div>
 
-        {/* Checklist — client component */}
-        <OnboardingChecklistClient employeeId={employee.id} />
+        {/* Tabs: Checklist + 30-60-90 Plan */}
+        <OnboardingTabsClient
+          employeeId={employee.id}
+          hireDate={employee.hire_date}
+        />
       </div>
     </main>
   );

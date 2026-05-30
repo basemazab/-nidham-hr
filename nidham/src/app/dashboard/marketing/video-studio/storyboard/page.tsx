@@ -264,6 +264,12 @@ export default function StoryboardPage() {
                   >
                     🎥 خطة الإنتاج →
                   </Link>
+                  <Link
+                    href="/dashboard/marketing/video-studio/produce"
+                    className="flex-1 px-4 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-black text-center transition hover:shadow-lg"
+                  >
+                    🎞 إنتاج الفيديو →
+                  </Link>
                 </div>
               </div>
             )}

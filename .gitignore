@@ -12,3 +12,12 @@ postgres_data/
 redis_data/
 minio_data/
 uploads/
+
+.vercel
+.env*
+
+# Temp migration files
+all-migrations.sql
+migration-part-*.sql
+run-migration.js
+old-env.json
