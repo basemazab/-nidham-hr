@@ -1,3 +1,20 @@
+## إعداد GROQ_API_KEY (للتكرارية في AI)
+Groq مجاني ويعطي 30 RPM → يمنع توقف AI لو Gemini ضرب quota.
+
+1. افتح https://console.groq.com/keys
+2. سجّل بـ GitHub/Gmail
+3. اضغط "Create API Key"
+4. انسخ الـ key (يبدأ بـ `gsk_`)
+5. أضفه في Vercel:
+   ```
+   vercel env add GROQ_API_KEY production
+   ```
+   والصق الـ key وادخل `y`
+6. وأضفه محليًا:
+   ```
+   echo "GROQ_API_KEY=gsk_..." >> .env.local
+   ```
+
 <!-- BEGIN:nextjs-agent-rules -->
 # This is NOT the Next.js you know
 
