@@ -113,6 +113,9 @@ export function SoftwareApplicationSchema() {
       "بوت WhatsApp للموظفين",
       "التوقيع الإلكتروني على العقود",
       "إدارة العملاء (CRM)",
+      "استوديو تسويق بالذكاء الاصطناعي",
+      "تصميم حملات إعلانية بـ AI",
+      "فحص السير الذاتية بـ AI",
       "تقارير وتحليلات متقدمة",
     ],
     inLanguage: ["ar", "en"],
@@ -145,6 +148,14 @@ export function WebsiteSchema() {
       "نظام HR + Payroll + AI متكامل للشركات المصرية - متوافق مع قانون العمل والتأمينات",
     publisher: { "@id": `${SITE}/#organization` },
     inLanguage: "ar-EG",
+    potentialAction: {
+      "@type": "SearchAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: `${SITE}/search?q={search_term_string}`,
+      },
+      "query-input": "required name=search_term_string",
+    },
   };
   return (
     <script

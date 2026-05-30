@@ -1,6 +1,7 @@
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { SectionHeader } from "./sections/section-helpers";
+import { FAQPageSchema } from "@/components/json-ld";
 
 const DynamicLiveScreenshots = dynamic(() => import("./sections/live-screenshots").then((m) => ({ default: m.LiveScreenshotsSection })), { loading: () => <div className="h-64 animate-pulse bg-slate-100 rounded-2xl" /> });
 const DynamicBridgeAnalytics = dynamic(() => import("./sections/bridge-analytics").then((m) => ({ default: m.BridgeAnalyticsSection })), { loading: () => <div className="h-64 animate-pulse bg-slate-800 rounded-2xl" /> });
@@ -58,6 +59,16 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
       <DynamicHowItWorks />
       <DynamicFinalCTA />
       <DynamicFooter />
+      <FAQPageSchema questions={[
+        { question: "ما هو أفضل نظام HR في مصر؟", answer: "نِظام هو أفضل نظام HR ومرتبات متكامل للشركات المصرية — يدعم قانون العمل 12/2003 والتأمينات 148/2019، حضور بالـ GPS، حساب روابط آلي، CRM، واستوديو تسويق بالذكاء الاصطناعي. جرّب 14 يوم مجاناً." },
+        { question: "كم تكلفة نظام HR للشركات الصغيرة في مصر؟", answer: "نِظام يبدأ من 749 جنيه مصري شهرياً لـ 25 موظف (باقة Starter). الباقة Pro 2,430 جنيه لـ 100 موظف، والباقة Business 5,990 جنيه لـ 500 موظف. كل الباقات تشمل دعم فني وتحديثات قانونية." },
+        { question: "إيه الفرق بين نِظام و Bayzat أو ZenHR؟", answer: "نِظام مصمم خصيصاً للسوق المصري — متوافق مع قانون العمل المصري 12/2003 والتأمينات 148/2019، ويدعم اللغة العربية بالكامل، ويشمل CRM واستوديو تسويق بـ AI. Bayzat و ZenHR مصممان للسوق الخليجي ويفتقران للتوافق القانوني المصري." },
+        { question: "هل نظام الحضور بالـ GPS قانوني في مصر؟", answer: "نعم، الحضور بالـ GPS قانوني في مصر. نِظام يستخدم GPS + سيلفي لتسجيل الحضور، مع geofence قابل للتعديل حول موقع الشركة. القانون لا يشترط طريقة محددة لتسجيل الحضور طالما موثقة." },
+        { question: "ازاي أحسب المرتب في مصر بعد التأمينات والضريبة؟", answer: "نِظام يحسب المرتب تلقائياً: خصم التأمينات 14% (11% موظف + 3% شركة) بحد أقصى 11,700 جنيه، وضريبة الدخل حسب الشرائح: أول 45,000 معفى، و10% لـ 45-65 ألف حتى 27.5% لأكثر من 300 ألف." },
+        { question: "هل يوفر نِظام فحص السير الذاتية بالذكاء الاصطناعي؟", answer: "نعم، نِظام يشمل فحص CVs بالـ AI — بيحلل السيرة الذاتية، يحسب درجة التطابق مع الوظيفة (0-100)، ويقترح أسئلة مقابلة شخصية مخصصة لكل مرشح." },
+        { question: "هل يمكن تجربة نِظام مجاناً؟", answer: "نعم، نِظام يوفر تجربة مجانية لمدة 14 يوم بدون بطاقة ائتمان. تشمل كل الميزات بما فيها AI والحضور بالـ GPS. تقدر تلغي أي وقت." },
+        { question: "هل نِظام مناسب للشركات الناشئة والصغيرة؟", answer: "بالتأكيد. نِظام مصمم للشركات الناشئة والصغيرة في مصر — يبدأ من 749 جنيه شهرياً، يوفر حل متكامل بديل لـ Excel، ويوفر وقت الـ HR مع أتمتة الرواتب والحضور والإجازات." },
+      ]} />
     </main>
   );
 }

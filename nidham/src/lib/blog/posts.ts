@@ -43,6 +43,66 @@ export type BlogPost = {
 // ── Posts (newest first — order here controls /blog index order) ────────────
 export const POSTS: BlogPost[] = [
   {
+    slug: "ai-cv-screening-egypt",
+    title: "فحص السير الذاتية بالذكاء الاصطناعي — أسرع 10 مرات للـ HR",
+    heading: "فحص CVs بالذكاء الاصطناعي — إزاي توفر 80% من وقت التوظيف",
+    description:
+      "AI يفحص 100 سيرة ذاتية في 5 دقائق — درجة تطابق 0-100 + أسئلة مقابلة مخصصة لكل مرشح. مقارنة ChatGPT vs نظام HR متخصص ونصائح عملية.",
+    excerpt:
+      "AI يفحص 100 CV في 5 دقائق بدل 5 ساعات. درجة تطابق (0-100) + أسئلة مقابلة لكل مرشح. مش رفاهية — ضرورة لو بتوظف بانتظام.",
+    keyword: "فحص السير الذاتية بالذكاء الاصطناعي",
+    publishedAt: "2026-05-30",
+    updatedAt: "2026-05-30",
+    readMinutes: 9,
+    author: "فريق نِظام HR",
+    tags: ["AI", "توظيف", "فحص CVs", "ذكاء اصطناعي"],
+  },
+  {
+    slug: "integrated-hr-crm-marketing-egypt",
+    title: "نظام متكامل HR + CRM + تسويق vs 3 أنظمة منفصلة — التكلفة الحقيقية",
+    heading: "نظام متكامل بدل 3 أنظمة منفصلة — وفر 60%",
+    description:
+      "التكلفة الحقيقية لاستخدام 3-5 أنظمة منفصلة (HR + CRM + تسويق) في شركتك المصرية — مقارنة بالأرقام مع نظام متكامل واحد وخطة انتقال عملية.",
+    excerpt:
+      "3 أنظمة منفصلة = 2,500-9,000 جنيه/شهر + بيانات مكررة + أخطاء يدوية. نظام متكامل واحد = 749 جنيه وبيانات موحّدة. المقارنة بالأرقام.",
+    keyword: "نظام متكامل HR CRM",
+    publishedAt: "2026-05-30",
+    updatedAt: "2026-05-30",
+    readMinutes: 10,
+    author: "فريق نِظام HR",
+    tags: ["مقارنات", "نظام متكامل", "HR", "CRM", "تسويق"],
+  },
+  {
+    slug: "ai-in-hr-egypt",
+    title: "الذكاء الاصطناعي في الموارد البشرية — 5 استخدامات عملية للشركات المصرية",
+    heading: "AI في HR — 5 استخدامات عملية للشركات المصرية",
+    description:
+      "5 استخدامات للذكاء الاصطناعي في HR: فحص CVs، حساب الرواتب، المساعد الذكي، تحليل الأداء، والتسويق. كل استخدام مع أرقام التوفير الفعلية.",
+    excerpt:
+      "فحص CVs (وفر 95%)، حساب الرواتب تلقائياً (100%)، المساعد الذكي (80%)، تحليل الأداء، والتسويق بالـ AI. رقم واحد يغير كل حاجة.",
+    keyword: "الذكاء الاصطناعي في الموارد البشرية",
+    publishedAt: "2026-05-30",
+    updatedAt: "2026-05-30",
+    readMinutes: 11,
+    author: "فريق نِظام HR",
+    tags: ["AI", "ذكاء اصطناعي", "HR", "أتمتة"],
+  },
+  {
+    slug: "crm-strategy-egypt",
+    title: "كيف تبني استراتيجية CRM فعالة في السوق المصري — 5 خطوات",
+    heading: "استراتيجية CRM للشركات المصرية — 5 خطوات عملية",
+    description:
+      "5 خطوات لبناء استراتيجية CRM ناجحة في مصر: تحديد مراحل البيع، مصادر الـ Leads، توثيق التفاعلات، الربط مع HR والتسويق، ومقاييس الأداء.",
+    excerpt:
+      "5 خطوات لاستراتيجية CRM فعالة في مصر: من تحديد مراحل البيع لربط CRM مع HR والتسويق. مع مقاييس أداء فريق المبيعات وخطة تنفيذ.",
+    keyword: "استراتيجية CRM مصر",
+    publishedAt: "2026-05-30",
+    updatedAt: "2026-05-30",
+    readMinutes: 8,
+    author: "فريق نِظام HR",
+    tags: ["CRM", "إدارة العملاء", "مبيعات", "استراتيجية"],
+  },
+  {
     slug: "labor-law-12-2003-egypt-explained",
     title: "قانون العمل المصري 12/2003 — شرح أهم 10 مواد للـ HR",
     heading: "قانون العمل 12/2003 — أهم 10 مواد",
@@ -322,4 +382,12 @@ export const POST_CONTENT_LOADERS: Record<
     import("@/content/blog/legal-termination-article-69-egypt"),
   "income-tax-egypt-2026-explained": () =>
     import("@/content/blog/income-tax-egypt-2026-explained"),
+  "crm-strategy-egypt": () =>
+    import("@/content/blog/crm-strategy-egypt"),
+  "ai-in-hr-egypt": () =>
+    import("@/content/blog/ai-in-hr-egypt"),
+  "integrated-hr-crm-marketing-egypt": () =>
+    import("@/content/blog/integrated-hr-crm-marketing-egypt"),
+  "ai-cv-screening-egypt": () =>
+    import("@/content/blog/ai-cv-screening-egypt"),
 };
