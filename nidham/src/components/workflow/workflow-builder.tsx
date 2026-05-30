@@ -16,6 +16,7 @@ import {
   UserCheck,
   UserX,
 } from "lucide-react";
+import { WorkflowHelpModal } from "./workflow-help-modal";
 
 const TRIGGER_OPTIONS: { value: TriggerType; icon: React.ReactNode; desc: string }[] = [
   {
@@ -87,11 +88,14 @@ export function WorkflowBuilder() {
   if (step === "trigger") {
     return (
       <div className="mx-auto max-w-3xl space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold">قاعدة أتمتة جديدة</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            اختر المشغل (الحدث) الذي سيبدأ قاعدة الأتمتة
-          </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold">قاعدة أتمتة جديدة</h1>
+            <p className="text-muted-foreground text-sm mt-1">
+              اختر المشغل (الحدث) الذي سيبدأ قاعدة الأتمتة
+            </p>
+          </div>
+          <WorkflowHelpModal />
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">

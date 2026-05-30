@@ -22,6 +22,7 @@ import {
   Filter,
 } from "lucide-react";
 import Link from "next/link";
+import { WorkflowHelpModal } from "./workflow-help-modal";
 
 interface WorkflowEditorProps {
   workflow: Workflow;
@@ -145,6 +146,7 @@ export function WorkflowEditor({ workflow }: WorkflowEditorProps) {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <WorkflowHelpModal />
           <button
             onClick={handleToggle}
             className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
