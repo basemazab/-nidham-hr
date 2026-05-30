@@ -27,18 +27,29 @@ export async function POST(req: Request) {
   if (error) return Response.json({ error: error.message }, { status: 500 });
   if (!docs?.length) return Response.json({ message: "لا توجد مستندات", count: 0 });
 
+  const errors: string[] = [];
   let success = 0, fail = 0;
   for (const doc of docs) {
     try {
       const text = `${doc.title}\n${(doc.content ?? "").slice(0, 2000)}`;
       const embedding = await generateEmbedding(text);
-      await supabase
+      const { error: updateError } = await supabase
         .from("ai_knowledge_base")
         .update({ embedding: `[${embedding.join(",")}]` })
         .eq("id", doc.id);
+      if (updateError) throw new Error(updateError.message);
       success++;
-    } catch { fail++; }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message.slice(0, 200) : String(e);
+      if (errors.length < 5) errors.push(msg);
+      fail++;
+    }
   }
 
-  return Response.json({ message: `تم ${success}، فشل ${fail}`, success, failed: fail });
+  return Response.json({
+    message: `تم ${success}، فشل ${fail}`,
+    success,
+    failed: fail,
+    sample_errors: errors,
+  });
 }
