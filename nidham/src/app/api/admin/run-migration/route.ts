@@ -26,7 +26,7 @@ export async function POST(req: Request) {
 
     const sql = readFileSync(join(process.cwd(), "db/migrations", `${safeName}.sql`), "utf8");
 
-    const { data, error } = await supabase.rpc("exec_sql", { sql_text: sql });
+    const { data, error } = await supabase.rpc("exec_sql", { sql: sql });
 
     if (error) {
       return Response.json({ ok: false, error: error.message }, { status: 500 });
