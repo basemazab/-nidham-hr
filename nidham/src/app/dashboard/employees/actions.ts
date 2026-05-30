@@ -145,6 +145,60 @@ export type EOSBreakdown = {
  * Used by the "Terminate" modal to show HR "كده فاضل عليك تدفع
  * X جنيه" before they confirm.
  */
+const VALID_STATUSES = ["active", "on_leave", "terminated", "resigned", "inactive"] as const;
+
+export async function setEmployeeStatus(employeeId: string, status: string) {
+  await requireHR();
+  const supabase = await createClient();
+
+  if (!VALID_STATUSES.includes(status as any)) {
+    redirect(
+      `/dashboard/employees/${employeeId}?error=` +
+        encodeURIComponent("حالة غير صالحة"),
+    );
+  }
+
+  const updateData: Record<string, unknown> = { status };
+
+  if (
+    (status === "terminated" || status === "resigned" || status === "inactive") &&
+    !(
+      status === "inactive" &&
+      (
+        await supabase.from("employees").select("status").eq("id", employeeId).maybeSingle()
+      )?.data?.status === "inactive"
+    )
+  ) {
+    const today = new Date().toISOString().split("T")[0];
+    updateData.termination_date = today;
+    if (status === "resigned") updateData.termination_reason = "resignation";
+    if (status === "terminated") updateData.termination_reason = "termination_by_employer";
+  }
+
+  if (status === "active") {
+    updateData.termination_date = null;
+    updateData.termination_reason = null;
+    updateData.eos_gratuity = null;
+  }
+
+  const { error } = await supabase
+    .from("employees")
+    .update(updateData)
+    .eq("id", employeeId);
+
+  if (error) {
+    redirect(
+      `/dashboard/employees/${employeeId}?error=` +
+        encodeURIComponent(arabicizeDbError(error.message)),
+    );
+  }
+
+  revalidatePath("/dashboard/employees");
+  revalidatePath(`/dashboard/employees/${employeeId}`);
+  bustDashboardCache();
+  redirect(`/dashboard/employees/${employeeId}?status_updated=1`);
+}
+
 export async function previewEOSGratuity(
   employeeId: string,
   terminationDate: string,

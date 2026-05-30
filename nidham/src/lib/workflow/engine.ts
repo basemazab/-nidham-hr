@@ -257,15 +257,44 @@ async function executeSetEmployeeStatus(
     };
   }
 
-  console.info(
-    `[workflow] set_employee_status: employee ${ctx.employeeId} → ${status}`,
-  );
+  try {
+    const { createClient } = await import("@/lib/supabase/server");
+    const supabase = await createClient();
 
-  return {
-    actionId: action.id,
-    actionType: action.type,
-    success: true,
-  };
+    const updateData: Record<string, unknown> = { status };
+
+    if (status === "terminated" || status === "resigned" || status === "inactive") {
+      updateData.termination_date = ctx.timestamp.toISOString().split("T")[0];
+      updateData.termination_reason = "automation";
+    }
+
+    const { error } = await supabase
+      .from("employees")
+      .update(updateData)
+      .eq("id", ctx.employeeId);
+
+    if (error) {
+      return {
+        actionId: action.id,
+        actionType: action.type,
+        success: false,
+        error: error.message,
+      };
+    }
+
+    return {
+      actionId: action.id,
+      actionType: action.type,
+      success: true,
+    };
+  } catch (err) {
+    return {
+      actionId: action.id,
+      actionType: action.type,
+      success: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
 }
 
 async function executeAssignApprover(

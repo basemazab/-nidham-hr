@@ -7,6 +7,7 @@ import {
   generateEmployeeInvitation,
   previewEOSGratuity,
   terminateEmployee,
+  setEmployeeStatus,
   uploadEmployeeAvatar,
   removeEmployeeAvatar,
   uploadEmployeeDocument,
@@ -18,6 +19,7 @@ import { CopyButton } from "@/components/copy-button";
 import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
 import { InvitationQR } from "@/components/invitation-qr";
 import { EmployeeShiftCard } from "@/components/employee-shift-card";
+import { QuickStatusAction } from "@/components/quick-status-action";
 import { AutoSubmitFileForm } from "@/components/auto-submit-file-form";
 import { FileInputAutoSubmit } from "@/components/file-input-auto-submit";
 
@@ -100,7 +102,7 @@ type Employee = {
   social_insurance_number_dec: string | null;
   bank_name_dec: string | null;
   bank_account_number_dec: string | null;
-  status: "active" | "on_leave" | "terminated";
+  status: "active" | "on_leave" | "terminated" | "resigned" | "inactive";
   notes: string | null;
   avatar_url: string | null;
   created_at: string;
@@ -267,17 +269,28 @@ export default async function EditEmployeePage({ params, searchParams }: PagePro
                 terminateAction={terminateEmployee}
               />
             )}
+            {isAdmin && (
+              <QuickStatusAction
+                employeeId={employee.id}
+                currentStatus={employee.status}
+              />
+            )}
           </div>
         </header>
 
-        {/* If the employee was already terminated, show a banner with
-            the EOS snapshot so HR sees the final settlement. */}
-        {employee.status === "terminated" && employee.termination_date && (
-          <div className="mb-6 bg-gradient-to-br from-slate-100 to-slate-50 border-2 border-slate-300 rounded-2xl p-5">
+        {/* If the employee was already terminated/resigned/inactive, show a banner */}
+        {(employee.status === "terminated" || employee.status === "resigned" || employee.status === "inactive") && employee.termination_date && (
+          <div className={`mb-6 bg-gradient-to-br border-2 rounded-2xl p-5 ${
+            employee.status === "terminated"
+              ? "from-slate-100 to-slate-50 border-slate-300"
+              : employee.status === "resigned"
+                ? "from-amber-50 to-amber-50/30 border-amber-200"
+                : "from-slate-50 to-slate-50/30 border-slate-200"
+          }`}>
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <div className="text-xs text-slate-500 font-cairo mb-1">
-                  🏁 منتهي الخدمة في{" "}
+                  {employee.status === "terminated" ? "🏁 منتهي الخدمة" : employee.status === "resigned" ? "🚪 استقال" : "⏸ غير نشط"} في{" "}
                   <strong className="text-slate-700">
                     {new Date(employee.termination_date).toLocaleDateString("ar-EG")}
                   </strong>
@@ -658,6 +671,8 @@ export default async function EditEmployeePage({ params, searchParams }: PagePro
               >
                 <option value="active">نشط</option>
                 <option value="on_leave">في إجازة</option>
+                <option value="resigned">استقال</option>
+                <option value="inactive">غير نشط</option>
                 <option value="terminated">منتهي العمل</option>
               </select>
             </div>

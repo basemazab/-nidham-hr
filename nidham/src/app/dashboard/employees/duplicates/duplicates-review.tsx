@@ -25,6 +25,8 @@ const STATUS_LABELS: Record<string, string> = {
   active: "نشط",
   on_leave: "إجازة",
   terminated: "منتهي",
+  resigned: "استقال",
+  inactive: "غير نشط",
 };
 
 export function DuplicatesReview({ groups, action }: Props) {
@@ -195,10 +197,14 @@ export function DuplicatesReview({ groups, action }: Props) {
                               ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                               : e.status === "on_leave"
                                 ? "bg-amber-50 text-amber-700 border-amber-200"
-                                : "bg-slate-100 text-slate-600 border-slate-200"
+                                : e.status === "resigned"
+                                  ? "bg-orange-50 text-orange-700 border-orange-200"
+                                  : e.status === "inactive"
+                                    ? "bg-slate-50 text-slate-500 border-slate-200"
+                                    : "bg-slate-100 text-slate-600 border-slate-200"
                           }`}
                         >
-                          {STATUS_LABELS[e.status]}
+                          {STATUS_LABELS[e.status] ?? e.status}
                         </span>
                       </td>
                     </tr>

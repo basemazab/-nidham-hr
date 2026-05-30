@@ -333,6 +333,8 @@ export default async function NewEmployeePage({
               >
                 <option value="active">نشط</option>
                 <option value="on_leave">في إجازة</option>
+                <option value="resigned">استقال</option>
+                <option value="inactive">غير نشط</option>
                 <option value="terminated">منتهي العمل</option>
               </select>
             </div>

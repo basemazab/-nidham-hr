@@ -26,7 +26,7 @@ type DuplicateRow = {
   hire_date: string | null;
   created_at: string;
   has_user: boolean;
-  status: "active" | "on_leave" | "terminated";
+  status: "active" | "on_leave" | "terminated" | "resigned" | "inactive";
 };
 
 export type DuplicateGroup = {

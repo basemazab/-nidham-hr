@@ -34,7 +34,7 @@ export type EmployeeRow = {
   job_title: string | null;
   department: string | null;
   phone: string | null;
-  status: "active" | "on_leave" | "terminated";
+  status: "active" | "on_leave" | "terminated" | "resigned" | "inactive";
   hire_date: string | null;
   pay_frequency: "monthly" | "weekly" | null;
   basic_salary: number | null;
@@ -60,6 +60,14 @@ const STATUS_LABELS: Record<
   terminated: {
     text: "منتهي",
     classes: "bg-slate-100 text-slate-600 border-slate-200",
+  },
+  resigned: {
+    text: "استقال",
+    classes: "bg-orange-50 text-orange-700 border-orange-200",
+  },
+  inactive: {
+    text: "غير نشط",
+    classes: "bg-slate-50 text-slate-500 border-slate-200",
   },
 };
 
@@ -152,15 +160,17 @@ export function EmployeesExplorer({
   }, [employees, query, statusFilter, freqFilter, deptFilter]);
 
   const counts = useMemo(() => {
-    const byStatus = {
+    const byStatus: Record<string, number> = {
       all: employees.length,
       active: 0,
       on_leave: 0,
       terminated: 0,
+      resigned: 0,
+      inactive: 0,
     };
     const byFreq = { all: employees.length, monthly: 0, weekly: 0 };
     for (const e of employees) {
-      byStatus[e.status] += 1;
+      byStatus[e.status] = (byStatus[e.status] ?? 0) + 1;
       const f = e.pay_frequency ?? "monthly";
       byFreq[f] += 1;
     }
@@ -247,6 +257,20 @@ export function EmployeesExplorer({
             onClick={() => setStatusFilter("terminated")}
             label="منتهي"
             count={counts.byStatus.terminated}
+            tone="slate"
+          />
+          <FilterChip
+            active={statusFilter === "resigned"}
+            onClick={() => setStatusFilter("resigned")}
+            label="استقال"
+            count={counts.byStatus.resigned}
+            tone="amber"
+          />
+          <FilterChip
+            active={statusFilter === "inactive"}
+            onClick={() => setStatusFilter("inactive")}
+            label="غير نشط"
+            count={counts.byStatus.inactive}
             tone="slate"
           />
           <span className="text-slate-300 self-center px-1">|</span>
@@ -360,13 +384,16 @@ function CardGridView({ employees }: { employees: EmployeeRow[] }) {
 function EmployeeCard({ employee }: { employee: EmployeeRow }) {
   const status = STATUS_LABELS[employee.status];
   const comp = totalComp(employee);
-  // Status dot color — green for active, amber for on-leave, gray for terminated.
   const dotColor =
     employee.status === "active"
       ? "bg-emerald-500"
       : employee.status === "on_leave"
         ? "bg-amber-500"
-        : "bg-slate-400";
+        : employee.status === "resigned"
+          ? "bg-orange-400"
+          : employee.status === "inactive"
+            ? "bg-slate-300"
+            : "bg-slate-400";
 
   return (
     <Link
