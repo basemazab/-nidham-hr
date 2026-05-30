@@ -4,8 +4,8 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import type { UIMessage } from "ai";
+import { getKBSearchSources, type KBSource } from "@/lib/ai/kb-actions";
 
-// ─── Types ───────────────────────────────────────────────────────────────────
 type ParsedFile = {
   ok: true;
   filename: string;
@@ -80,8 +80,24 @@ export function SuperAgentChat() {
   const [fileBusy, setFileBusy] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  // Track KB sources per assistant message via onFinish + server action
+  const [messageSources, setMessageSources] = useState<Map<string, KBSource[]>>(new Map());
+  const lastUserQueryRef = useRef<string>("");
+
   const { messages, sendMessage, status, error } = useChat({
     transport: new DefaultChatTransport({ api: "/api/ai/agent" }),
+    onFinish: async ({ message }) => {
+      const query = lastUserQueryRef.current;
+      if (!query) return;
+      lastUserQueryRef.current = "";
+      const sources = await getKBSearchSources(query);
+      if (sources.length === 0) return;
+      setMessageSources((prev) => {
+        const next = new Map(prev);
+        next.set(message.id, sources);
+        return next;
+      });
+    },
   });
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -221,7 +237,9 @@ export function SuperAgentChat() {
     e.preventDefault();
     if (isLoading) return;
     if (!input.trim() && !attached) return;
-    const finalText = buildMessageText(input.trim() || "حلل الملف ده وقولي ممكن أعمل بيه إيه");
+    const rawQuery = input.trim() || "حلل الملف ده وقولي ممكن أعمل بيه إيه";
+    lastUserQueryRef.current = rawQuery;
+    const finalText = buildMessageText(rawQuery);
     sendMessage({ text: finalText });
     setInput("");
     setAttached(null);
@@ -230,6 +248,7 @@ export function SuperAgentChat() {
 
   const handleSuggestionClick = (q: string) => {
     if (isLoading) return;
+    lastUserQueryRef.current = q;
     sendMessage({ text: q });
   };
 
@@ -396,7 +415,12 @@ export function SuperAgentChat() {
         ) : (
           <div className="space-y-4">
             {messages.map((m: UIMessage) => (
-              <MessageBubble key={m.id} message={m} renderToolOutput={renderToolOutput} />
+              <MessageBubble
+                key={m.id}
+                message={m}
+                renderToolOutput={renderToolOutput}
+                kbSources={messageSources.get(m.id)}
+              />
             ))}
             {isLoading && (
               <div className="flex gap-3">
@@ -549,9 +573,11 @@ export function SuperAgentChat() {
 function MessageBubble({
   message,
   renderToolOutput,
+  kbSources,
 }: {
   message: UIMessage;
   renderToolOutput: (toolName: string, output: unknown) => React.ReactNode;
+  kbSources?: KBSource[];
 }) {
   const isUser = message.role === "user";
   return (
@@ -607,6 +633,22 @@ function MessageBubble({
           }
           return null;
         })}
+        {/* KB sources */}
+        {!isUser && kbSources && kbSources.length > 0 && (
+          <div className="max-w-md rounded-xl border border-amber-200 bg-amber-50/50 px-3 py-2 text-xs font-cairo shadow-sm">
+            <div className="mb-1 text-[10px] font-bold text-amber-700">📚 المستندات المرجعية</div>
+            <div className="flex flex-wrap gap-1">
+              {kbSources.map((s) => (
+                <span
+                  key={s.id}
+                  className="inline-block rounded bg-white px-1.5 py-0.5 text-[10px] text-slate-700 border border-amber-100"
+                >
+                  {s.source_type === "pdf" ? "📄" : s.source_type === "doc" ? "📝" : "📋"} {s.title}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

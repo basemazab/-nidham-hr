@@ -430,8 +430,261 @@ export default async function MarketingHubPage({
             </details>
           </section>
         )}
+
+        {/* External AI tools */}
+        <section className="mt-8 border-t border-slate-200 pt-6">
+          <div className="inline-block px-3 py-1 rounded-full bg-gradient-to-r from-violet-100 to-fuchsia-100 border border-violet-300 text-violet-800 text-xs font-bold mb-3 font-cairo">
+            🤖 أدوات AI خارجية (15)
+          </div>
+          <h2 className="text-sm font-black text-slate-700 mb-1 font-cairo">
+            مساعدين تسويق بالذكاء الاصطناعي
+          </h2>
+          <p className="text-xs text-slate-500 font-cairo mb-4">
+            أدوات خارجية مكملة — مش جزء من Nidham، بس بننصح فيها. اضغط على الأداة عشان تفتح الموقع.
+          </p>
+
+          {/* 🎯 AI CMO */}
+          <ToolCat icon="🎯" title="وكيل تسويق متكامل" />
+          <div className="grid sm:grid-cols-2 gap-3 mb-5">
+            <ExtToolCard
+              href="https://okara.ai/cmo"
+              icon="🎯"
+              iconBg="from-violet-100 to-fuchsia-100 border-violet-200"
+              name="Okara — AI CMO"
+              desc="مساعد تسويق بـ 6 وكلاء: SEO، GEO، كاتب محتوى، Reddit، HN، X. يحلل منتجك ويولّد إستراتيجية كاملة بضغطة زر."
+              badge="🟢 مجاني"
+            />
+            <ExtToolCard
+              href="https://github.com/ericosiu/ai-marketing-skills"
+              icon="🧰"
+              iconBg="from-blue-100 to-cyan-100 border-blue-200"
+              name="AI Marketing Skills ★2.5k"
+              desc="مكتبة مفتوحة المصدر: 15+ skill تسويقية — SEO, outbound, content ops, sales pipeline, finance automation. تشغل على Claude Code."
+              badge="🔓 مفتوح"
+              github
+            />
+            <ExtToolCard
+              href="https://github.com/indranilbanerjee/digital-marketing-pro"
+              icon="⚡"
+              iconBg="from-emerald-100 to-green-100 border-emerald-200"
+              name="Digital Marketing Pro ★112"
+              desc="150 مهارة، 25 وكيل، 12-part Strategy Flow، 6-platform AEO/GEO. يشتغل على Claude/Cursor/Codex/GitHub Copilot."
+              badge="🔓 مفتوح"
+              github
+            />
+          </div>
+
+          {/* 🎬 AI Video & Creative */}
+          <ToolCat icon="🎬" title="إعلانات فيديو بالذكاء الاصطناعي" />
+          <div className="grid sm:grid-cols-2 gap-3 mb-5">
+            <ExtToolCard
+              href="https://arcads.ai"
+              icon="🎬"
+              iconBg="from-indigo-100 to-purple-100 border-indigo-200"
+              name="Arcads — AI Video Ads"
+              desc="1,000+ ممثل AI، مونتاج، ترجمة، تعليق صوتي، توليف مشاهد. تدعم Seedance 2.0، Sora 2، Kling 3.0، Grok Video."
+              badge="🟢 مجاني"
+              href2="https://github.com/krusemediallc/arcads-claude-code"
+              label2="🔗 GitHub"
+            />
+            <ExtToolCard
+              href="https://github.com/Anil-matcha/Open-AI-UGC"
+              icon="🎥"
+              iconBg="from-rose-100 to-pink-100 border-rose-200"
+              name="Open AI UGC ★82"
+              desc="بديل Arcads مفتوح المصدر. UGC video ads بـ Veo 3.1, Seedance 2, Grok Video. يستضاف عندك على Next.js."
+              badge="🔓 مفتوح"
+              github
+            />
+          </div>
+
+          {/* 📝 AI Copy & Content */}
+          <ToolCat icon="📝" title="كتابة المحتوى والنسخ الإعلانية" />
+          <div className="grid sm:grid-cols-2 gap-3 mb-5">
+            <ExtToolCard
+              href="https://github.com/AgriciDaniel/claude-ads"
+              icon="📋"
+              iconBg="from-amber-100 to-orange-100 border-amber-200"
+              name="Claude Ads ★5.2k"
+              desc="تدقيق إعلانات شامل: 250+ check على Google, Meta, YouTube, LinkedIn, TikTok, Microsoft & Apple Ads. مع AI creative generation."
+              badge="🔓 مفتوح"
+              github
+            />
+            <ExtToolCard
+              href="https://github.com/IamRamgarhia/OpenAdKit-Open-Source-AI-Marketing-Tool"
+              icon="✍"
+              iconBg="from-yellow-100 to-amber-100 border-yellow-200"
+              name="OpenAdKit"
+              desc="بديل Jasper + Anyword مفتوح المصدر. 9 BYOK providers، يشتغل في المتصفح فقط، MIT License."
+              badge="🔓 مفتوح"
+              github
+            />
+          </div>
+
+          {/* 📊 SEO & AI Visibility */}
+          <ToolCat icon="📊" title="SEO وظهور في محركات البحث AI" />
+          <div className="grid sm:grid-cols-2 gap-3 mb-5">
+            <ExtToolCard
+              href="https://www.frase.io"
+              icon="🔍"
+              iconBg="from-sky-100 to-blue-100 border-sky-200"
+              name="Frase — Agentic SEO & GEO"
+              desc="SEO + GEO: يتتبع ظهورك في 8 منصات AI (ChatGPT, Perplexity...). Agent كامل: بحث → كتابة → نشر. مع MCP server."
+              badge="🟢 Freemium"
+            />
+            <ExtToolCard
+              href="https://surferseo.com"
+              icon="🌊"
+              iconBg="from-cyan-100 to-teal-100 border-cyan-200"
+              name="Surfer SEO"
+              desc="تحسين محتوى لحظي: يقارن كتابتك بأفضل 10 نتائج Google ويعطيك توصيات دقيقة عن الكلمات والعناوين."
+              badge="🟢 Freemium"
+            />
+          </div>
+
+          {/* 🚀 Ad Management & Automation */}
+          <ToolCat icon="🚀" title="إدارة وتحسين الإعلانات" />
+          <div className="grid sm:grid-cols-2 gap-3 mb-5">
+            <ExtToolCard
+              href="https://github.com/itallstartedwithaidea/advertising-hub"
+              icon="🌐"
+              iconBg="from-purple-100 to-fuchsia-100 border-purple-200"
+              name="Advertising Hub ★14"
+              desc="API واحد لـ 14 منصة إعلانية (Google, Meta, Amazon, LinkedIn, Pinterest, Reddit, Spotify...). مع 25+ AI agent و MCP servers."
+              badge="🔓 مفتوح"
+              github
+            />
+            <ExtToolCard
+              href="https://github.com/itallstartedwithaidea/google-ads-api-agent"
+              icon="📈"
+              iconBg="from-blue-100 to-indigo-100 border-blue-200"
+              name="Google Ads API Agent ★16"
+              desc="وكيل ذكي لإدارة Google Ads على Claude Opus. تحليل الحملات، تدقيق، تحسين، وإنشاء تقارير."
+              badge="🔓 مفتوح"
+              github
+            />
+          </div>
+
+          {/* 📧 Email Marketing */}
+          <ToolCat icon="📧" title="البريد الإلكتروني والنيوزليتر" />
+          <div className="grid sm:grid-cols-2 gap-3 mb-5">
+            <ExtToolCard
+              href="https://github.com/Mailtrain-org/mailtrain"
+              icon="📬"
+              iconBg="from-red-100 to-rose-100 border-red-200"
+              name="Mailtrain ★5.7k"
+              desc="نيوزليتر مفتوح المصدر بالكامل. استضافة ذاتية، عربيات، قوائم غير محدودة، تحليلات. بديل Mailchimp بدون فلوس."
+              badge="🔓 مفتوح"
+              github
+            />
+            <ExtToolCard
+              href="https://github.com/mettle/sendportal"
+              icon="✉"
+              iconBg="from-orange-100 to-amber-100 border-orange-200"
+              name="SendPortal ★2.1k"
+              desc="إيميل ماركتنج مفتوح المصدر. حملات، أتمتة، قوائم، تقارير. يستضاف عندك — تحكم كامل في بياناتك."
+              badge="🔓 مفتوح"
+              github
+            />
+          </div>
+
+          {/* 📱 Social Media */}
+          <ToolCat icon="📱" title="السوشيال ميديا" />
+          <div className="grid sm:grid-cols-2 gap-3 mb-5">
+            <ExtToolCard
+              href="https://github.com/leaperone/MultiPost-Extension"
+              icon="📤"
+              iconBg="from-green-100 to-emerald-100 border-green-200"
+              name="MultiPost ★2.4k"
+              desc="إضافة متصفح للنشر على 10+ منصة بضغطة واحدة: Facebook, Instagram, X, LinkedIn, TikTok, YouTube والمزيد."
+              badge="🔓 مفتوح"
+              github
+            />
+            <ExtToolCard
+              href="https://github.com/stevenflanagan1/social-ai-team"
+              icon="👥"
+              iconBg="from-teal-100 to-cyan-100 border-teal-200"
+              name="Social AI Team ★119"
+              desc="فريق سوشيال ميديا AI كامل: brand setup, content calendar, captions, creative, performance review."
+              badge="🔓 مفتوح"
+              github
+            />
+          </div>
+        </section>
       </div>
     </main>
+  );
+}
+
+function ToolCat({ icon, title }: { icon: string; title: string }) {
+  return (
+    <div className="flex items-center gap-2 mb-3">
+      <span className="text-base">{icon}</span>
+      <h3 className="text-xs font-black text-slate-600 font-cairo uppercase tracking-wider">
+        {title}
+      </h3>
+      <div className="flex-1 h-px bg-slate-200" />
+    </div>
+  );
+}
+
+function ExtToolCard({
+  href,
+  icon,
+  iconBg,
+  name,
+  desc,
+  badge,
+  github,
+  href2,
+  label2,
+}: {
+  href: string;
+  icon: string;
+  iconBg: string;
+  name: string;
+  desc: string;
+  badge: string;
+  github?: boolean;
+  href2?: string;
+  label2?: string;
+}) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="block bg-white border-2 border-slate-200 rounded-xl p-4 hover:border-violet-300 hover:shadow-md transition-all group"
+    >
+      <div className="flex items-start gap-3">
+        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${iconBg} flex items-center justify-center text-lg shrink-0 border`}>
+          {icon}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+            <h3 className="text-sm font-black text-slate-800 font-cairo group-hover:text-violet-700 transition">
+              {name}
+            </h3>
+            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-slate-50 text-slate-600 border border-slate-200 font-bold font-cairo">
+              {badge}
+            </span>
+          </div>
+          <p className="text-[11px] text-slate-500 font-cairo leading-relaxed">
+            {desc}
+          </p>
+          {github && (
+            <div className="mt-1 text-[10px] text-slate-400 font-cairo">
+              🔗 GitHub
+            </div>
+          )}
+          {label2 && (
+            <div className="mt-1 text-[10px] text-slate-400 font-cairo">
+              {label2}
+            </div>
+          )}
+        </div>
+      </div>
+    </a>
   );
 }
 

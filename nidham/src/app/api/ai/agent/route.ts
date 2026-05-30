@@ -372,15 +372,21 @@ export async function POST(req: Request) {
   );
 
   // Inject knowledge base context (RAG) for the user's latest question
+  let kbMatchDocs: { id: string; title: string; source_type: string }[] = [];
   try {
     const lastUserMsg = [...messages].reverse().find((m) => m.role === "user")?.content;
     if (lastUserMsg && profile.company_id) {
       const kbDocs = await searchKnowledgeBase(profile.company_id, lastUserMsg, 3);
       if (kbDocs && kbDocs.length > 0) {
+        kbMatchDocs = kbDocs.map((d: { id: string; title: string; source_type: string }) => ({
+          id: d.id,
+          title: d.title,
+          source_type: d.source_type,
+        }));
         systemPrompt += `\n\n## مستندات مرجعية ذات صلة بسؤال المستخدم\n`;
         systemPrompt += kbDocs
           .map(
-            (d: any) =>
+            (d: { source_type: string; title: string; content?: string }) =>
               `- [${d.source_type}] ${d.title}:\n  ${(d.content ?? "").slice(0, 600)}`,
           )
           .join("\n");

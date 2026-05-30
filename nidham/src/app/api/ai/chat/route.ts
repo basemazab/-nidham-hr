@@ -1,14 +1,11 @@
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { streamText } from "ai";
 import { createClient } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { searchKnowledgeBase } from "@/lib/ai/memory";
+import { pickAgentModelLargeContext } from "@/lib/ai-models";
 
-// Use our env var name (GEMINI_API_KEY) instead of the SDK's default
-// (GOOGLE_GENERATIVE_AI_API_KEY). One provider instance for the whole route.
-const google = createGoogleGenerativeAI({
-  apiKey: process.env.GEMINI_API_KEY,
-});
+// Model is picked dynamically via pickAgentModelLargeContext() to enable
+// multi-provider fallback (Gemini → Groq) instead of hard-coding Gemini.
 
 type UIMessagePart = { type: string; text?: string };
 type IncomingMessage = {
@@ -306,10 +303,11 @@ export async function POST(req: Request) {
     );
   }
 
-  if (!process.env.GEMINI_API_KEY) {
+  if (!process.env.GROQ_API_KEY && !process.env.GEMINI_API_KEY) {
     return new Response(
       JSON.stringify({
-        error: "AI configuration missing — GEMINI_API_KEY not set",
+        error:
+          "إعدادات الذكاء الاصطناعي ناقصة — ابعت GROQ_API_KEY أو GEMINI_API_KEY في Vercel Environment Variables",
       }),
       { status: 500 },
     );
@@ -335,15 +333,21 @@ export async function POST(req: Request) {
   let systemPrompt = await buildCompanyContext(supabase);
 
   // Inject knowledge base context (RAG) for the user's latest question
+  let kbMatchDocs: { id: string; title: string; source_type: string }[] = [];
   try {
     const lastUserMsg = [...messages].reverse().find((m) => m.role === "user")?.content;
     if (lastUserMsg && profile.company_id) {
       const kbDocs = await searchKnowledgeBase(profile.company_id, lastUserMsg, 3);
       if (kbDocs && kbDocs.length > 0) {
+        kbMatchDocs = kbDocs.map((d: { id: string; title: string; source_type: string }) => ({
+          id: d.id,
+          title: d.title,
+          source_type: d.source_type,
+        }));
         systemPrompt += `\n\n## مستندات مرجعية ذات صلة بسؤال المستخدم\n`;
         systemPrompt += kbDocs
           .map(
-            (d: any) =>
+            (d: { source_type: string; title: string; content?: string }) =>
               `- [${d.source_type}] ${d.title}:\n  ${(d.content ?? "").slice(0, 600)}`,
           )
           .join("\n");
@@ -355,8 +359,10 @@ export async function POST(req: Request) {
     // KB search is non-critical — don't crash the chat
   }
 
+  const picked = pickAgentModelLargeContext();
+
   const result = streamText({
-    model: google("gemini-2.5-flash"),
+    model: picked.model,
     system: systemPrompt,
     messages,
   });

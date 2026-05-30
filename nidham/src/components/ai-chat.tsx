@@ -3,6 +3,7 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useState, useRef, useEffect } from "react";
+import { getKBSearchSources, type KBSource } from "@/lib/ai/kb-actions";
 
 // Two flavours of question on purpose: half about Egyptian labor law
 // (which the system prompt now teaches the model), half about the
@@ -20,8 +21,23 @@ const SUGGESTED_QUESTIONS: { q: string; cat: "law" | "data" }[] = [
 
 export function AIChat() {
   const [input, setInput] = useState("");
+  const [messageSources, setMessageSources] = useState<Map<string, KBSource[]>>(new Map());
+  const lastUserQueryRef = useRef<string>("");
+
   const { messages, sendMessage, status, error } = useChat({
     transport: new DefaultChatTransport({ api: "/api/ai/chat" }),
+    onFinish: async ({ message }) => {
+      const query = lastUserQueryRef.current;
+      if (!query) return;
+      lastUserQueryRef.current = "";
+      const sources = await getKBSearchSources(query);
+      if (sources.length === 0) return;
+      setMessageSources((prev) => {
+        const next = new Map(prev);
+        next.set(message.id, sources);
+        return next;
+      });
+    },
   });
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -32,12 +48,14 @@ export function AIChat() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || status !== "ready") return;
+    lastUserQueryRef.current = input.trim();
     sendMessage({ text: input });
     setInput("");
   };
 
   const handleSuggestionClick = (q: string) => {
     if (status !== "ready") return;
+    lastUserQueryRef.current = q;
     sendMessage({ text: q });
   };
 
@@ -83,6 +101,7 @@ export function AIChat() {
             {messages.map((m) => {
               const textParts = m.parts.filter((p) => p.type === "text");
               const content = textParts.map((p) => ("text" in p ? p.text : "")).join("");
+              const sources = messageSources.get(m.id);
               return (
                 <div
                   key={m.id}
@@ -97,14 +116,31 @@ export function AIChat() {
                   >
                     {m.role === "user" ? "أ" : "🤖"}
                   </div>
-                  <div
-                    className={`max-w-[80%] px-4 py-3 rounded-2xl font-cairo text-sm leading-relaxed whitespace-pre-wrap ${
-                      m.role === "user"
-                        ? "bg-brand-cyan/10 text-slate-800 rounded-tr-sm"
-                        : "bg-slate-50 text-slate-800 rounded-tl-sm"
-                    }`}
-                  >
-                    {content}
+                  <div className={`flex flex-col gap-2 ${m.role === "user" ? "items-end" : "items-start"}`}>
+                    <div
+                      className={`max-w-[80%] px-4 py-3 rounded-2xl font-cairo text-sm leading-relaxed whitespace-pre-wrap ${
+                        m.role === "user"
+                          ? "bg-brand-cyan/10 text-slate-800 rounded-tr-sm"
+                          : "bg-slate-50 text-slate-800 rounded-tl-sm"
+                      }`}
+                    >
+                      {content}
+                    </div>
+                    {m.role !== "user" && sources && sources.length > 0 && (
+                      <div className="max-w-md rounded-xl border border-amber-200 bg-amber-50/50 px-3 py-2 text-xs font-cairo shadow-sm">
+                        <div className="mb-1 text-[10px] font-bold text-amber-700">📚 المستندات المرجعية</div>
+                        <div className="flex flex-wrap gap-1">
+                          {sources.map((s) => (
+                            <span
+                              key={s.id}
+                              className="inline-block rounded bg-white px-1.5 py-0.5 text-[10px] text-slate-700 border border-amber-100"
+                            >
+                              {s.source_type === "pdf" ? "📄" : s.source_type === "doc" ? "📝" : "📋"} {s.title}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               );
