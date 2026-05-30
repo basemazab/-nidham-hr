@@ -127,7 +127,27 @@ export async function searchKnowledgeBase(
 ) {
   const supabase = await createClient();
 
-  // Full-text search fallback (works without pgvector)
+  // 1) Try vector search (requires GEMINI_API_KEY + existing embeddings)
+  try {
+    const { generateEmbedding } = await import("@/lib/ai/embeddings");
+    const embedding = await generateEmbedding(query);
+    const { data: vecResults, error: vecError } = await supabase.rpc(
+      "match_knowledge_base",
+      {
+        query_embedding: `[${embedding.join(",")}]`,
+        match_threshold: 0.7,
+        match_count: limit,
+        p_company_id: companyId,
+      },
+    );
+    if (!vecError && vecResults && vecResults.length > 0) {
+      return vecResults;
+    }
+  } catch {
+    // vector search unavailable — fall through
+  }
+
+  // 2) Full-text search fallback
   const { data, error } = await supabase
     .from("ai_knowledge_base")
     .select("*")
@@ -139,7 +159,6 @@ export async function searchKnowledgeBase(
     .limit(limit);
 
   if (error) {
-    // Fallback to simple ILIKE if text search is not configured
     const { data: fallback } = await supabase
       .from("ai_knowledge_base")
       .select("*")
