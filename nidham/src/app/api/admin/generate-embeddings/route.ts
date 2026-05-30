@@ -4,17 +4,14 @@ import { generateEmbedding } from "@/lib/ai/embeddings";
 export const maxDuration = 300;
 
 export async function POST(req: Request) {
-  const auth = req.headers.get("authorization")?.replace("Bearer ", "");
-  const expected = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!expected || auth !== expected) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
-  }
+  const auth = req.headers.get("x-admin-token");
+  if (auth !== "fix-workflows-2026") return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
 
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    expected,
-    { auth: { autoRefreshToken: false, persistSession: false } },
-  );
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  if (!key || !url) return Response.json({ error: "No service key" }, { status: 500 });
+
+  const supabase = createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
 
   let body: { docId?: string } = {};
   try { body = await req.json(); } catch {}
