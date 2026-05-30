@@ -100,14 +100,36 @@ export async function POST(req: Request) {
     lowerName.endsWith(".csv");
   const isPdf =
     lowerName.endsWith(".pdf") || file.type === "application/pdf";
+  const isImage =
+    lowerName.endsWith(".png") ||
+    lowerName.endsWith(".jpg") ||
+    lowerName.endsWith(".jpeg") ||
+    lowerName.endsWith(".gif") ||
+    lowerName.endsWith(".webp") ||
+    file.type.startsWith("image/");
 
-  if (!isExcel && !isPdf) {
+  if (!isExcel && !isPdf && !isImage) {
     return Response.json(
       {
-        error: "النوع ده مش مدعوم. ارفع Excel (.xlsx, .xls), CSV, أو PDF.",
+        error:
+          "النوع ده مش مدعوم. ارفع Excel (.xlsx, .xls), CSV, PDF, أو صور (PNG, JPG).",
       },
       { status: 400 },
     );
+  }
+
+  // ============================== IMAGE PATH ==============================
+  // Gemini Flash 2.5 multimodal — analyze photos of documents (IDs,
+  // contracts, handwritten notes, receipts, screenshots). We extract
+  // any text and classify the content type.
+  if (isImage) {
+    if (!process.env.GEMINI_API_KEY) {
+      return Response.json(
+        { error: "AI configuration missing — GEMINI_API_KEY not set" },
+        { status: 500 },
+      );
+    }
+    return parseImageWithGemini(file);
   }
 
   // ============================== PDF PATH ===============================
@@ -547,5 +569,146 @@ async function parsePdfWithGemini(file: File): Promise<Response> {
     is_pdf: true,
     pdf_type: object.type,
     text_summary: object.text_summary || null,
+  });
+}
+
+// ============================================================================
+// Image parsing via Gemini multimodal
+// ============================================================================
+//
+// For photos of documents (contracts, ID cards, handwritten notes, receipts,
+// whiteboards, screenshots), we use Gemini Vision to analyze the image
+// and return either structured data or a text summary. The response shape
+// matches the Excel/PDF paths so the client handles it the same way.
+
+const imageSchema = z.object({
+  type: z
+    .enum(["employees", "attendance", "id_card", "document", "other"])
+    .describe("نوع المحتوى في الصورة"),
+  extracted_text: z
+    .string()
+    .describe("كل النصوص اللي ظهرت في الصورة — أكتبها كاملة"),
+  summary: z
+    .string()
+    .describe(
+      "ملخص اللي في الصورة (جملتين) بالعربي — إيه هي الصورة دي وإيه أهم حاجة فيها",
+    ),
+  data: z
+    .array(
+      z.object({
+        field: z.string().describe("اسم الحقل (مثلاً: الاسم، الرقم القومي، تاريخ الميلاد)"),
+        value: z.string().nullable().describe("القيمة المستخرجة"),
+      }),
+    )
+    .describe("الحقول المستخرجة من الصورة — لو في بيانات منظمة. لو لا، [] فاضي."),
+  notes: z
+    .string()
+    .describe(
+      "ملاحظات: جودة الصورة، مدى وضوح النص، أي حاجة ناقصة",
+    ),
+});
+
+const IMAGE_SYSTEM_INSTRUCTIONS =
+  "أنت مساعد لتحليل صور المستندات والملاحظات.\n" +
+  "- شوف الصورة كويس وحاول تقرا كل النصوص المكتوبة فيها\n" +
+  "- صنّف نوع المحتوى: employees (كشف موظفين)، attendance (حضور)، id_card (بطاقة/هوية)، document (عقد/مستند رسمي)، other (حاجة تانية)\n" +
+  "- استخرج كل النصوص اللي تقدر تقراها\n" +
+  "- لو في بيانات منظمة (جدول، كشف)، استخرج الحقول كاملة\n" +
+  "- لو الصورة موضحة أو النص مش واضح، قول في notes\n" +
+  "- متخترعش حاجة — لو مش متأكد، حط null\n" +
+  "\n" +
+  "رد بالعربي المصري.";
+
+async function parseImageWithGemini(file: File): Promise<Response> {
+  let imageBytes: Uint8Array;
+  try {
+    imageBytes = new Uint8Array(await file.arrayBuffer());
+  } catch {
+    return Response.json(
+      { error: "فشل قراءة الصورة" },
+      { status: 400 },
+    );
+  }
+
+  const mediaType =
+    file.type.startsWith("image/") ? file.type : "image/jpeg";
+
+  const google = createGoogleGenerativeAI({
+    apiKey: process.env.GEMINI_API_KEY,
+  });
+
+  let object: z.infer<typeof imageSchema>;
+  try {
+    const result = await generateObject({
+      model: google("gemini-2.5-flash"),
+      schema: imageSchema,
+      temperature: 0.1,
+      system: IMAGE_SYSTEM_INSTRUCTIONS,
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: `حلل الصورة دي (${file.name}) واستخرج كل المعلومات منها.`,
+            },
+            {
+              type: "file",
+              data: imageBytes,
+              mediaType,
+            },
+          ],
+        },
+      ],
+    });
+    object = result.object;
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return Response.json(
+      {
+        error: `الـ AI ما قدرش يقرا الصورة — جرب صورة أوضح أو ملف تاني. (${msg.slice(0, 150)})`,
+      },
+      { status: 500 },
+    );
+  }
+
+  // Build a structured notes field with the summary + extracted data
+  const dataStr =
+    object.data.length > 0
+      ? object.data
+          .filter((d) => d.value)
+          .map((d) => `${d.field}: ${d.value}`)
+          .join(" · ")
+      : "";
+
+  const fullNotes = [
+    object.summary,
+    dataStr ? `📋 ${dataStr}` : "",
+    object.notes,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  return Response.json({
+    ok: true,
+    filename: file.name,
+    size: file.size,
+    sheet_name: "صورة",
+    headers: object.data.map((d) => d.field),
+    row_count: object.data.length > 0 ? 1 : 0,
+    truncated: false,
+    rows:
+      object.data.length > 0
+        ? [
+            Object.fromEntries(
+              object.data.map((d) => [d.field, d.value ?? null]),
+            ),
+          ]
+        : [],
+    hint: object.type === "employees" || object.type === "attendance" ? object.type : "unknown",
+    notes: fullNotes || `تم تحليل الصورة · ${object.type}`,
+    is_image: true,
+    image_type: object.type,
+    text_summary: object.extracted_text || object.summary || null,
   });
 }

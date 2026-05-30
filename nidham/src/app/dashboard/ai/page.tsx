@@ -1,13 +1,11 @@
 import { getMyProfile } from "@/lib/permissions";
-import { listConversations } from "@/lib/ai/memory";
-import { AIChatWithMemory } from "@/components/ai-chat-with-memory";
-import { ChatErrorBoundary } from "@/components/chat-error-boundary";
+import { SuperAgentChat } from "@/components/super-agent-chat";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "المساعد الذكي",
+  title: "المساعد الذكي — Super Agent",
 };
 
 export default async function AIPage() {
@@ -29,13 +27,6 @@ export default async function AIPage() {
       );
     }
 
-    let conversations: Awaited<ReturnType<typeof listConversations>> = [];
-    try {
-      conversations = await listConversations(profile.id, profile.company_id);
-    } catch {
-      // table might not exist in all environments yet
-    }
-
     return (
       <main className="flex-1 px-4 md:px-6 py-6 bg-gradient-to-b from-slate-50 via-white to-cyan-50/30 min-h-screen">
         <div className="max-w-6xl mx-auto mb-4">
@@ -46,24 +37,23 @@ export default async function AIPage() {
 
         <header className="flex items-start justify-between gap-3 flex-wrap mb-6 max-w-6xl mx-auto">
           <div>
-            <div className="inline-block px-2.5 py-0.5 rounded-full bg-cyan-50 border border-cyan-200 text-cyan-700 text-[11px] font-bold mb-2 font-cairo">
-              🤖 الذكاء الاصطناعي
+            <div className="inline-block px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-[11px] font-bold mb-2 font-cairo">
+              🤖 المساعد الذكي — قدرات خارقة
             </div>
-            <h1 className="text-3xl font-black font-cairo text-slate-800 mb-1">المساعد الذكي</h1>
-            <p className="text-sm text-slate-500 font-cairo">اسأل عن قانون العمل، المرتبات، الضرائب، أو بيانات شركتك</p>
+            <h1 className="text-3xl font-black font-cairo text-slate-800 mb-1">Super Agent</h1>
+            <p className="text-sm text-slate-500 font-cairo">
+              أرفع ملفات Excel و PDF والصور — استورد موظفين، حلل العقود، قفل المرتبات، واعمل تقارير
+            </p>
           </div>
+          <Link
+            href="/dashboard/ai/tools"
+            className="hidden md:inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-600 transition font-cairo"
+          >
+            ⚙ الأدوات
+          </Link>
         </header>
 
-        <div className="bg-white rounded-2xl shadow-md border border-slate-100 overflow-hidden">
-          <ChatErrorBoundary>
-            <AIChatWithMemory
-              conversations={conversations}
-              userId={profile.id}
-              companyId={profile.company_id}
-              userName={profile.full_name ?? ""}
-            />
-          </ChatErrorBoundary>
-        </div>
+        <SuperAgentChat />
       </main>
     );
   } catch (e) {
