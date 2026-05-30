@@ -55,3 +55,7 @@ playwright-report/
 
 # Generated marketing/social asset captures — outputs of scripts/capture-social-assets.ts
 scripts/.social-assets/
+
+# Migration scripts that may contain secrets
+run-migration-*.js
+tmp/
