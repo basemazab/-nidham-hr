@@ -280,6 +280,38 @@ export default async function MarketingHubPage({
           </div>
         )}
 
+        {/* AI Tools quick access */}
+        <div className="mb-6 grid grid-cols-2 md:grid-cols-4 gap-3">
+          <ToolLink
+            href="/dashboard/marketing/ai-cmo"
+            icon="🧠"
+            title="AI CMO"
+            text="حلل موقعك بـ 6 وكلاء AI: SEO, GEO, محتوى، سوشيال، خطة تسويق"
+            gradient="from-violet-100 to-fuchsia-100 border-violet-200 hover:border-violet-400"
+          />
+          <ToolLink
+            href="/dashboard/marketing/ad-copy"
+            icon="✍"
+            title="AI Ad Copy"
+            text="توليد نصوص إعلانية لـ Meta/Google/TikTok/LinkedIn مع character limits"
+            gradient="from-sky-100 to-blue-100 border-sky-200 hover:border-sky-400"
+          />
+          <ToolLink
+            href="/dashboard/marketing/video-studio"
+            icon="🎬"
+            title="Video Studio"
+            text="سيناريوهات فيديو + لوحات قصة + تخطيط إنتاج"
+            gradient="from-rose-100 to-orange-50 border-rose-200 hover:border-rose-400"
+          />
+          <ToolLink
+            href="/dashboard/marketing/integrations"
+            icon="🔌"
+            title="Integrations"
+            text="ربط Meta Lead Ads — Webhooks + CRM"
+            gradient="from-blue-100 to-indigo-100 border-blue-200 hover:border-blue-400"
+          />
+        </div>
+
         {/* Create new project form */}
         <section className="bg-white border-2 border-amber-200 rounded-2xl p-5 mb-6">
           <h2 className="font-black font-cairo text-slate-800 mb-1">
@@ -685,6 +717,23 @@ function ExtToolCard({
         </div>
       </div>
     </a>
+  );
+}
+
+function ToolLink({ href, icon, title, text, gradient }: { href: string; icon: string; title: string; text: string; gradient: string }) {
+  return (
+    <Link
+      href={href}
+      className={`block bg-white border-2 rounded-2xl p-4 transition hover:shadow-lg hover:-translate-y-0.5 group ${gradient}`}
+    >
+      <div className="text-2xl mb-1">{icon}</div>
+      <h3 className="text-sm font-black text-slate-800 font-cairo group-hover:text-violet-700 transition">
+        {title}
+      </h3>
+      <p className="text-[10px] text-slate-500 font-cairo leading-relaxed mt-0.5">
+        {text}
+      </p>
+    </Link>
   );
 }
 

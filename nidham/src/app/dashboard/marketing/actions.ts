@@ -651,3 +651,94 @@ export async function runCampaignWizard(formData: FormData) {
   revalidatePath(`/dashboard/marketing/${projectId}/campaign`);
   redirect(`/dashboard/marketing/${projectId}/campaign?generated=1`);
 }
+
+// ============================================================================
+// AI CMO — Okara-style autonomous marketing analysis
+// ============================================================================
+
+import {
+  generateBrandProfile,
+  generateSEOAudit,
+  generateGEOAnalysis,
+  generateContentStrategy,
+  generateSocialPlan,
+  generateFullMarketingPlan,
+} from "@/lib/marketing-ai";
+import type { BrandProfile, SEOAudit, GEOAnalysis, ContentStrategy, SocialPlan, FullMarketingPlan } from "@/lib/marketing-ai";
+
+async function fetchUrlText(url: string): Promise<string> {
+  try {
+    const res = await fetch(url, {
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; NidhamAI/1.0)" },
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!res.ok) return "";
+    const html = await res.text();
+    const text = html
+      .replace(/<script[\s\S]*?<\/script>/gi, "")
+      .replace(/<style[\s\S]*?<\/style>/gi, "")
+      .replace(/<nav[\s\S]*?<\/nav>/gi, "")
+      .replace(/<footer[\s\S]*?<\/footer>/gi, "")
+      .replace(/<header[\s\S]*?<\/header>/gi, "")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/&[a-z]+;/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    return text.slice(0, 12000);
+  } catch {
+    return "";
+  }
+}
+
+export type CMOAnalysisResult = {
+  brandProfile: BrandProfile | null;
+  seoAudit: SEOAudit | null;
+  geoAnalysis: GEOAnalysis | null;
+  contentStrategy: ContentStrategy | null;
+  socialPlan: SocialPlan | null;
+  fullPlan: FullMarketingPlan | null;
+  error?: string;
+};
+
+export async function runCMOFullAnalysis(url: string): Promise<CMOAnalysisResult> {
+  const { profile, supabase } = await gateEnterprise();
+  const empty: CMOAnalysisResult = {
+    brandProfile: null,
+    seoAudit: null,
+    geoAnalysis: null,
+    contentStrategy: null,
+    socialPlan: null,
+    fullPlan: null,
+  };
+
+  try {
+    // 1. Fetch URL text
+    const siteContent = await fetchUrlText(url);
+    if (!siteContent) return { ...empty, error: "ماقدرتش أجيب محتوى الموقع — تأكد من الرابط" };
+
+    // 2. Brand profile
+    const brand = await generateBrandProfile(siteContent, url);
+
+    // 3. SEO audit
+    const seo = await generateSEOAudit(siteContent, url);
+
+    // 4. GEO analysis
+    const geo = await generateGEOAnalysis(brand);
+
+    // 5. Content strategy
+    const content = await generateContentStrategy(brand);
+
+    // 6. Social plan
+    const social = await generateSocialPlan(brand);
+
+    // 7. Full marketing plan (combines all)
+    const plan = await generateFullMarketingPlan(brand, seo, geo, content, social);
+
+    return { brandProfile: brand, seoAudit: seo, geoAnalysis: geo, contentStrategy: content, socialPlan: social, fullPlan: plan };
+  } catch (err) {
+    return {
+      ...empty,
+      error: err instanceof Error ? err.message.slice(0, 200) : "فشل التحليل",
+    };
+  }
+}
