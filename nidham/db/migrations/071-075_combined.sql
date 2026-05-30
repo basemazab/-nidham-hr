@@ -5,6 +5,11 @@
 --   Dashboard → Database → Extensions → enable "vector"
 -- ============================================================
 
+-- ⚠️ IMPORTANT: Set client encoding to UTF8 before any INSERT
+-- that contains Arabic text. Previous runs with WIN1252 caused
+-- double-encoding mojibake in ai_knowledge_base.
+SET client_encoding TO 'UTF8';
+
 -- ============================================================
 -- 071: Workflow Automation Engine
 -- ============================================================

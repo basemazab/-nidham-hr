@@ -5,6 +5,8 @@
 -- company documents, and full audit logging of AI agent actions.
 -- ============================================================
 
+SET client_encoding TO 'UTF8';
+
 -- 1. Enable pgvector extension
 CREATE EXTENSION IF NOT EXISTS vector WITH SCHEMA extensions;
 
