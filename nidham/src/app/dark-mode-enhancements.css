@@ -1,0 +1,305 @@
+/* ============================================================================
+   تحسينات الوضع الداكن والاستجابة
+   ============================================================================ */
+
+/* ---------------------------------------------------------------------------
+   تحسينات الجداول على الهواتف الذكية
+   --------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+  .table-scroll {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .table-scroll table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .table-scroll thead {
+    display: none;
+  }
+
+  .table-scroll tbody,
+  .table-scroll tr,
+  .table-scroll td {
+    display: block;
+    width: 100%;
+  }
+
+  .table-scroll tr {
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--border-soft);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    background-color: var(--surface);
+  }
+
+  .table-scroll td {
+    padding-left: 50%;
+    position: relative;
+    text-align: right;
+    padding-right: 1rem;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
+
+  .table-scroll td:before {
+    content: attr(data-label);
+    position: absolute;
+    left: 1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    color: var(--foreground);
+    opacity: 0.7;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   تحسينات الوضع الداكن للعناصر
+   --------------------------------------------------------------------------- */
+.dark {
+  color-scheme: dark;
+}
+
+.dark input,
+.dark textarea,
+.dark select {
+  background-color: var(--surface);
+  color: var(--foreground);
+  border-color: var(--border-soft);
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: var(--foreground);
+  opacity: 0.5;
+}
+
+.dark button:not(.btn-primary):not(.btn-secondary) {
+  background-color: var(--surface-muted);
+  color: var(--foreground);
+  border-color: var(--border-soft);
+}
+
+.dark button:not(.btn-primary):not(.btn-secondary):hover {
+  background-color: var(--surface);
+}
+
+/* ---------------------------------------------------------------------------
+   تحسينات الظلال والحدود في الوضع الداكن
+   --------------------------------------------------------------------------- */
+.dark .shadow-sm {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.dark .shadow {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.dark .shadow-md {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+}
+
+.dark .shadow-lg {
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.6);
+}
+
+/* ---------------------------------------------------------------------------
+   تحسينات الألوان في الوضع الداكن
+   --------------------------------------------------------------------------- */
+.dark .text-slate-600 {
+  color: var(--foreground);
+  opacity: 0.7;
+}
+
+.dark .bg-slate-50 {
+  background-color: var(--surface-muted);
+}
+
+.dark .bg-slate-100 {
+  background-color: var(--surface);
+}
+
+.dark .border-slate-200 {
+  border-color: var(--border-soft);
+}
+
+/* ---------------------------------------------------------------------------
+   تحسينات الانتقالات والتحريكات
+   --------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: no-preference) {
+  * {
+    scroll-behavior: smooth;
+  }
+
+  button,
+  a,
+  [role="button"] {
+    transition: all 0.2s ease;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   تحسينات الاستجابة للشاشات الكبيرة
+   --------------------------------------------------------------------------- */
+@media (min-width: 1024px) {
+  .table-scroll table {
+    min-width: 100%;
+  }
+
+  .table-scroll thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   تحسينات الأداء — استخدام will-change بحذر
+   --------------------------------------------------------------------------- */
+.motion-safe {
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .motion-safe {
+    will-change: auto;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   تحسينات الوصولية
+   --------------------------------------------------------------------------- */
+:focus-visible {
+  outline: 2px solid var(--brand-cyan);
+  outline-offset: 2px;
+}
+
+.dark :focus-visible {
+  outline-color: var(--brand-cyan);
+}
+
+/* ---------------------------------------------------------------------------
+   تحسينات الأيقونات والصور في الوضع الداكن
+   --------------------------------------------------------------------------- */
+.dark img {
+  opacity: 0.9;
+}
+
+.dark svg {
+  color: inherit;
+}
+
+/* ---------------------------------------------------------------------------
+   تحسينات الخلفيات المتدرجة
+   --------------------------------------------------------------------------- */
+.gradient-light {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+}
+
+.dark .gradient-light {
+  background: linear-gradient(135deg, #0a1428 0%, #152540 100%);
+}
+
+.gradient-accent {
+  background: linear-gradient(135deg, #22d3ee 0%, #0891b2 100%);
+}
+
+/* ---------------------------------------------------------------------------
+   تحسينات الأزرار
+   --------------------------------------------------------------------------- */
+.btn-primary {
+  background: linear-gradient(135deg, #22d3ee 0%, #0891b2 100%);
+  color: #0a1428;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(34, 211, 238, 0.3);
+}
+
+.dark .btn-primary {
+  color: #0a1428;
+}
+
+/* ---------------------------------------------------------------------------
+   تحسينات النماذج
+   --------------------------------------------------------------------------- */
+.form-input {
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-soft);
+  background-color: var(--surface);
+  color: var(--foreground);
+  padding: 0.75rem 1rem;
+  transition: all 0.2s ease;
+}
+
+.form-input:focus {
+  border-color: var(--brand-cyan);
+  box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.1);
+}
+
+.dark .form-input {
+  background-color: var(--surface);
+  border-color: var(--border-soft);
+}
+
+/* ---------------------------------------------------------------------------
+   تحسينات الشرائط والإشعارات
+   --------------------------------------------------------------------------- */
+.alert {
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-left: 4px solid;
+}
+
+.alert-success {
+  background-color: rgba(34, 197, 94, 0.1);
+  border-color: #22c55e;
+  color: #166534;
+}
+
+.dark .alert-success {
+  background-color: rgba(34, 197, 94, 0.15);
+  color: #86efac;
+}
+
+.alert-error {
+  background-color: rgba(239, 68, 68, 0.1);
+  border-color: #ef4444;
+  color: #991b1b;
+}
+
+.dark .alert-error {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+}
+
+.alert-warning {
+  background-color: rgba(245, 158, 11, 0.1);
+  border-color: #f59e0b;
+  color: #92400e;
+}
+
+.dark .alert-warning {
+  background-color: rgba(245, 158, 11, 0.15);
+  color: #fcd34d;
+}
+
+.alert-info {
+  background-color: rgba(34, 211, 238, 0.1);
+  border-color: #22d3ee;
+  color: #164e63;
+}
+
+.dark .alert-info {
+  background-color: rgba(34, 211, 238, 0.15);
+  color: #a5f3fc;
+}
