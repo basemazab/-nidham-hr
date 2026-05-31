@@ -216,7 +216,7 @@ export default async function DashboardPage({
         <SmartInsights companyId={callerCompanyId} />
 
         {/* Retention Banner */}
-        <RetentionBanner companyId={callerCompanyId} />
+        <RetentionBanner />
       </div>
     </main>
   );

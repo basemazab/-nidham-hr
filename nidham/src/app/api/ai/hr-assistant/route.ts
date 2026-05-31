@@ -47,8 +47,6 @@ export async function POST(request: NextRequest) {
       model: openai("gpt-4-turbo"),
       system: systemPrompt,
       messages: formattedMessages,
-      temperature: 0.7,
-      max_tokens: 500,
     });
 
     return NextResponse.json({

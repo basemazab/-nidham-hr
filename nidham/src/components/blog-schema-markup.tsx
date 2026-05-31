@@ -151,4 +151,53 @@ export function BreadcrumbSchemaMarkup({
 /**
  * ArticleSchemaMarkup — Schema Markup متقدم للمقالات
  */
-export function ArticleSchemaMarkup({\n  title,\n  description,\n  image,\n  author,\n  datePublished,\n  dateModified,\n  url,\n  wordCount,\n  articleSection,\n  keywords,\n}: {\n  title: string;\n  description: string;\n  image?: string;\n  author: string;\n  datePublished: string;\n  dateModified?: string;\n  url: string;\n  wordCount?: number;\n  articleSection?: string;\n  keywords?: string[];\n}) {\n  const schema = {\n    "@context": "https://schema.org",\n    "@type": "Article",\n    headline: title,\n    description: description,\n    image: image || "/og-local.png",\n    author: {\n      "@type": "Person",\n      name: author,\n    },\n    datePublished: datePublished,\n    dateModified: dateModified || datePublished,\n    url: url,\n    wordCount: wordCount || 1000,\n    articleSection: articleSection || "HR",\n    keywords: keywords?.join(", ") || "",\n    inLanguage: "ar",\n  };\n\n  return (\n    <script\n      type="application/ld+json"\n      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}\n    />\n  );\n}\n
+export function ArticleSchemaMarkup({
+  title,
+  description,
+  image,
+  author,
+  datePublished,
+  dateModified,
+  url,
+  wordCount,
+  articleSection,
+  keywords,
+}: {
+  title: string;
+  description: string;
+  image?: string;
+  author: string;
+  datePublished: string;
+  dateModified?: string;
+  url: string;
+  wordCount?: number;
+  articleSection?: string;
+  keywords?: string[];
+}) {
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: title,
+    description: description,
+    image: image || "/og-local.png",
+    author: {
+      "@type": "Person",
+      name: author,
+    },
+    datePublished: datePublished,
+    dateModified: dateModified || datePublished,
+    url: url,
+    wordCount: wordCount || 1000,
+    articleSection: articleSection || "HR",
+    keywords: keywords?.join(", ") || "",
+    inLanguage: "ar",
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+}
+
