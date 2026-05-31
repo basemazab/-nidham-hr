@@ -139,6 +139,7 @@ const NAV_ITEMS: readonly NavItem[] = [
   { href: "/dashboard/whatsapp-test",   label: "اختبار بوت الواتساب",   icon: "💬", section: "ai", visibleTo: ["admin"] },
   { href: "/dashboard/jobs",       label: "التوظيف الذكي",        icon: "🎯", section: "ai", feature: "recruitment" },
   { href: "/dashboard/retention",  label: "احتفاظ بالموظفين",     icon: "🛡", section: "ai", feature: "retention_insights" },
+  { href: "/dashboard/nidham-ai", label: "محرك نيدهام AI",        icon: "🧠", section: "ai", feature: "retention_insights" },
 
   // ── Automation — workflow engine ──
   { href: "/dashboard/automation",     label: "أتمتة سير العمل",  icon: "⚡", section: "automation", visibleTo: ["admin", "manager"] },
