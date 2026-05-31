@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { SiteHeader } from "@/components/site-header";
 import Link from "next/link";
 import {
@@ -16,7 +17,18 @@ import {
 } from "lucide-react";
 
 export const metadata = {
-  title: "بوابة المطورين | Developer Portal",
+  title: "بوابة المطورين — API وتكاملات نظام HR | نِظام",
+  description:
+    "REST API لنظام HR: توثيق كامل، Authentication، Endpoints (موظفين، مرتبات، حضور، عملاء)، Webhooks، SDKs. ابدأ التكامل في دقائق.",
+  alternates: { canonical: "/developers" },
+  openGraph: {
+    images: [{ url: "/api/og?title=" + encodeURIComponent("بوابة مطوري نِظام HR"), width: 1200, height: 630, alt: "بوابة مطوري نِظام HR" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "بوابة المطورين — API | نِظام",
+    description: "REST API كامل لنظام HR: موظفين، مرتبات، حضور، عملاء. وثّق نظامك مع نِظام.",
+  },
 };
 
 const GUIDES = [

@@ -29,6 +29,7 @@ type AccountRow = {
   is_active: boolean;
   last_used_at: string | null;
   last_error: string | null;
+  token_expires_at: string | null;
 };
 
 type PostRow = {
@@ -89,7 +90,7 @@ export default async function SocialHomePage({
     supabase
       .from("social_accounts")
       .select(
-        "id, platform, display_label, is_active, last_used_at, last_error",
+        "id, platform, display_label, is_active, last_used_at, last_error, token_expires_at",
       )
       .order("platform")
       .returns<AccountRow[]>(),
@@ -216,7 +217,7 @@ export default async function SocialHomePage({
       )}
 
       {/* KPI strip */}
-      <section className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+      <section className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         <Kpi
           icon="🔌"
           label="حسابات مربوطة"
@@ -242,6 +243,12 @@ export default async function SocialHomePage({
           color={stats.criticalComments > 0 ? "rose" : "slate"}
         />
       </section>
+
+      {/* Weekly content calendar */}
+      <WeeklyCalendar posts={posts} />
+
+      {/* Best time to post + platform health */}
+      <PlatformInsights accounts={accounts} />
 
       {/* Quick links */}
       <section className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -517,6 +524,180 @@ function AccountChip({ account }: { account: AccountRow }) {
         </div>
       )}
     </div>
+  );
+}
+
+// ============================================================================
+// Weekly content calendar — 7-day heat strip
+// ============================================================================
+function WeeklyCalendar({ posts }: { posts: PostRow[] }) {
+  const today = new Date();
+  const dayNames = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+  const BAR_MAX = 48;
+
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const date = new Date(today);
+    date.setDate(date.getDate() + i);
+    const dateStr = date.toISOString().slice(0, 10);
+    const dayName = dayNames[date.getDay()];
+    const counts = { scheduled: 0, published: 0, draft: 0 };
+    for (const p of posts) {
+      if (p.scheduled_for?.startsWith(dateStr)) counts.scheduled++;
+      if (p.published_at?.startsWith(dateStr)) counts.published++;
+    }
+    const total = counts.scheduled + counts.published;
+    const isToday = i === 0;
+    return { dateStr, dayName, ...counts, total, isToday };
+  });
+
+  const maxTotal = Math.max(...days.map((d) => d.total), 1);
+
+  return (
+    <section className="mb-8">
+      <h2 className="text-sm font-black font-cairo text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+        📅 أيام النشر القادمة
+      </h2>
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4">
+        <div className="grid grid-cols-7 gap-2">
+          {days.map((d) => (
+            <div key={d.dateStr} className="flex flex-col items-center gap-1.5">
+              <span className={`text-[10px] font-cairo font-bold ${d.isToday ? "text-rose-600 dark:text-rose-400" : "text-slate-500 dark:text-slate-400"}`}>
+                {d.isToday ? "اليوم" : d.dayName.slice(0, 4)}
+              </span>
+              <div className="flex items-end gap-0.5 h-12">
+                {d.scheduled > 0 && (
+                  <div
+                    className="w-3 rounded-t bg-amber-400 dark:bg-amber-500 transition-all"
+                    style={{ height: `${(d.scheduled / maxTotal) * BAR_MAX}px` }}
+                    title={`${d.scheduled} مجدول`}
+                  />
+                )}
+                {d.published > 0 && (
+                  <div
+                    className="w-3 rounded-t bg-emerald-400 dark:bg-emerald-500 transition-all"
+                    style={{ height: `${(d.published / maxTotal) * BAR_MAX}px` }}
+                    title={`${d.published} منشور`}
+                  />
+                )}
+              </div>
+              <span className={`text-[10px] font-bold font-cairo ${d.total > 0 ? "text-slate-700 dark:text-slate-300" : "text-slate-400 dark:text-slate-500"}`}>
+                {d.total || "—"}
+              </span>
+            </div>
+          ))}
+        </div>
+        <div className="flex items-center gap-4 mt-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+          <span className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400 font-cairo">
+            <span className="w-2 h-2 rounded-sm bg-amber-400 inline-block" /> مجدول
+          </span>
+          <span className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400 font-cairo">
+            <span className="w-2 h-2 rounded-sm bg-emerald-400 inline-block" /> منشور
+          </span>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ============================================================================
+// Platform Insights — AI posting tip + token health
+// ============================================================================
+function PlatformInsights({ accounts }: { accounts: AccountRow[] }) {
+  // Static best-time recommendation based on Egyptian audience research
+  const bestTimes = [
+    { platform: "فيسبوك", time: "8-10 مساءً", reason: "أعلى تفاعل بعد الإفطار/العشاء" },
+    { platform: "إنستجرام", time: "12-2 ظهراً", reason: "تصفح الغداء" },
+    { platform: "X", time: "10-12 صباحاً", reason: "أخبار الصباح" },
+    { platform: "لينكد إن", time: "7-9 صباحاً", reason: "قبل الدوام" },
+  ];
+
+  const activeCount = accounts.filter((a) => a.is_active).length;
+  const expiredCount = accounts.filter((a) => {
+    if (!a.token_expires_at) return false;
+    return new Date(a.token_expires_at) < new Date();
+  }).length;
+  const expiringSoon = accounts.filter((a) => {
+    if (!a.token_expires_at) return false;
+    const daysLeft = (new Date(a.token_expires_at).getTime() - Date.now()) / 86400000;
+    return daysLeft > 0 && daysLeft < 30;
+  }).length;
+
+  return (
+    <section className="mb-8">
+      <h2 className="text-sm font-black font-cairo text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+        🧠 رؤى ذكية
+      </h2>
+      <div className="grid md:grid-cols-2 gap-4">
+
+        {/* Best time to post */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4">
+          <h3 className="text-xs font-bold font-cairo text-slate-700 dark:text-slate-200 mb-3">
+            ⏰ أفضل أوقات النشر للجمهور المصري
+          </h3>
+          <div className="space-y-2">
+            {bestTimes.map((t) => (
+              <div key={t.platform} className="flex items-center justify-between text-xs font-cairo">
+                <span className="text-slate-600 dark:text-slate-400">{t.platform}</span>
+                <div className="text-left">
+                  <span className="text-emerald-700 dark:text-emerald-400 font-bold">{t.time}</span>
+                  <span className="text-[10px] text-slate-400 dark:text-slate-500 mr-2">{t.reason}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Account health summary */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4">
+          <h3 className="text-xs font-bold font-cairo text-slate-700 dark:text-slate-200 mb-3">
+            🔌 صحة الحسابات
+          </h3>
+          <div className="grid grid-cols-3 gap-3 mb-3">
+            <div className="text-center p-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/30">
+              <div className="text-lg font-black font-display text-emerald-700 dark:text-emerald-400">{activeCount}</div>
+              <div className="text-[10px] font-cairo text-emerald-600 dark:text-emerald-500">نشط</div>
+            </div>
+            <div className="text-center p-2 rounded-lg bg-amber-50 dark:bg-amber-900/30">
+              <div className="text-lg font-black font-display text-amber-700 dark:text-amber-400">{expiringSoon}</div>
+              <div className="text-[10px] font-cairo text-amber-600 dark:text-amber-500">توشك على الانتهاء</div>
+            </div>
+            <div className="text-center p-2 rounded-lg bg-rose-50 dark:bg-rose-900/30">
+              <div className="text-lg font-black font-display text-rose-700 dark:text-rose-400">{expiredCount}</div>
+              <div className="text-[10px] font-cairo text-rose-600 dark:text-rose-500">منتهي</div>
+            </div>
+          </div>
+          {accounts.length > 0 && (
+            <div className="space-y-1.5">
+              {accounts.map((a) => {
+                let statusCls = "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400";
+                let statusText = "بدون Token";
+                if (a.token_expires_at) {
+                  const daysLeft = (new Date(a.token_expires_at).getTime() - Date.now()) / 86400000;
+                  if (daysLeft < 0) {
+                    statusCls = "bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-400";
+                    statusText = "منتهي";
+                  } else if (daysLeft < 30) {
+                    statusCls = "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400";
+                    statusText = `${Math.ceil(daysLeft)} يوم`;
+                  } else {
+                    statusCls = "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400";
+                    statusText = `${Math.ceil(daysLeft)} يوم`;
+                  }
+                }
+                return (
+                  <div key={a.id} className="flex items-center gap-2 text-[10px] font-cairo">
+                    <span className="text-base">{PLATFORM_ICON[a.platform] ?? "🔌"}</span>
+                    <span className="flex-1 truncate text-slate-600 dark:text-slate-300">{a.display_label}</span>
+                    <span className={`px-1.5 py-0.5 rounded font-bold ${statusCls}`}>{statusText}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+      </div>
+    </section>
   );
 }
 

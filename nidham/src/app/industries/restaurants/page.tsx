@@ -8,6 +8,18 @@ export const metadata: Metadata = {
   description:
     "نظام HR متخصص للمطاعم والكافيهات: جدولة ورديات الويترز والشيفات، حساب البقشيش (Tips Pool)، حضور بالموبايل، حساب الأوفر تايم بنسب القانون.",
   alternates: { canonical: "/industries/restaurants" },
+  openGraph: {
+    type: "website",
+    title: "نظام HR للمطاعم والكافيهات في مصر | نِظام HR",
+    description: "جدولة ورديات، حساب بقشيش، إدارة Casual staff، حضور بالموبايل.",
+    url: "/industries/restaurants",
+    images: [{ url: "/api/og?title=" + encodeURIComponent("نظام HR للمطاعم والكافيهات"), width: 1200, height: 630, alt: "نظام HR للمطاعم والكافيهات" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "نظام HR للمطاعم والكافيهات في مصر | نِظام HR",
+    description: "ورديات متغيرة، بقشيش شفاف، حضور بالموبايل — كل حاجة في نظام واحد.",
+  },
 };
 
 const data: IndustryPageData = {

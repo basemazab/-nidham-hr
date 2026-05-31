@@ -12,8 +12,6 @@ type Generated = {
   description: string;
   requirements: string;
   responsibilities: string;
-  suggested_salary_min: number | null;
-  suggested_salary_max: number | null;
 };
 
 type Props = {
@@ -76,16 +74,10 @@ export function AIJobDescriptionGenerator(props: Props) {
       const data = (await res.json()) as Generated & { ok: true };
 
       // Write into the form fields. We use textareas for the three
-      // long-form ones; the salary inputs are numeric.
+      // long-form ones.
       setField(props.descriptionFieldId, data.description);
       setField(props.requirementsFieldId, data.requirements);
       setField(props.responsibilitiesFieldId, data.responsibilities);
-      if (data.suggested_salary_min != null) {
-        setField(props.salaryMinFieldId, String(data.suggested_salary_min));
-      }
-      if (data.suggested_salary_max != null) {
-        setField(props.salaryMaxFieldId, String(data.suggested_salary_max));
-      }
 
       setSuccess(true);
     } catch (err) {

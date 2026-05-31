@@ -20,8 +20,8 @@ export async function POST(req: Request) {
     if (!migration) return Response.json({ error: "Migration name required" }, { status: 400 });
 
     const safeName = migration.replace(/[^a-zA-Z0-9_-]/g, "");
-    if (!safeName.startsWith("077")) {
-      return Response.json({ error: "Only migration 077 allowed via this endpoint" }, { status: 400 });
+    if (!safeName.startsWith("077") && !safeName.startsWith("079") && !safeName.startsWith("080")) {
+      return Response.json({ error: "Only migration 077, 079, or 080 allowed via this endpoint" }, { status: 400 });
     }
 
     const sql = readFileSync(join(process.cwd(), "db/migrations", `${safeName}.sql`), "utf8");

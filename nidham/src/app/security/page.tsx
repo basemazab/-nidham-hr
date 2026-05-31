@@ -1,3 +1,20 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "أمان وحماية نظام HR — تشفير AES-256 + PDPL + Audit Log | نِظام",
+  description:
+    "نظام HR آمن: تشفير AES-256 للبيانات الحساسة، متوافق مع قانون حماية البيانات المصري 151/2020، Audit Log كامل، صلاحيات RBAC، 2FA، خوادم مصرية على Azure.",
+  alternates: { canonical: "/security" },
+  openGraph: {
+    images: [{ url: "/api/og?title=" + encodeURIComponent("أمان وحماية نِظام HR"), width: 1200, height: 630, alt: "أمان وحماية نِظام HR" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "أمان نظام HR — تشفير AES-256 | نِظام",
+    description: "AES-256، PDPL 151/2020، Audit Log، RBAC، 2FA، خوادم مصرية. بياناتك في أمان.",
+  },
+};
+
 // ============================================================================
 // /security — Security + Compliance details (الأمان + الامتثال)
 // ============================================================================
@@ -11,12 +28,6 @@
 //   - SLA enforcement?
 
 import Link from "next/link";
-
-export const metadata = {
-  title: "الأمان + الامتثال | نِظام",
-  description:
-    "تفاصيل الأمان والـ compliance في Nidham — تشفير AES-256، 2FA، Audit Log، Backup يومي، PDPL 151/2020 + قانون العمل 12/2003.",
-};
 
 export default function SecurityPage() {
   return (

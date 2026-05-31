@@ -12,18 +12,24 @@ import { BlogNav, BlogFooter } from "@/components/blog-chrome";
 // First Byte, full HTML) and good for ranking (zero JS for first paint).
 
 export const metadata: Metadata = {
-  title: "مدونة نِظام HR — مقالات عن إدارة الموارد البشرية والمرتبات في مصر",
+  title: "مدونة نِظام HR — مقالات إدارة الموارد البشرية والمرتبات في مصر",
   description:
-    "مقالات تفصيلية للـ HR والـ Founders المصريين: حساب المرتبات، التأمينات، قانون العمل، مقارنات أنظمة HR، أدلة عملية بالأمثلة.",
+    "أدلة ومقالات للـ HR المصري: كيفية حساب المرتبات والتأمينات 2026، قانون العمل 12/2003، مقارنة أنظمة HR (Bayzat vs ZenHR vs نِظام)، ودليل اختيار نظام HR لشركتك.",
   alternates: {
     canonical: "/blog",
   },
   openGraph: {
     type: "website",
-    title: "مدونة نِظام HR — موارد للـ HR في مصر",
+    title: "مدونة نِظام HR — مقالات HR ومرتبات للشركات المصرية",
     description:
-      "حساب المرتبات، التأمينات، قانون العمل، مقارنات أنظمة HR في مصر.",
+      "حساب المرتبات، التأمينات 148/2019، قانون العمل، مقارنات أنظمة HR، وأدلة عملية للـ HR المصري.",
     url: "/blog",
+    images: [{ url: "/api/og?title=" + encodeURIComponent("مدونة نِظام HR — موارد للـ HR في مصر"), width: 1200, height: 630, alt: "مدونة نِظام HR — موارد للـ HR في مصر" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "مدونة نِظام HR — مقالات HR ومرتبات للشركات المصرية",
+    description: "أدلة حساب المرتبات، التأمينات، قانون العمل، ومقارنة أنظمة HR في مصر.",
   },
 };
 
@@ -47,6 +53,15 @@ export default function BlogIndexPage() {
             أدلة، حسابات، مقارنات، وشرح قانوني — كلها مكتوبة من فريق بيتعامل
             يومياً مع الـ HR والمرتبات في السوق المصري.
           </p>
+          <div className="mt-5 flex items-center justify-center gap-4 text-xs text-slate-400">
+            <Link href="/compare" className="hover:text-emerald-600 transition underline underline-offset-2">📊 مقارنة أنظمة HR</Link>
+            <span className="text-slate-300">·</span>
+            <Link href="/features" className="hover:text-emerald-600 transition underline underline-offset-2">⚡ مميزات نِظام</Link>
+            <span className="text-slate-300">·</span>
+            <Link href="/why-nidham" className="hover:text-emerald-600 transition underline underline-offset-2">💡 ليه نِظام</Link>
+            <span className="text-slate-300">·</span>
+            <Link href="/pricing" className="hover:text-emerald-600 transition underline underline-offset-2">💰 الأسعار</Link>
+          </div>
         </div>
       </section>
 

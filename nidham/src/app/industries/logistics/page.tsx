@@ -16,6 +16,12 @@ export const metadata: Metadata = {
     title: "نظام HR + CRM لشركات الشحن المصرية",
     description: "إدارة السائقين والعملاء في منصة واحدة. GPS attendance + CRM + payroll.",
     url: "/industries/logistics",
+    images: [{ url: "/api/og?title=" + encodeURIComponent("نظام HR لشركات الشحن المصرية"), width: 1200, height: 630, alt: "نظام HR لشركات الشحن المصرية" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "نظام HR + CRM لشركات الشحن المصرية | نِظام HR",
+    description: "تتبع السائقين بـ GPS، حضور من الموقع، إدارة عملاء الشركات، وتكامل مع TMS.",
   },
 };
 

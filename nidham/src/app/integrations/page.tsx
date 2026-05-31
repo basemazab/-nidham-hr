@@ -1,3 +1,20 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "تكاملات نظام HR — ZKTeco، Excel، بنوك، Meta، وAPI | نِظام",
+  description:
+    "التكاملات المتاحة في نِظام HR: أجهزة ZKTeco/Hikvision، استيراد Excel/CSV، تصدير ملفات بنكية، تكامل إعلانات Meta، و REST API مفتوح. نظام HR يشتغل مع أدواتك.",
+  alternates: { canonical: "/integrations" },
+  openGraph: {
+    images: [{ url: "/api/og?title=" + encodeURIComponent("تكاملات نِظام HR"), width: 1200, height: 630, alt: "تكاملات نِظام HR" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "تكاملات نظام HR | نِظام",
+    description: "ZKTeco، Excel، بنوك مصرية، Meta Ads، REST API. نظام HR يشتغل مع أدواتك.",
+  },
+};
+
 // ============================================================================
 // /integrations — Integrations + tools that connect to Nidham (التكاملات)
 // ============================================================================
@@ -18,12 +35,6 @@
 // Honest about what we have vs what's planned.
 
 import Link from "next/link";
-
-export const metadata = {
-  title: "التكاملات | نِظام",
-  description:
-    "Nidham بيتكامل مع ZKTeco و Excel وأنظمة البنوك المصرية. تكاملات إضافية في الـ roadmap: QuickBooks, Sage, مصلحة الضرايب.",
-};
 
 type Integration = {
   name: string;

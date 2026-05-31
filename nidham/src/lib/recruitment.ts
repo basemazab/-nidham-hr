@@ -74,12 +74,12 @@ export const screeningSchema = z.object({
     .describe("Hire recommendation"),
   summary: z
     .string()
-    .min(20)
+    .min(10)
     .max(500)
     .describe("2-3 sentence overall assessment in Egyptian Arabic"),
   strengths: z
     .array(z.string())
-    .min(1)
+    .min(0)
     .max(6)
     .describe("Strengths in Arabic — short phrases"),
   weaknesses: z
@@ -89,7 +89,7 @@ export const screeningSchema = z.object({
     .describe("Gaps in Arabic — short phrases"),
   interview_questions: z
     .array(z.string())
-    .min(2)
+    .min(1)
     .max(6)
     .describe("Tailored interview questions in Arabic"),
   extracted_skills: z

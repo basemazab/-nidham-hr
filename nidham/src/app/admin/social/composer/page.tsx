@@ -60,6 +60,17 @@ const PLATFORM_LABEL: Record<string, string> = {
   telegram: "Telegram",
 };
 
+const PLATFORM_MAX: Record<string, number> = {
+  facebook: 1500,
+  instagram: 2200,
+  twitter: 280,
+  linkedin: 3000,
+  tiktok: 2200,
+  youtube: 5000,
+  threads: 500,
+  telegram: 4096,
+};
+
 export default async function SocialComposer({
   searchParams,
 }: {
@@ -286,11 +297,7 @@ function PostEditor({
                 ✦ AI
               </span>
             )}
-            {post.ai_intent && (
-              <span className="text-[10px] text-slate-500 dark:text-slate-400 font-cairo truncate">
-                {post.ai_intent}
-              </span>
-            )}
+            {post.ai_intent && <AiScoreBadge intent={post.ai_intent} />}
           </div>
         </div>
         <form action={archiveSocialPost}>
@@ -311,12 +318,15 @@ function PostEditor({
       {/* Edit form */}
       <form action={updateSocialPost} className="space-y-3 mb-3">
         <input type="hidden" name="id" value={post.id} />
-        <textarea
-          name="body"
-          rows={8}
-          defaultValue={post.body}
-          className={`${inputCls} font-cairo`}
-        />
+        <div className="relative">
+          <textarea
+            name="body"
+            rows={8}
+            defaultValue={post.body}
+            className={`${inputCls} font-cairo`}
+          />
+          <PlatformCompatibility body={post.body} accounts={accounts} />
+        </div>
         <div className="flex items-end gap-3 flex-wrap">
           <div className="flex-1 min-w-[200px]">
             <Label>جدولة (اختياري)</Label>
@@ -485,6 +495,76 @@ function ImageBlock({ post }: { post: PostRow }) {
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+function AiScoreBadge({ intent }: { intent: string }) {
+  // Parse stored format: "goal · topic |score:7|reasoning text"
+  const scoreMatch = intent.match(/\|score:(\d+)\|/);
+  if (!scoreMatch) {
+    return (
+      <span className="text-[10px] text-slate-500 dark:text-slate-400 font-cairo truncate">
+        {intent.slice(0, 60)}
+      </span>
+    );
+  }
+  const score = parseInt(scoreMatch[1], 10);
+  const reasoningPart = intent.split("|score:")[1]?.split("|")[1] ?? "";
+  const displayGoal = intent.split(" |")[0];
+  const stars = "★".repeat(score) + "☆".repeat(10 - score);
+  const color =
+    score >= 8
+      ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30"
+      : score >= 5
+        ? "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30"
+        : "text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800";
+  return (
+    <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold font-cairo inline-flex items-center gap-1 ${color}`} title={reasoningPart}>
+      <span className="text-[8px] tracking-tighter">{stars}</span>
+      <span>{score}/10</span>
+      <span className="opacity-60 mr-0.5 font-normal">{displayGoal.slice(0, 30)}</span>
+    </span>
+  );
+}
+
+function PlatformCompatibility({
+  body,
+  accounts,
+}: {
+  body: string;
+  accounts: AccountRow[];
+}) {
+  const len = body.length;
+  // Unique platforms from connected accounts
+  const platforms = [...new Set(accounts.map((a) => a.platform))];
+  const checks = platforms.map((p) => ({
+    platform: p,
+    label: PLATFORM_LABEL[p] ?? p,
+    max: PLATFORM_MAX[p] ?? 9999,
+    ok: len <= (PLATFORM_MAX[p] ?? 9999),
+    pct: Math.min(Math.round((len / (PLATFORM_MAX[p] ?? 9999)) * 100), 100),
+  }));
+  checks.sort((a, b) => a.max - b.max); // most restrictive first
+
+  return (
+    <div className="absolute bottom-2 left-2 right-2 flex items-center gap-1.5 flex-wrap">
+      <span className={`text-[10px] font-bold font-cairo ${len > 280 ? "text-amber-600 dark:text-amber-400" : "text-slate-500 dark:text-slate-400"}`}>
+        {len} حرف
+      </span>
+      {checks.map((c) => (
+        <span
+          key={c.platform}
+          className={`text-[9px] px-1.5 py-0.5 rounded font-bold font-cairo ${
+            c.ok
+              ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
+              : "bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400"
+          }`}
+          title={`${c.label}: حد أقصى ${c.max.toLocaleString()} حرف`}
+        >
+          {c.label} {c.ok ? "✅" : `❌ ${c.max.toLocaleString()}`}
+        </span>
+      ))}
     </div>
   );
 }

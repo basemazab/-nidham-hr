@@ -43,6 +43,96 @@ export type BlogPost = {
 // ── Posts (newest first — order here controls /blog index order) ────────────
 export const POSTS: BlogPost[] = [
   {
+    slug: "hr-guide-egypt",
+    title: "الدليل الشامل لإدارة الموارد البشرية في مصر — قانون العمل، تأمينات، ضرائب، وأنظمة HR",
+    heading: "دليل HR الشامل في مصر — كل ما يحتاج المدير وصاحب العمل معرفته",
+    description:
+      "الدليل الشامل للـ HR في مصر: قانون العمل 12/2003، التأمينات الاجتماعية 148/2019، ضريبة المرتبات 7 شرائح 2026، الإجازات، إنهاء الخدمة، ومقارنة أنظمة HR. دليل عملي بالروابط والتفاصيل.",
+    excerpt:
+      "الدليل الأشمل للـ HR المصري: قانون العمل 12/2003، التأمينات 148/2019، ضريبة 2026، إجازات، عقود، ومقارنة أنظمة HR. كل اللي تحتاجه في مكان واحد.",
+    keyword: "دليل HR مصر",
+    publishedAt: "2026-05-31",
+    updatedAt: "2026-05-31",
+    readMinutes: 15,
+    author: "فريق نِظام HR",
+    tags: ["دليل", "HR", "قانون العمل", "تأمينات", "ضريبة"],
+  },
+  {
+    slug: "payroll-system-egypt",
+    title: "نظام رواتب ومرتبات مصري — دليل كامل لحساب المرتبات في مصر 2026",
+    heading: "نظام رواتب ومرتبات مصري — دليل payroll للـ HR",
+    description:
+      "دليل شامل لنظام الرواتب والمرتبات في مصر: حساب التأمينات 148/2019، ضريبة الدخل 7 شرائح 2026، أيام العمل 26/30، overtime، وسلف. النظام بيحسب كل ده تلقائياً — وفر 80% وقت payroll.",
+    excerpt:
+      "دليل payroll كامل لمصر: التأمينات 148/2019، ضريبة 2026 (7 شرائح)، 26/30 يوم، overtime (35% - 50% - 100%)، وسلف. نظام مرتبات بيحسب كل حاجة تلقائياً.",
+    keyword: "نظام رواتب ومرتبات مصر",
+    publishedAt: "2026-05-31",
+    updatedAt: "2026-05-31",
+    readMinutes: 10,
+    author: "فريق نِظام HR",
+    tags: ["مرتبات", "Payroll", "رواتب", "التأمينات", "ضريبة"],
+  },
+  {
+    slug: "attendance-system-egypt",
+    title: "برنامج حضور وانصراف للشركات المصرية — GPS + سيلفي + واتساب",
+    heading: "برنامج حضور وانصراف مصري — دليل شامل 2026",
+    description:
+      "أفضل برنامج حضور وانصراف للشركات المصرية: GPS + سيلفي (بدون أجهزة بصمة)، ربط ZKTeco/Hikvision، حساب غياب تلقائي وربط بالمرتبات، واتساب بوت. متوافق مع قانون العمل 12/2003.",
+    excerpt:
+      "GPS + سيلفي بدل أجهزة البصمة — واتساب بوت للحضور — ربط ZKTeco — حساب غياب تلقائي — ربط بالمرتبات. وفر 100% وقت متابعة الحضور.",
+    keyword: "برنامج حضور وانصراف",
+    publishedAt: "2026-05-31",
+    updatedAt: "2026-05-31",
+    readMinutes: 9,
+    author: "فريق نِظام HR",
+    tags: ["حضور وانصراف", "GPS", "بصمة", "ZKTeco", "موبايل"],
+  },
+  {
+    slug: "cloud-hr-benefits-egypt",
+    title: "مميزات نظام HR السحابي للشركات المصرية — 7 أسباب تخلّيك تتحول",
+    heading: "نظام HR السحابي — 7 مميزات تغير طريقة إدارة شركتك",
+    description:
+      "7 مميزات لنظام HR السحابي: وفر 60% من وقت HR، إدارة من أي مكان، تحديثات تلقائية للقوانين المصرية، أمان AES-256، وتكامل مع CRM والتسويق.",
+    excerpt:
+      "Cloud HR = وفر 60% وقت HR + إدارة من الموبايل + تحديثات تلقائية للقانون المصري. 7 أسباب تخلّيك تستغني عن الـ on-premise نهائياً.",
+    keyword: "نظام HR سحابي مصر",
+    publishedAt: "2026-05-31",
+    updatedAt: "2026-05-31",
+    readMinutes: 8,
+    author: "فريق نِظام HR",
+    tags: ["HR سحابي", "Cloud HR", "تكنولوجيا HR", "مميزات"],
+  },
+  {
+    slug: "how-to-choose-hr-system-egypt",
+    title: "ازاي تختار نظام HR لشركتك في مصر — 10 معايير + دليل خطوة بخطوة",
+    heading: "دليل اختيار نظام HR للشركات المصرية — 10 معايير",
+    description:
+      "10 معايير أساسية لاختيار نظام HR في مصر: التوافق مع قانون العمل، حساب التأمينات، السعر، الدعم الفني بالعربي، والتكامل مع CRM والتسويق.",
+    excerpt:
+      "10 معايير لاختيار نظام HR في مصر — من التوافق مع قانون العمل 12/2003 لـ السعر والدعم الفني. مع دليل مقارنة Bayzat و ZenHR و نِظام.",
+    keyword: "اختيار نظام HR",
+    publishedAt: "2026-05-31",
+    updatedAt: "2026-05-31",
+    readMinutes: 10,
+    author: "فريق نِظام HR",
+    tags: ["اختيار نظام HR", "مقارنات", "HR", "دليل"],
+  },
+  {
+    slug: "hr-system-for-startups-egypt",
+    title: "نظام HR للشركات الناشئة في مصر — ازاي تبدأ صح من أول يوم",
+    heading: "نظام HR للشركات الناشئة — دليل المؤسس المصري",
+    description:
+      "دليل شامل لنظام HR للشركات الناشئة في مصر: 5 موظفين ببلاش، حساب التأمينات والضرايب التلقائي، ونماذج رسمية جاهزة. وفر فلوس + وقت من أول يوم.",
+    excerpt:
+      "شركتك الناشئة محتاجة HR من أول يوم. 5 موظفين ببلاش، حساب تأمينات آلي، و9 نماذج رسمية جاهزة. دليل المؤسس المصري لاختيار نظام HR.",
+    keyword: "نظام HR للشركات الناشئة",
+    publishedAt: "2026-05-31",
+    updatedAt: "2026-05-31",
+    readMinutes: 9,
+    author: "فريق نِظام HR",
+    tags: ["شركات ناشئة", "HR", "دليل", "نظام HR"],
+  },
+  {
     slug: "ai-cv-screening-egypt",
     title: "فحص السير الذاتية بالذكاء الاصطناعي — أسرع 10 مرات للـ HR",
     heading: "فحص CVs بالذكاء الاصطناعي — إزاي توفر 80% من وقت التوظيف",
@@ -390,4 +480,16 @@ export const POST_CONTENT_LOADERS: Record<
     import("@/content/blog/integrated-hr-crm-marketing-egypt"),
   "ai-cv-screening-egypt": () =>
     import("@/content/blog/ai-cv-screening-egypt"),
+  "hr-system-for-startups-egypt": () =>
+    import("@/content/blog/hr-system-for-startups-egypt"),
+  "how-to-choose-hr-system-egypt": () =>
+    import("@/content/blog/how-to-choose-hr-system-egypt"),
+  "cloud-hr-benefits-egypt": () =>
+    import("@/content/blog/cloud-hr-benefits-egypt"),
+  "hr-guide-egypt": () =>
+    import("@/content/blog/hr-guide-egypt"),
+  "payroll-system-egypt": () =>
+    import("@/content/blog/payroll-system-egypt"),
+  "attendance-system-egypt": () =>
+    import("@/content/blog/attendance-system-egypt"),
 };

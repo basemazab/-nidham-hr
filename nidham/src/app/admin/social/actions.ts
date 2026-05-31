@@ -384,7 +384,7 @@ export async function generateAndDraftPosts(formData: FormData) {
     title: result.campaign_theme,
     body: composeFullBody(v),
     source: "ai_generated",
-    ai_intent: `${goal} · ${topic.slice(0, 80)}`,
+    ai_intent: `${goal} · ${topic.slice(0, 60)} |score:${v.estimated_engagement_score}|${v.reasoning.slice(0, 80)}`,
     ai_model: "groq:openai/gpt-oss-120b",
     status: "draft",
     tags: [goal, ...(referenceUrl ? ["has_link"] : [])],

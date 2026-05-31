@@ -1,0 +1,95 @@
+<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0.8" y2="1">
+      <stop offset="0%" stop-color="#0D9488"/>
+      <stop offset="40%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#0a0f1a"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#c9a84c"/>
+      <stop offset="100%" stop-color="#e8cc6e"/>
+    </linearGradient>
+    <linearGradient id="card" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.08)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0.03)"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  
+  <!-- Decorative elements -->
+  <g opacity="0.04">
+    <circle cx="200" cy="315" r="350" fill="none" stroke="white" stroke-width="1"/>
+    <circle cx="200" cy="315" r="450" fill="none" stroke="white" stroke-width="1" stroke-dasharray="8 8"/>
+    <line x1="600" y1="0" x2="1200" y2="630" stroke="white" stroke-width="1"/>
+    <line x1="750" y1="0" x2="1200" y2="300" stroke="white" stroke-width="1"/>
+  </g>
+
+  <!-- Gold accent top line -->
+  <rect x="0" y="0" width="1200" height="4" fill="url(#gold)"/>
+
+  <!-- Left content -->
+  <g transform="translate(80, 0)">
+    <!-- N logo -->
+    <rect x="0" y="60" width="54" height="54" rx="14" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+    <text x="27" y="96" font-family="system-ui,sans-serif" font-size="28" font-weight="900" fill="white" text-anchor="middle">ن</text>
+    <text x="68" y="96" font-family="system-ui,sans-serif" font-size="20" font-weight="700" fill="rgba(255,255,255,0.7)">نِظام HR</text>
+
+    <!-- Main heading -->
+    <text x="0" y="210" font-family="system-ui,sans-serif" font-size="88" font-weight="900" fill="white">تقديم على وظيفة</text>
+    
+    <!-- Subtitle -->
+    <text x="0" y="285" font-family="system-ui,sans-serif" font-size="44" font-weight="700" fill="rgba(255,255,255,0.85)">قدم دلوقتي في دقايق</text>
+
+    <!-- Divider -->
+    <rect x="0" y="315" width="200" height="4" rx="2" fill="url(#gold)"/>
+
+    <!-- Feature badges -->
+    <g transform="translate(0, 350)">
+      <rect x="0" y="0" width="160" height="44" rx="22" fill="rgba(255,255,255,0.07)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+      <text x="80" y="28" font-family="system-ui,sans-serif" font-size="17" font-weight="700" fill="#22d3ee" text-anchor="middle">✦ CV Screening بالـ AI</text>
+      
+      <rect x="180" y="0" width="130" height="44" rx="22" fill="rgba(255,255,255,0.07)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+      <text x="245" y="28" font-family="system-ui,sans-serif" font-size="17" font-weight="700" fill="#c9a84c" text-anchor="middle">✦ تحديث فوري</text>
+      
+      <rect x="330" y="0" width="110" height="44" rx="22" fill="rgba(255,255,255,0.07)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+      <text x="385" y="28" font-family="system-ui,sans-serif" font-size="17" font-weight="700" fill="#a78bfa" text-anchor="middle">✦ بدون تسجيل</text>
+    </g>
+
+    <!-- CTA -->
+    <rect x="0" y="430" width="280" height="56" rx="28" fill="url(#gold)"/>
+    <text x="140" y="466" font-family="system-ui,sans-serif" font-size="22" font-weight="900" fill="#0a0f1a" text-anchor="middle">ابدأ التقديم ✦</text>
+  </g>
+
+  <!-- Right side decorative elements -->
+  <g transform="translate(760, 0)">
+    <!-- Document icon with checkmark -->
+    <g transform="translate(0, 140)">
+      <rect x="0" y="0" width="120" height="160" rx="12" fill="url(#card)" stroke="rgba(255,255,255,0.1)" stroke-width="1.5"/>
+      <rect x="20" y="40" width="80" height="8" rx="4" fill="rgba(255,255,255,0.3)"/>
+      <rect x="20" y="58" width="65" height="8" rx="4" fill="rgba(255,255,255,0.15)"/>
+      <rect x="20" y="80" width="80" height="8" rx="4" fill="rgba(255,255,255,0.3)"/>
+      <rect x="20" y="98" width="50" height="8" rx="4" fill="rgba(255,255,255,0.15)"/>
+      <rect x="20" y="120" width="70" height="8" rx="4" fill="rgba(255,255,255,0.3)"/>
+      <circle cx="95" cy="20" r="16" fill="#22d3ee"/>
+      <path d="M87 20 L93 27 L103 14" fill="none" stroke="#0a0f1a" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+
+    <!-- Percentage circles -->
+    <g transform="translate(340, 150)">
+      <circle cx="0" cy="0" r="50" fill="rgba(34,211,238,0.1)" stroke="#22d3ee" stroke-width="2"/>
+      <text x="0" y="-8" font-family="system-ui,sans-serif" font-size="28" font-weight="900" fill="#22d3ee" text-anchor="middle">92%</text>
+      <text x="0" y="18" font-family="system-ui,sans-serif" font-size="12" font-weight="600" fill="rgba(255,255,255,0.6)" text-anchor="middle">AI Match</text>
+    </g>
+    <g transform="translate(340, 290)">
+      <circle cx="0" cy="0" r="50" fill="rgba(201,168,76,0.1)" stroke="#c9a84c" stroke-width="2"/>
+      <text x="0" y="-8" font-family="system-ui,sans-serif" font-size="28" font-weight="900" fill="#c9a84c" text-anchor="middle">85%</text>
+      <text x="0" y="18" font-family="system-ui,sans-serif" font-size="12" font-weight="600" fill="rgba(255,255,255,0.6)" text-anchor="middle">Skills Fit</text>
+    </g>
+  </g>
+
+  <!-- Footer -->
+  <rect x="0" y="600" width="1200" height="30" fill="rgba(0,0,0,0.2)"/>
+  <text x="600" y="620" font-family="system-ui,sans-serif" font-size="14" font-weight="500" fill="rgba(255,255,255,0.4)" text-anchor="middle">nidhamhr.com — نظام توظيف ذكي</text>
+</svg>

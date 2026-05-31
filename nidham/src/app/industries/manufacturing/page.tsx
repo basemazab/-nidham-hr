@@ -16,6 +16,12 @@ export const metadata: Metadata = {
     title: "نظام HR للمصانع المصرية | نِظام HR",
     description: "إدارة عمال الإنتاج + ورديات + حضور + مرتبات في نظام واحد.",
     url: "/industries/manufacturing",
+    images: [{ url: "/api/og?title=" + encodeURIComponent("نظام HR للمصانع المصرية"), width: 1200, height: 630, alt: "نظام HR للمصانع المصرية" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "نظام HR للمصانع المصرية | نِظام HR",
+    description: "إدارة عمال الإنتاج، ورديات ثلاثية، أوفر تايم قانوني، حضور بالبصمة أو GPS.",
   },
 };
 

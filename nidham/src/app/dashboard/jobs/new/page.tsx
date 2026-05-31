@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createJob } from "../actions";
 import { AIJobDescriptionGenerator } from "@/components/ai-jd-generator";
+import { JobFormClient } from "./job-form-client";
 
 type SearchParams = Promise<{ error?: string }>;
 
@@ -250,6 +251,15 @@ export default async function NewJobPage({
                   />
                 </div>
               </div>
+            </div>
+
+            {/* AI Application Form Builder */}
+            <div className="border-t border-slate-100 pt-5">
+              <h3 className="text-sm font-bold text-slate-800 mb-1 font-cairo">📝 استمارة التقديم (أسئلة ذكية)</h3>
+              <p className="text-xs text-slate-500 mb-3 font-cairo">
+                الـ AI يولد أسئلة مخصصة حسب المسمى الوظيفي — تقدر تعدل وترتب بنفسك.
+              </p>
+              <JobFormClient />
             </div>
 
             <div>

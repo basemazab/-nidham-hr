@@ -8,6 +8,18 @@ export const metadata: Metadata = {
   description:
     "نظام HR للمحلات والـ Chains: إدارة كل فرع بـ Dashboard منفصل، حضور بالـ GPS لكل موقع، حساب العمولات للـ Sales، تقارير لكل مدير فرع.",
   alternates: { canonical: "/industries/retail" },
+  openGraph: {
+    type: "website",
+    title: "نظام HR للمحلات والريتيل في مصر | نِظام HR",
+    description: "إدارة فروع متعددة، حضور GPS لكل موقع، عمولات مبيعات، تقارير لكل فرع.",
+    url: "/industries/retail",
+    images: [{ url: "/api/og?title=" + encodeURIComponent("نظام HR للمحلات والريتيل"), width: 1200, height: 630, alt: "نظام HR للمحلات والريتيل" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "نظام HR للمحلات والريتيل في مصر | نِظام HR",
+    description: "فروع متعددة، حضور GPS، عمولات مبيعات، تقارير لكل مدير فرع.",
+  },
 };
 
 const data: IndustryPageData = {

@@ -24,9 +24,18 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "شوف Nidham | جولة في النظام",
+  title: "نظام HR مصري متكامل — إدارة موظفين، مرتبات، حضور، AI | نِظام",
   description:
-    "شوف كل ميزات Nidham بالصور — إدارة الموظفين، المرتبات، الحضور بالـ GPS، AI Agent، Mobile app، Bridge Analytics. شغّال عند 200+ موظف.",
+    "نظام HR مصري 100%: إدارة الموظفين، مرتبات متوافقة مع قانون 2026، حضور GPS + سيلفي، AI Agent بالعربي، واتساب بوت، نماذج تأمينات. شوف الجولة بالصور. جرّب مجاناً 14 يوم.",
+  alternates: { canonical: "/product" },
+  openGraph: {
+    images: [{ url: "/api/og?title=" + encodeURIComponent("نظام HR مصري متكامل — نِظام"), width: 1200, height: 630, alt: "نظام HR مصري متكامل — نِظام" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "نظام HR مصري متكامل — إدارة موظفين، مرتبات، حضور، AI",
+    description: "نظام HR مصري 100%: إدارة موظفين، مرتبات، حضور GPS، AI Agent، واتساب بوت. جرّب مجاناً 14 يوم.",
+  },
 };
 
 type Feature = {
@@ -155,11 +164,28 @@ export default function ProductPage() {
             🎯 جولة في النظام
           </div>
           <h1 className="text-4xl md:text-5xl font-black font-cairo text-slate-900 mb-3">
-            شوف Nidham بنفسك
+            نظام HR مصري متكامل — شوف بنفسك
           </h1>
           <p className="text-lg text-slate-600 font-cairo max-w-2xl mx-auto">
             6 ميزات أساسية شغّالة دلوقتي عند 200+ موظف في 2 شركة مصرية.
           </p>
+          <div className="mt-5 flex items-center justify-center gap-4 text-xs font-cairo">
+            <Link href="/pricing" className="text-slate-400 hover:text-emerald-600 transition underline underline-offset-2">
+              💰 الأسعار والباقات
+            </Link>
+            <span className="text-slate-300">·</span>
+            <Link href="/compare" className="text-slate-400 hover:text-emerald-600 transition underline underline-offset-2">
+              📊 مقارنة مع Bayzat و ZenHR
+            </Link>
+            <span className="text-slate-300">·</span>
+            <Link href="/features" className="text-slate-400 hover:text-emerald-600 transition underline underline-offset-2">
+              ⚡ كل المميزات
+            </Link>
+            <span className="text-slate-300">·</span>
+            <Link href="/why-nidham" className="text-slate-400 hover:text-emerald-600 transition underline underline-offset-2">
+              💡 ليه تختار نِظام
+            </Link>
+          </div>
         </header>
 
         {/* Feature blocks — alternating left/right layout */}

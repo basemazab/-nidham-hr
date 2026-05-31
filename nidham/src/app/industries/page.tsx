@@ -5,8 +5,20 @@ import { BlogNav, BlogFooter } from "@/components/blog-chrome";
 export const metadata: Metadata = {
   title: "نظام HR متخصص لقطاعك — صناعة، شحن، مطاعم، ريتيل | نِظام HR",
   description:
-    "نِظام HR مع تخصيصات لقطاعات السوق المصري: المصانع، شركات الشحن، المطاعم والكافيهات، ومحلات الريتيل. اختار قطاعك وشوف المميزات.",
+    "نظام HR متخصص لكل قطاع في مصر: المصانع (ورديات + أوفر تايم)، شركات الشحن (GPS + CRM)، المطاعم والكافيهات (بقشيش + ورديات)، ومحلات الريتيل (فروع متعددة + عمولات).",
   alternates: { canonical: "/industries" },
+  openGraph: {
+    type: "website",
+    title: "نظام HR متخصص لقطاعك في مصر | نِظام HR",
+    description: "نظام HR متخصص للمصانع، الشحن، المطاعم، والريتيل في مصر.",
+    url: "/industries",
+    images: [{ url: "/api/og?title=" + encodeURIComponent("نظام HR متخصص لقطاعك"), width: 1200, height: 630, alt: "نظام HR متخصص لقطاعك" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "نظام HR متخصص لقطاعك — صناعة، شحن، مطاعم، ريتيل",
+    description: "نظام HR مصري متخصص لكل قطاع: مصانع، شحن، مطاعم، ريتيل.",
+  },
 };
 
 const INDUSTRIES = [

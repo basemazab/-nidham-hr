@@ -1,4 +1,20 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "نظام CRM مصري — إدارة العملاء والمبيعات للشركات المصرية | نِظام",
+  description:
+    "نظام CRM مصري 100%: Pipeline مبيعات، إدارة العملاء المتوقعين، تفاعلات يومية، عقود وتجديدات، تقارير وتحليلات. مدمج مع HR و التسويق في نظام واحد. جرب 14 يوم مجاناً.",
+  alternates: { canonical: "/crm" },
+  openGraph: {
+    images: [{ url: "/api/og?title=" + encodeURIComponent("نظام CRM مصري — نِظام"), width: 1200, height: 630, alt: "نظام CRM مصري — نِظام" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "نظام CRM مصري | نِظام",
+    description: "CRM + HR + تسويق في نظام واحد. Pipeline، عقود، تقارير. جرب مجاناً 14 يوم.",
+  },
+};
 
 // ============================================================================
 // /crm — CRM-only landing page (for sales / shipping / software customers)
@@ -10,12 +26,6 @@ import Link from "next/link";
 // funnels into /signup?plan=crm-starter (or crm-pro) — which the signup
 // action detects and uses to auto-apply feature overrides that hide all
 // HR modules from the new tenant's dashboard.
-
-export const metadata = {
-  title: "نِظام CRM — إدارة المبيعات للشركات المصرية | Nidham",
-  description:
-    "نظام CRM عربي لإدارة العملاء والـ Pipeline ومتابعة الـ deals. مبني للشركات المصرية في الـ B2B والتجارة والخدمات. 14 يوم تجربة مجانية.",
-};
 
 export default function CrmLandingPage() {
   return (

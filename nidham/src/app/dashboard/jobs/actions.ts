@@ -37,6 +37,15 @@ function asBool(value: FormDataEntryValue | null): boolean {
   return value !== null && (value === "on" || value === "true" || value === "1");
 }
 
+function parseJson(value: FormDataEntryValue | null): unknown {
+  if (value === null || typeof value !== "string") return null;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+}
+
 function slugify(text: string): string {
   return text
     .toLowerCase()
@@ -105,6 +114,8 @@ export async function createJob(formData: FormData) {
       remote_ok: asBool(formData.get("remote_ok")),
       salary_min: asNumber(formData.get("salary_min")),
       salary_max: asNumber(formData.get("salary_max")),
+      show_salary: asBool(formData.get("show_salary")),
+      application_form: parseJson(formData.get("application_form")),
       experience_years_min: asInt(formData.get("experience_years_min")) ?? 0,
       status: asText(formData.get("status")) ?? "open",
       is_public: asBool(formData.get("is_public")),
@@ -153,6 +164,8 @@ export async function updateJob(jobId: string, formData: FormData) {
       remote_ok: asBool(formData.get("remote_ok")),
       salary_min: asNumber(formData.get("salary_min")),
       salary_max: asNumber(formData.get("salary_max")),
+      show_salary: asBool(formData.get("show_salary")),
+      application_form: parseJson(formData.get("application_form")),
       experience_years_min: asInt(formData.get("experience_years_min")) ?? 0,
       status: asText(formData.get("status")) ?? "open",
       is_public: asBool(formData.get("is_public")),
@@ -465,6 +478,9 @@ async function screenApplicationInline(applicationId: string) {
       schema: screeningSchema,
       prompt,
       temperature: 0.2,
+      providerOptions: {
+        google: { responseMimeType: "application/json" },
+      },
     });
 
     await supabase

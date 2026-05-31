@@ -12,12 +12,19 @@
 import Link from "next/link";
 import { FAQPageSchema } from "@/components/json-ld";
 
-// SEO O2: title front-loads "أسعار" + "نظام HR" — common Egyptian search.
 export const metadata = {
-  title: "أسعار نظام HR ومرتبات مصري — من 749 ج/شهر | نِظام",
+  title: "أسعار نظام HR ومرتبات مصري — من 0 ج/شهر (مجاني) | نِظام",
   description:
-    "باقات نظام HR ومرتبات مصري — Free / Starter (749 ج) / Pro (2,430 ج) / Business (5,990 ج). 14 يوم تجربة مجاناً. خصم 20% على الاشتراك السنوي.",
+    "أسعار نظام HR ومرتبات في مصر: مجاني للأبد (5 موظفين)، Starter 500 ج/شهر، Pro 1,500 ج/شهر (100 موظف)، Business 3,500 ج/شهر. 14 يوم تجربة مجانية — خصم 20% سنوي. أرخص 60-85% من Bayzat و ZenHR.",
   alternates: { canonical: "/pricing" },
+  openGraph: {
+    images: [{ url: "/api/og?title=" + encodeURIComponent("أسعار نظام HR مصري — من 0 ج للباقة المجانية"), width: 1200, height: 630, alt: "أسعار نظام HR مصري — من 0 ج للباقة المجانية" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "أسعار نظام HR ومرتبات مصري — من 0 ج/شهر | نِظام",
+    description: "4 باقات: مجاني للأبد لحد 5 موظفين، 500 ج/شهر (25 موظف)، 1,500 ج/شهر (100 موظف). جرب 14 يوم مجاناً.",
+  },
 };
 
 // FAQ schema content — populated below into JSON-LD AND rendered visually
@@ -170,36 +177,36 @@ const ENTERPRISE_FEATURES = [
 
 const FAQ = [
   {
-    q: "هل أقدر أبدأ مجاناً قبل ما أدفع؟",
-    a: "أكيد. الباقة المجانية للأبد لحد 5 موظفين. بعدها لو شركتك كبرت، ترقّى للباقة المناسبة. مفيش credit card مطلوبة في البداية.",
+    question: "هل أقدر أبدأ مجاناً قبل ما أدفع؟",
+    answer: "أكيد. الباقة المجانية للأبد لحد 5 موظفين. بعدها لو شركتك كبرت، ترقّى للباقة المناسبة. مفيش credit card مطلوبة في البداية.",
   },
   {
-    q: "هل السعر شامل ضريبة القيمة المضافة؟",
-    a: "السعر المعروض دون ضريبة. الـ VAT 14% بتنضاف على الفاتورة النهائية. لو شركتك مسجلة ضريبياً، تقدر تخصمها كـ input tax.",
+    question: "هل السعر شامل ضريبة القيمة المضافة؟",
+    answer: "السعر المعروض دون ضريبة. الـ VAT 14% بتنضاف على الفاتورة النهائية. لو شركتك مسجلة ضريبياً، تقدر تخصمها كـ input tax.",
   },
   {
-    q: "ممكن أدفع سنوياً وأخصم؟",
-    a: "أيوه — الدفع السنوي بيخصملك 20%. شركة 100 موظف على Pro: 18,000 ج/سنة بدل 18,000 ج (1,500 × 12). بتوفّر 3,600 ج بدفعة واحدة.",
+    question: "ممكن أدفع سنوياً وأخصم؟",
+    answer: "أيوه — الدفع السنوي بيخصملك 20%. شركة 100 موظف على Pro: 1,500 ج/شهر ← 1,200 ج/شهر = 14,400 ج/سنة بدل 18,000 ج. بتوفّر 3,600 ج بدفعة واحدة.",
   },
   {
-    q: "هل عندي ضمان استرداد لو ما عجبنيش؟",
-    a: "أيوه — 30 يوم ضمان استرداد كامل لأول دفعة. مفيش أسئلة، بنرجّع الفلوس + بياناتك تقدر تـ export-ها كاملة.",
+    question: "هل عندي ضمان استرداد لو ما عجبنيش؟",
+    answer: "أيوه — 30 يوم ضمان استرداد كامل لأول دفعة. مفيش أسئلة، بنرجّع الفلوس + بياناتك تقدر تـ export-ها كاملة.",
   },
   {
-    q: "البيانات بتاعتي آمنة؟ خصوصاً المرتبات؟",
-    a: "كل البيانات الحساسة (رقم قومي، حساب بنكي) مشفّرة at-rest. بنتبع قانون حماية البيانات الشخصية المصري 151/2020. عندنا 2FA، audit log بـ SHA-256 chain ضد التزوير، و backup يومي على AWS.",
+    question: "البيانات بتاعتي آمنة؟ خصوصاً المرتبات؟",
+    answer: "كل البيانات الحساسة (رقم قومي، حساب بنكي) مشفّرة at-rest. بنتبع قانون حماية البيانات الشخصية المصري 151/2020. عندنا 2FA، audit log بـ SHA-256 chain ضد التزوير، و backup يومي على AWS.",
   },
   {
-    q: "بنشتغل ZKTeco — هتقدروا تستوردوا منه؟",
-    a: "أيوه، استيراد Excel من جهاز ZKTeco مدمج بـ AI بيقرا الأعمدة العربية تلقائياً ومش بيخسر بصمة. متوسط الاستيراد: 30 ثانية لـ ملف 50 موظف لـ شهر كامل.",
+    question: "بنشتغل ZKTeco — هتقدروا تستوردوا منه؟",
+    answer: "أيوه، استيراد Excel من جهاز ZKTeco مدمج بـ AI بيقرا الأعمدة العربية تلقائياً ومش بيخسر بصمة. متوسط الاستيراد: 30 ثانية لـ ملف 50 موظف لـ شهر كامل.",
   },
   {
-    q: "في support بالعربي؟",
-    a: "أكيد. الـ support كله عربي مصري. Pro: عبر WhatsApp + Email. Business: priority WhatsApp + ساعات عمل أطول. Enterprise: dedicated account manager + SLA 4 ساعات response.",
+    question: "في support بالعربي؟",
+    answer: "أكيد. الـ support كله عربي مصري. Pro: عبر WhatsApp + Email. Business: priority WhatsApp + ساعات عمل أطول. Enterprise: dedicated account manager + SLA 4 ساعات response.",
   },
   {
-    q: "ممكن أنقل لـ نظام تاني لو قررت؟",
-    a: "أيوه — تقدر تـ export كل بياناتك كـ Excel من /api/export في أي وقت. مفيش lock-in. ده حق محفوظ بـ PDPL Article 17 (right to data portability).",
+    question: "ممكن أنقل لـ نظام تاني لو قررت؟",
+    answer: "أيوه — تقدر تـ export كل بياناتك كـ Excel من /api/export في أي وقت. مفيش lock-in. ده حق محفوظ بـ PDPL Article 17 (right to data portability).",
   },
 ];
 
@@ -210,6 +217,7 @@ export default function PricingPage() {
           Google reads this and may render expandable Q&A directly in
           search results — massive CTR boost for pricing keywords. */}
       <FAQPageSchema questions={PRICING_FAQS} />
+      <FAQPageSchema questions={FAQ} />
 
       <div className="max-w-6xl mx-auto">
         {/* Breadcrumb */}
@@ -223,7 +231,7 @@ export default function PricingPage() {
         </div>
 
         {/* Header */}
-        <header className="text-center mb-12">
+        <header className="text-center mb-6">
           <div className="inline-block px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold mb-3 font-cairo">
             💰 أسعار شفافة
           </div>
@@ -235,6 +243,19 @@ export default function PricingPage() {
             credit card في البداية، مفيش lock-in. كل باقة بـ 30 يوم ضمان
             استرداد.
           </p>
+          <div className="mt-5 flex items-center justify-center gap-4 text-xs font-cairo">
+            <Link href="/compare" className="text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition underline underline-offset-2">
+              📊 مقارنة الأسعار مع Bayzat و ZenHR
+            </Link>
+            <span className="text-slate-300">·</span>
+            <Link href="/features" className="text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition underline underline-offset-2">
+              ⚡ كل مميزات النظام
+            </Link>
+            <span className="text-slate-300">·</span>
+            <Link href="/why-nidham" className="text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition underline underline-offset-2">
+              💡 ليه نِظام أفضل من المنافسين
+            </Link>
+          </div>
         </header>
 
         {/* Beta callout */}
@@ -355,13 +376,10 @@ export default function PricingPage() {
                 className="bg-white rounded-2xl border border-slate-200 p-4 font-cairo group"
               >
                 <summary className="cursor-pointer flex items-center justify-between text-sm font-bold text-slate-800">
-                  <span>{item.q}</span>
-                  <span className="text-slate-400 group-open:rotate-180 transition">
-                    ▼
-                  </span>
-                </summary>
+                  <span>{item.question}</span>
+                  </summary>
                 <p className="mt-3 text-sm text-slate-600 leading-relaxed">
-                  {item.a}
+                  {item.answer}
                 </p>
               </details>
             ))}

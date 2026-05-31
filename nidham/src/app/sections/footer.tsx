@@ -37,10 +37,14 @@ export function Footer() {
       <div className="max-w-6xl mx-auto mt-10 pt-6 border-t border-slate-800 flex flex-col gap-4 text-xs">
         <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 font-cairo">
           <Link href="/about" className="hover:text-white transition">مين إحنا</Link><span className="text-slate-700">·</span>
+          <Link href="/features" className="hover:text-amber-300 transition">المميزات</Link><span className="text-slate-700">·</span>
+          <Link href="/why-nidham" className="hover:text-amber-300 transition">ليه نِظام</Link><span className="text-slate-700">·</span>
           <Link href="/customers" className="hover:text-white transition">عملاؤنا</Link><span className="text-slate-700">·</span>
           <Link href="/product" className="hover:text-white transition">شوف النظام</Link><span className="text-slate-700">·</span>
+          <Link href="/compare" className="hover:text-amber-300 transition">مقارنة الأنظمة</Link><span className="text-slate-700">·</span>
           <Link href="/security" className="hover:text-white transition">الأمان</Link><span className="text-slate-700">·</span>
           <Link href="/integrations" className="hover:text-white transition">التكاملات</Link><span className="text-slate-700">·</span>
+          <Link href="/industries" className="hover:text-amber-300 transition">القطاعات</Link><span className="text-slate-700">·</span>
           <Link href="/api-docs" className="hover:text-white transition">API</Link>
         </div>
         <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 font-cairo border-t border-slate-800/50 pt-3">

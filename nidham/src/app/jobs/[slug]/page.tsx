@@ -55,9 +55,25 @@ export async function generateMetadata({ params }: PageProps) {
 
   if (!job) return { title: "وظيفة — نِظام" };
   const parts = [job.title, job.department, job.location].filter(Boolean);
+  const encodedTitle = encodeURIComponent(job.title);
+  const h = await headers();
+  const origin = h.get("x-forwarded-host") || h.get("host") || "nidhamhr.com";
+  const protocol = process.env.NODE_ENV === "development" ? "http" : "https";
+  const base = `${protocol}://${origin}`;
+  const ogUrl = `${base}/api/og?title=${encodedTitle}`;
   return {
     title: `${parts.join(" · ")} — نِظام`,
     description: `قدم على وظيفة ${job.title} من خلال منصة نِظام`,
+    alternates: { canonical: `${base}/jobs/${slug}` },
+    openGraph: {
+      url: `${base}/jobs/${slug}`,
+      images: [{ url: ogUrl, width: 1200, height: 630, alt: `${job.title} — نِظام` }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${parts.join(" · ")} — نِظام`,
+      description: `قدم على وظيفة ${job.title} من خلال منصة نِظام`,
+    },
   };
 }
 
@@ -150,7 +166,7 @@ export default async function PublicJobDetailPage({ params }: PageProps) {
 
           <div className="mt-6 flex flex-wrap gap-3">
             <Link
-              href={`/jobs/${job.slug}/apply`}
+              href={`/apply/${job.slug}`}
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-brand-cyan to-brand-cyan-dark text-white font-bold shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 hover:-translate-y-0.5 transition-all font-cairo"
             >
               ✦ قدم دلوقتي

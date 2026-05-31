@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { SiteHeader } from "@/components/site-header";
 import Link from "next/link";
 import {
@@ -14,7 +15,18 @@ import {
 } from "lucide-react";
 
 export const metadata = {
-  title: "حلول المؤسسات | Enterprise",
+  title: "Enterprise — حلول HR للشركات الكبيرة 500+ موظف | نِظام",
+  description:
+    "نظام HR للشركات الكبيرة والمؤسسات: On-premise deployment، RBAC متقدم، تشفير PII، SSO/SAML، Audit Log، SLA 99.99%، Custom integrations. خوادم مصرية or On-premise — اختار انت.",
+  alternates: { canonical: "/enterprise" },
+  openGraph: {
+    images: [{ url: "/api/og?title=" + encodeURIComponent("Enterprise — نِظام للشركات الكبيرة"), width: 1200, height: 630, alt: "Enterprise — نِظام للشركات الكبيرة" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Enterprise — حلول HR للشركات الكبيرة | نِظام",
+    description: "On-premise، RBAC، SSO، SLA 99.99%. نظام HR للشركات الكبيرة في مصر.",
+  },
 };
 
 const FEATURES = [

@@ -195,6 +195,15 @@ export function IndustryPage({ data }: { data: IndustryPageData }) {
           >
             🚀 ابدأ مجاناً
           </Link>
+          <div className="mt-5 flex items-center justify-center gap-4 text-xs">
+            <Link href="/compare" className="text-white/60 hover:text-white transition underline underline-offset-2">📊 مقارنة مع Bayzat و ZenHR</Link>
+            <span className="text-white/20">·</span>
+            <Link href="/features" className="text-white/60 hover:text-white transition underline underline-offset-2">⚡ كل مميزات النظام</Link>
+            <span className="text-white/20">·</span>
+            <Link href="/why-nidham" className="text-white/60 hover:text-white transition underline underline-offset-2">💡 ليه نِظام</Link>
+            <span className="text-white/20">·</span>
+            <Link href="/pricing" className="text-white/60 hover:text-white transition underline underline-offset-2">💰 الأسعار</Link>
+          </div>
         </div>
       </section>
 

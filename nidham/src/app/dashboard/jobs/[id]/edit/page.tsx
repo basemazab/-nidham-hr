@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { updateJob } from "../../actions";
+import { EditJobFormClient } from "./edit-job-form-client";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -23,6 +24,8 @@ type Job = {
   experience_years_min: number | null;
   status: "draft" | "open" | "closed" | "filled" | "cancelled";
   is_public: boolean;
+  show_salary: boolean | null;
+  application_form: unknown;
 };
 
 export default async function EditJobPage({ params, searchParams }: PageProps) {
@@ -229,6 +232,18 @@ export default async function EditJobPage({ params, searchParams }: PageProps) {
                   className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:border-brand-cyan focus:ring-2 focus:ring-brand-cyan/20 outline-none transition text-slate-900 font-cairo resize-none"
                 />
               </div>
+            </div>
+
+            {/* AI Application Form Builder */}
+            <div className="border-t border-slate-100 pt-5">
+              <h3 className="text-sm font-bold text-slate-800 mb-1 font-cairo">📝 استمارة التقديم (أسئلة ذكية)</h3>
+              <p className="text-xs text-slate-500 mb-3 font-cairo">
+                الـ AI يولد أسئلة مخصصة حسب المسمى الوظيفي — تقدر تعدل وترتب بنفسك.
+              </p>
+              <EditJobFormClient
+                initialQuestions={(Array.isArray(job.application_form) ? job.application_form : []) as any}
+                initialShowSalary={job.show_salary ?? false}
+              />
             </div>
 
             <div>

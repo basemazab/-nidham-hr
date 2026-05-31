@@ -22,12 +22,22 @@
 //   - Add LinkedIn URL when he creates a professional profile
 //   - Edit the personal-anecdote bullets if any feel off
 
+import type { Metadata } from "next";
 import Link from "next/link";
 
-export const metadata = {
-  title: "مين إحنا | نِظام",
+export const metadata: Metadata = {
+  title: "عن نِظام HR — فريق مصري بيبني أفضل نظام HR للشركات المصرية",
   description:
-    "نِظام مش startup عشوائي — اتبنى من HR Manager (HR BASEM AZAB) عاش نفس مشاكل المرتبات والتأمينات اللي بتقابلك. القصة، الفريق، ليه اتبنت Nidham.",
+    "نِظام HR مبني في دمياط، مصر — على إيد فريق HR وخبراء برمجيات مصريين. مهمتنا: نظام واحد يجمّع HR + Payroll + CRM + AI للشركات المصرية. متوافق مع قانون العمل 12/2003.",
+  alternates: { canonical: "/about" },
+  openGraph: {
+    images: [{ url: "/api/og?title=" + encodeURIComponent("عن نِظام HR — فريق مصري"), width: 1200, height: 630, alt: "عن نِظام HR — فريق مصري" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "عن نِظام HR | الفريق المصري",
+    description: "نظام HR مبني في دمياط، مصر — على إيد فريق HR وخبراء برمجيات مصريين.",
+  },
 };
 
 export default function AboutPage() {

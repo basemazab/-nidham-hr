@@ -23,9 +23,18 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "عملاؤنا | نِظام",
+  title: "عملاء نِظام HR — شركات مصرية بتستخدم النظام | تجارب حقيقية",
   description:
-    "شركات حقيقية بتستخدم Nidham. مجموعة الاتحاد للإنشاءات المعدنية + المصرية الألمانية للأبواب WPC. أكثر من 200 موظف بـ توفير 14,000+ ج/شهر.",
+    "تجارب عملاء نِظام HR في مصر: مجموعة الاتحاد للإنشاءات المعدنية (200+ موظف) والمصرية الألمانية للأبواب WPC. توفير 90% وقت مرتبات وصفر غرامات تأمينات. شوف النتائج الحقيقية.",
+  alternates: { canonical: "/customers" },
+  openGraph: {
+    images: [{ url: "/api/og?title=" + encodeURIComponent("عملاء نِظام HR — شركات مصرية حقيقية"), width: 1200, height: 630, alt: "عملاء نِظام HR — شركات مصرية حقيقية" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "عملاء نِظام HR — شركات مصرية بتستخدم النظام",
+    description: "200+ موظف، توفير 90% وقت مرتبات، صفر غرامات تأمينات. تجارب حقيقية من شركات مصرية.",
+  },
 };
 
 type CaseStudy = {
@@ -283,7 +292,20 @@ export default function CustomersPage() {
           </div>
         </section>
 
-        <footer className="mt-12 text-center">
+        {/* Internal links */}
+        <section className="mt-8 mb-4 text-center">
+          <div className="flex items-center justify-center gap-4 text-xs font-cairo">
+            <Link href="/compare" className="text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition underline underline-offset-2">📊 مقارنة مع Bayzat و ZenHR</Link>
+            <span className="text-slate-300">·</span>
+            <Link href="/features" className="text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition underline underline-offset-2">⚡ كل مميزات النظام</Link>
+            <span className="text-slate-300">·</span>
+            <Link href="/why-nidham" className="text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition underline underline-offset-2">💡 ليه نِظام أفضل من المنافسين</Link>
+            <span className="text-slate-300">·</span>
+            <Link href="/pricing" className="text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition underline underline-offset-2">💰 الأسعار والباقات</Link>
+          </div>
+        </section>
+
+        <footer className="mt-4 text-center">
           <p className="text-xs text-slate-500 font-cairo">
             Nidham · بُني في دمياط، مصر · 2026
           </p>

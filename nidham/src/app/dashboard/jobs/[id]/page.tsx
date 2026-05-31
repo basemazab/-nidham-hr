@@ -14,6 +14,7 @@ import {
 import { CopyButton } from "@/components/copy-button";
 import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
 import { AISourcingPanel } from "@/components/ai-sourcing-panel";
+import { SharePanel } from "@/components/jobs/share-panel";
 import { headers } from "next/headers";
 
 type PageProps = {
@@ -110,7 +111,7 @@ export default async function JobDetailPage({ params }: PageProps) {
     const h = await headers();
     const host = h.get("host") ?? "";
     const proto = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
-    publicUrl = `${proto}://${host}/jobs/${job.slug}`;
+    publicUrl = `${proto}://${host}/apply/${job.slug}`;
   }
 
   // Funnel stats
@@ -223,6 +224,22 @@ export default async function JobDetailPage({ params }: PageProps) {
             />
           </div>
         )}
+
+        {/* Share panel */}
+        <div className="mb-6">
+          <SharePanel
+            jobId={job.id}
+            jobTitle={job.title}
+            department={job.department ?? undefined}
+            location={job.location ?? undefined}
+            jobType={job.job_type}
+            salaryMin={job.salary_min}
+            salaryMax={job.salary_max}
+            description={job.description ?? undefined}
+            requirements={job.requirements ?? undefined}
+            publicUrl={publicUrl}
+          />
+        </div>
 
         {/* Funnel cards */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">

@@ -9,12 +9,22 @@
 // (yet) — the WhatsApp deeplink is faster + more familiar for Egyptian
 // SMB owners, and form spam from cold leads is a net loss.
 
+import type { Metadata } from "next";
 import Link from "next/link";
 
-export const metadata = {
-  title: "تواصل معانا | نِظام",
+export const metadata: Metadata = {
+  title: "تواصل مع نِظام HR — واتساب، إيميل، أو نموذج الاتصال",
   description:
-    "كل طرق التواصل مع فريق Nidham — واتساب، إيميل، عنوان المكتب، وساعات العمل.",
+    "تواصل مع فريق نِظام HR: واتساب 0105 535 6622، إيميل nidhamhr@proton.me، أو من خلال نموذج الاتصال. رد في دقايق على واتساب.",
+  alternates: { canonical: "/contact" },
+  openGraph: {
+    images: [{ url: "/api/og?title=" + encodeURIComponent("تواصل مع نِظام HR"), width: 1200, height: 630, alt: "تواصل مع نِظام HR" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "تواصل مع نِظام HR",
+    description: "واتساب، إيميل، أو نموذج الاتصال. فريق نِظام يرد في دقايق.",
+  },
 };
 
 export default function ContactPage() {
