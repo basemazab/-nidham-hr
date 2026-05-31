@@ -1,9 +1,13 @@
 "use client";
 
-import { useChat } from "@ai-sdk/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { MessageCircle, X, Send, Loader } from "lucide-react";
+
+interface Message {
+  role: "user" | "assistant";
+  content: string;
+}
 
 /**
  * HRAIAssistant — مساعد HR ذكي عائم
@@ -14,18 +18,9 @@ import { MessageCircle, X, Send, Loader } from "lucide-react";
 export function HRAIAssistant() {
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
-    api: "/api/ai/hr-assistant",
-    system: `أنت مساعد HR ذكي متخصص في نظام إدارة الموارد البشرية. 
-    تساعد المديرين في:
-    - الحصول على معلومات سريعة عن الموظفين
-    - حساب الرواتب والتأمينات
-    - إدارة الإجازات والغيابات
-    - تقارير الأداء
-    - الامتثال لقانون العمل المصري
-    
-    كن مختصراً وعملياً في الإجابات. استخدم اللغة العربية بشكل احترافي.`,
-  });
+  const [userInput, setUserInput] = useState("");
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -33,9 +28,51 @@ export function HRAIAssistant() {
 
   if (!mounted) return null;
 
-  const handleSendMessage = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSendMessage = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    handleSubmit(e);
+    if (!userInput.trim() || isLoading) return;
+
+    const userMessage: Message = {
+      role: "user",
+      content: userInput,
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    setUserInput("");
+    setIsLoading(true);
+
+    try {
+      const response = await fetch("/api/ai/hr-assistant", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          messages: [...messages, userMessage],
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to get response");
+      }
+
+      const data = await response.json();
+      const assistantMessage: Message = {
+        role: "assistant",
+        content: data.content || "عذراً، لم أتمكن من الإجابة على سؤالك.",
+      };
+
+      setMessages((prev) => [...prev, assistantMessage]);
+    } catch (error) {
+      console.error("Error:", error);
+      const errorMessage: Message = {
+        role: "assistant",
+        content: "حدث خطأ أثناء معالجة طلبك. يرجى المحاولة مرة أخرى.",
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -120,15 +157,15 @@ export function HRAIAssistant() {
           <form onSubmit={handleSendMessage} className="border-t border-border-soft p-3 flex gap-2">
             <input
               type="text"
-              value={input}
-              onChange={handleInputChange}
+              value={userInput}
+              onChange={(e) => setUserInput(e.target.value)}
               placeholder="اكتب سؤالك..."
               className="flex-1 rounded-lg border border-border-soft bg-surface dark:bg-slate-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan"
               disabled={isLoading}
             />
             <button
               type="submit"
-              disabled={isLoading || !input.trim()}
+              disabled={isLoading || !userInput.trim()}
               className="bg-brand-cyan text-white rounded-lg p-2 hover:bg-brand-cyan-dark disabled:opacity-50 transition"
             >
               <Send className="w-4 h-4" />

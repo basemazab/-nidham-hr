@@ -160,4 +160,129 @@ export const queryOptimizations = {
   },
 
   /**
-   * للإجازات — اختيار الحقول الأساسية\n   */\n  leaveSelect: {\n    id: true,\n    employeeId: true,\n    type: true,\n    startDate: true,\n    endDate: true,\n    status: true,\n    reason: true,\n  },\n};\n\n// ============================================================================\n// Response Compression\n// ============================================================================\n\n/**\n * shouldCompress — التحقق من ما إذا كان يجب ضغط الاستجابة\n */\nexport function shouldCompress(contentLength: number): boolean {\n  // ضغط الاستجابات الأكبر من 1KB\n  return contentLength > 1024;\n}\n\n// ============================================================================\n// Rate Limiting\n// ============================================================================\n\ninterface RateLimitEntry {\n  count: number;\n  resetTime: number;\n}\n\nconst rateLimitStore = new Map<string, RateLimitEntry>();\n\n/**\n * checkRateLimit — التحقق من حد المعدل\n */\nexport function checkRateLimit(\n  key: string,\n  maxRequests: number = 100,\n  windowSeconds: number = 60\n): { allowed: boolean; remaining: number; resetTime: number } {\n  const now = Date.now();\n  const entry = rateLimitStore.get(key);\n\n  if (!entry || now > entry.resetTime) {\n    // نافذة جديدة\n    const newEntry = {\n      count: 1,\n      resetTime: now + windowSeconds * 1000,\n    };\n    rateLimitStore.set(key, newEntry);\n    return {\n      allowed: true,\n      remaining: maxRequests - 1,\n      resetTime: newEntry.resetTime,\n    };\n  }\n\n  if (entry.count < maxRequests) {\n    entry.count++;\n    return {\n      allowed: true,\n      remaining: maxRequests - entry.count,\n      resetTime: entry.resetTime,\n    };\n  }\n\n  return {\n    allowed: false,\n    remaining: 0,\n    resetTime: entry.resetTime,\n  };\n}\n\n// ============================================================================\n// Database Query Caching\n// ============================================================================\n\n/**\n * cachedQuery — تنفيذ استعلام مع caching\n */\nexport async function cachedQuery<T>(\n  key: string,\n  queryFn: () => Promise<T>,\n  ttlSeconds: number = 300\n): Promise<T> {\n  // التحقق من الذاكرة المؤقتة\n  const cached = getCachedData<T>(key);\n  if (cached) {\n    return cached;\n  }\n\n  // تنفيذ الاستعلام\n  const data = await queryFn();\n\n  // تخزين النتيجة\n  setCachedData(key, data, ttlSeconds);\n\n  return data;\n}\n\n// ============================================================================\n// Batch Operations\n// ============================================================================\n\n/**\n * batchProcess — معالجة دفعية للعمليات\n */\nexport async function batchProcess<T, R>(\n  items: T[],\n  processFn: (item: T) => Promise<R>,\n  batchSize: number = 10\n): Promise<R[]> {\n  const results: R[] = [];\n\n  for (let i = 0; i < items.length; i += batchSize) {\n    const batch = items.slice(i, i + batchSize);\n    const batchResults = await Promise.all(batch.map(processFn));\n    results.push(...batchResults);\n  }\n\n  return results;\n}\n
+   * للإجازات — اختيار الحقول الأساسية
+   */
+  leaveSelect: {
+    id: true,
+    employeeId: true,
+    type: true,
+    startDate: true,
+    endDate: true,
+    status: true,
+    reason: true,
+  },
+};
+
+// ============================================================================
+// Response Compression
+// ============================================================================
+
+/**
+ * shouldCompress — التحقق من ما إذا كان يجب ضغط الاستجابة
+ */
+export function shouldCompress(contentLength: number): boolean {
+  // ضغط الاستجابات الأكبر من 1KB
+  return contentLength > 1024;
+}
+
+// ============================================================================
+// Rate Limiting
+// ============================================================================
+
+interface RateLimitEntry {
+  count: number;
+  resetTime: number;
+}
+
+const rateLimitStore = new Map<string, RateLimitEntry>();
+
+/**
+ * checkRateLimit — التحقق من حد المعدل
+ */
+export function checkRateLimit(
+  key: string,
+  maxRequests: number = 100,
+  windowSeconds: number = 60
+): { allowed: boolean; remaining: number; resetTime: number } {
+  const now = Date.now();
+  const entry = rateLimitStore.get(key);
+
+  if (!entry || now > entry.resetTime) {
+    // نافذة جديدة
+    const newEntry = {
+      count: 1,
+      resetTime: now + windowSeconds * 1000,
+    };
+    rateLimitStore.set(key, newEntry);
+    return {
+      allowed: true,
+      remaining: maxRequests - 1,
+      resetTime: newEntry.resetTime,
+    };
+  }
+
+  if (entry.count < maxRequests) {
+    entry.count++;
+    return {
+      allowed: true,
+      remaining: maxRequests - entry.count,
+      resetTime: entry.resetTime,
+    };
+  }
+
+  return {
+    allowed: false,
+    remaining: 0,
+    resetTime: entry.resetTime,
+  };
+}
+
+// ============================================================================
+// Database Query Caching
+// ============================================================================
+
+/**
+ * cachedQuery — تنفيذ استعلام مع caching
+ */
+export async function cachedQuery<T>(
+  key: string,
+  queryFn: () => Promise<T>,
+  ttlSeconds: number = 300
+): Promise<T> {
+  // التحقق من الذاكرة المؤقتة
+  const cached = getCachedData<T>(key);
+  if (cached) {
+    return cached;
+  }
+
+  // تنفيذ الاستعلام
+  const data = await queryFn();
+
+  // تخزين النتيجة
+  setCachedData(key, data, ttlSeconds);
+
+  return data;
+}
+
+// ============================================================================
+// Batch Operations
+// ============================================================================
+
+/**
+ * batchProcess — معالجة دفعية للعمليات
+ */
+export async function batchProcess<T, R>(
+  items: T[],
+  processFn: (item: T) => Promise<R>,
+  batchSize: number = 10
+): Promise<R[]> {
+  const results: R[] = [];
+
+  for (let i = 0; i < items.length; i += batchSize) {
+    const batch = items.slice(i, i + batchSize);
+    const batchResults = await Promise.all(batch.map(processFn));
+    results.push(...batchResults);
+  }
+
+  return results;
+}
