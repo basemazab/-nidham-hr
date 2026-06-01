@@ -1,7 +1,6 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { MessageCircle, X, Send, Loader } from "lucide-react";
 
 interface Message {
@@ -28,6 +27,15 @@ export function HRAIAssistant() {
 
   if (!mounted) return null;
 
+  const msgEndRef = useRef<HTMLDivElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    msgEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  useEffect(() => () => abortRef.current?.abort(), []);
+
   const handleSendMessage = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!userInput.trim() || isLoading) return;
@@ -41,30 +49,29 @@ export function HRAIAssistant() {
     setUserInput("");
     setIsLoading(true);
 
+    abortRef.current?.abort();
+    abortRef.current = new AbortController();
+
     try {
       const response = await fetch("/api/ai/hr-assistant", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: [...messages, userMessage],
         }),
+        signal: abortRef.current.signal,
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to get response");
-      }
+      if (!response.ok) throw new Error("Failed to get response");
 
       const data = await response.json();
       const assistantMessage: Message = {
         role: "assistant",
         content: data.content || "عذراً، لم أتمكن من الإجابة على سؤالك.",
       };
-
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
-      console.error("Error:", error);
+      if (error instanceof DOMException && error.name === "AbortError") return;
       const errorMessage: Message = {
         role: "assistant",
         content: "حدث خطأ أثناء معالجة طلبك. يرجى المحاولة مرة أخرى.",
@@ -76,13 +83,11 @@ export function HRAIAssistant() {
   };
 
   return (
-    <AnimatePresence>
+    <>
       {/* Floating Button */}
-      <motion.button
+      <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-40 rounded-full bg-gradient-to-r from-brand-cyan to-brand-cyan-dark text-white shadow-lg hover:shadow-xl transition-shadow"
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.95 }}
+        className="fixed bottom-6 right-6 z-40 rounded-full bg-gradient-to-r from-brand-cyan to-brand-cyan-dark text-white shadow-lg hover:shadow-xl hover:scale-110 active:scale-95 transition-all duration-200"
         aria-label="فتح مساعد HR"
       >
         {isOpen ? (
@@ -90,16 +95,13 @@ export function HRAIAssistant() {
         ) : (
           <MessageCircle className="w-6 h-6 m-4" />
         )}
-      </motion.button>
+      </button>
 
       {/* Chat Window */}
       {isOpen && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          transition={{ duration: 0.2 }}
-          className="fixed bottom-24 right-6 z-40 w-96 max-h-96 bg-surface dark:bg-slate-900 rounded-2xl shadow-2xl border border-border-soft flex flex-col overflow-hidden"
+        <div
+          className="fixed bottom-24 right-6 z-40 w-96 max-h-96 bg-surface dark:bg-slate-900 rounded-2xl shadow-2xl border border-border-soft flex flex-col overflow-hidden animate-fade-in-up"
+          style={{ animationDuration: "200ms" }}
         >
           {/* Header */}
           <div className="bg-gradient-to-r from-brand-cyan to-brand-cyan-dark text-white p-4">
@@ -122,11 +124,10 @@ export function HRAIAssistant() {
               </div>
             ) : (
               messages.map((msg, idx) => (
-                <motion.div
+                <div
                   key={idx}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                  className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} animate-fade-in-up`}
+                  style={{ animationDelay: `${idx * 50}ms`, animationDuration: "200ms" }}
                 >
                   <div
                     className={`max-w-xs rounded-lg px-3 py-2 text-sm ${
@@ -137,20 +138,17 @@ export function HRAIAssistant() {
                   >
                     {msg.content}
                   </div>
-                </motion.div>
+                </div>
               ))
             )}
             {isLoading && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="flex justify-start"
-              >
+              <div className="flex justify-start animate-fade-in">
                 <div className="bg-surface-muted dark:bg-slate-800 rounded-lg px-3 py-2 rounded-bl-none">
                   <Loader className="w-4 h-4 animate-spin text-brand-cyan" />
                 </div>
-              </motion.div>
+              </div>
             )}
+            <div ref={msgEndRef} />
           </div>
 
           {/* Input */}
@@ -171,9 +169,9 @@ export function HRAIAssistant() {
               <Send className="w-4 h-4" />
             </button>
           </form>
-        </motion.div>
+        </div>
       )}
-    </AnimatePresence>
+    </>
   );
 }
 

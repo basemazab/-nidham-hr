@@ -87,7 +87,7 @@ export function generateSitemap(posts: Array<{
   publishedDate: string;
   modifiedDate?: string;
 }>) {
-  const baseUrl = "https://nidham-hr.vercel.app";
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://nidhamhr.com";
 
   const urls = [
     {
@@ -135,7 +135,7 @@ Disallow: /admin
 Disallow: /api
 Disallow: /private
 
-Sitemap: https://nidham-hr.vercel.app/sitemap.xml
+Sitemap: https://nidhamhr.com/sitemap.xml
 
 User-agent: Googlebot
 Allow: /
@@ -225,7 +225,8 @@ export function generateBlogPostSEO({
   category: string;
   tags: string[];
 }) {
-  const url = `https://nidham-hr.vercel.app/blog/${slug}`;
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://nidhamhr.com";
+  const url = `${baseUrl}/blog/${slug}`;
   const keywords = [...tags, category, ...blogKeywords.hr];
 
   return {
@@ -252,7 +253,7 @@ export function generateBlogPostSEO({
       datePublished: publishedDate,
       dateModified: modifiedDate || publishedDate,
       url: url,
-      articleBody: content,
+      articleBody: content.length > 500 ? content.slice(0, 500) + "..." : content,
       keywords: keywords.join(", "),
       inLanguage: "ar",
     },
@@ -263,7 +264,7 @@ export function generateBlogPostSEO({
  * generateCanonicalURL — توليد Canonical URL
  */
 export function generateCanonicalURL(path: string): string {
-  const baseUrl = "https://nidham-hr.vercel.app";
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://nidhamhr.com";
   return `${baseUrl}${path}`;
 }
 
@@ -271,7 +272,7 @@ export function generateCanonicalURL(path: string): string {
  * generateAlternateLanguageLinks — توليد روابط اللغات البديلة
  */
 export function generateAlternateLanguageLinks(slug: string) {
-  const baseUrl = "https://nidham-hr.vercel.app";
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://nidhamhr.com";
   return {
     ar: `${baseUrl}/ar/blog/${slug}`,
     en: `${baseUrl}/en/blog/${slug}`,

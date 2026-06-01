@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Tajawal, Cairo, Reem_Kufi } from "next/font/google";
-import { Suspense } from "react";
+import { Suspense, type ReactNode } from "react";
 import { Toaster } from "sonner";
 import "./globals.css";
 import { UrlToasts } from "@/components/url-toasts";
@@ -186,7 +186,9 @@ export default function RootLayout({
         <WebsiteSchema />
         <ThemeProvider>
           <AppProviders>
-          {children}
+          <Suspense fallback={null}>
+            {children}
+          </Suspense>
           {/* Sonner toaster — top-center so RTL feels natural. richColors
               gives success / error a subtle tint instead of the plain
               dark default. theme="system" lets sonner pick light/dark

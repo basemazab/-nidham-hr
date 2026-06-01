@@ -19,6 +19,7 @@ interface CacheEntry<T> {
 }
 
 const apiCache = new Map<string, CacheEntry<any>>();
+const MAX_CACHE_SIZE = 500;
 
 /**
  * getCachedData — الحصول على البيانات المخزنة مؤقتاً
@@ -45,6 +46,10 @@ export function setCachedData<T>(
   data: T,
   ttlSeconds: number = 300
 ): void {
+  if (apiCache.size >= MAX_CACHE_SIZE) {
+    const oldest = apiCache.keys().next().value;
+    if (oldest !== undefined) apiCache.delete(oldest);
+  }
   apiCache.set(key, {
     data,
     timestamp: Date.now(),

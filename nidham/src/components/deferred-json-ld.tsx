@@ -8,7 +8,12 @@ export function DeferredJsonLd({ schema }: { schema: object }) {
     if (injected.current) return;
     injected.current = true;
 
+    let cancelled = false;
+    let idleId: number | undefined;
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
     const inject = () => {
+      if (cancelled) return;
       const script = document.createElement("script");
       script.type = "application/ld+json";
       script.textContent = JSON.stringify(schema);
@@ -16,10 +21,16 @@ export function DeferredJsonLd({ schema }: { schema: object }) {
     };
 
     if ("requestIdleCallback" in window) {
-      requestIdleCallback(inject, { timeout: 3000 });
+      idleId = requestIdleCallback(inject, { timeout: 2000 });
     } else {
-      setTimeout(inject, 3000);
+      timeoutId = setTimeout(inject, 2000);
     }
+
+    return () => {
+      cancelled = true;
+      if (idleId !== undefined) cancelIdleCallback(idleId);
+      if (timeoutId !== undefined) clearTimeout(timeoutId);
+    };
   }, [schema]);
 
   return null;

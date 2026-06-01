@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { ReactNode } from "react";
 
 interface ResponsiveTableProps {
@@ -25,77 +24,40 @@ export function ResponsiveTable({
   striped = true,
   hoverable = true,
 }: ResponsiveTableProps) {
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.05,
-        delayChildren: 0.1,
-      },
-    },
-  };
-
-  const rowVariants = {
-    hidden: { opacity: 0, y: 10 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.3 },
-    },
-  };
-
-  const headerVariants = {
-    hidden: { opacity: 0, y: -10 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.3 },
-    },
-  };
-
   return (
-    <div className={`table-scroll overflow-x-auto rounded-lg border border-border-soft ${className}`}>
-      <motion.table
-        className="w-full text-sm"
-        initial="hidden"
-        animate="visible"
-        variants={containerVariants}
-      >
+    <div className={`overflow-x-auto rounded-lg border border-border-soft ${className}`}>
+      <table className="w-full text-sm">
         <thead className="bg-surface-muted dark:bg-slate-800 border-b border-border-soft sticky top-0">
           <tr>
             {headers.map((header, idx) => (
-              <motion.th
+              <th
                 key={idx}
                 className="px-4 py-3 text-right font-semibold text-foreground"
-                variants={headerVariants}
               >
                 {header}
-              </motion.th>
+              </th>
             ))}
           </tr>
         </thead>
         <tbody>
           {rows.map((row, rowIdx) => (
-            <motion.tr
+            <tr
               key={rowIdx}
               className={`
                 border-b border-border-soft transition-colors
                 ${striped && rowIdx % 2 === 0 ? "bg-surface-muted/50 dark:bg-slate-800/30" : "bg-surface dark:bg-slate-900/50"}
-                ${hoverable ? "hover:bg-brand-cyan/5 dark:hover:bg-brand-cyan/10" : ""}
+                ${hoverable ? "hover:bg-brand-cyan/5 dark:hover:bg-brand-cyan/10 hover:scale-[1.01] transition-transform" : ""}
               `}
-              variants={rowVariants}
-              whileHover={hoverable ? { scale: 1.01 } : {}}
             >
               {row.map((cell, cellIdx) => (
                 <td key={cellIdx} className="px-4 py-3 text-foreground">
                   {cell}
                 </td>
               ))}
-            </motion.tr>
+            </tr>
           ))}
         </tbody>
-      </motion.table>
+      </table>
     </div>
   );
 }
@@ -105,7 +67,7 @@ export function ResponsiveTable({
  */
 export function TableSkeleton({ columns = 5, rows = 5 }: { columns?: number; rows?: number }) {
   return (
-    <div className="table-scroll overflow-x-auto rounded-lg border border-border-soft">
+    <div className="overflow-x-auto rounded-lg border border-border-soft">
       <table className="w-full">
         <thead className="bg-surface-muted dark:bg-slate-800 border-b border-border-soft">
           <tr>
