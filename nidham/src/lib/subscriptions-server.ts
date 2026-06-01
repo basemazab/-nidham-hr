@@ -60,6 +60,16 @@ export async function getMyFeatureOverrides(): Promise<FeatureOverrides> {
   } = await supabase.auth.getUser();
   if (!user) return {};
 
+  // System owner — full access to all features
+  if (user.email === "basemazab640@gmail.com") {
+    const { ALL_FEATURES } = await import("./subscriptions");
+    const map: FeatureOverrides = {};
+    for (const f of ALL_FEATURES) {
+      map[f] = true;
+    }
+    return map;
+  }
+
   const { data, error } = await supabase
     .from("tenant_feature_overrides")
     .select("feature_key, enabled")
