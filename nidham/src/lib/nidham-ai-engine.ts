@@ -1,5 +1,5 @@
 // ============================================================================
-// Nidham AI Predictive Engine — Core Logic
+// Nidham Strategic AI Engine — Core Logic (V2)
 // ============================================================================
 
 import { EmployeeSignals, RetentionInsight } from "./retention";
@@ -15,53 +15,59 @@ export interface ReplacementCostResult {
 }
 
 export interface LegalComplianceUpdate {
-  type: "minimum_wage" | "tax_law";
+  type: "minimum_wage" | "tax_law" | "labor_law_change" | "saudization_nitaqat";
   title: string;
-  currentValue: number;
-  newValue: number;
+  currentValue: string | number;
+  newValue: string | number;
   effectiveDate: string;
   description: string;
   impactedEmployeesCount: number;
+  strategicAdvice: string;
+}
+
+export interface ExpansionSimulationResult {
+  scenarioName: string;
+  totalNewHires: number;
+  estimatedMonthlyPayrollIncrease: number;
+  estimatedAnnualCost: number;
+  socialInsuranceImpact: number;
+  taxImpact: number;
+  onboardingComplexity: "Low" | "Medium" | "High";
+  recommendations: string[];
 }
 
 /**
- * 1. Churn Prediction (Nidham AI Predictive Engine)
- * Enhances the basic flight risk logic with a more granular probability score.
+ * 1. Advanced Churn Prediction
+ * Uses weighted signals to predict attrition risk.
  */
 export function predictEmployeeChurn(s: EmployeeSignals): RetentionInsight | null {
-  // Logic: Combining attendance trends, tenure, and salary staleness
   const signals: string[] = [];
   let riskProbability = 0;
 
-  // Signal: Attendance Decline
   if (s.attendanceRateDelta < -0.05) {
     const severity = Math.abs(s.attendanceRateDelta) * 100;
-    signals.push(`تراجع في نسبة الحضور بمعدل ${severity.toFixed(1)}%`);
-    riskProbability += severity * 2; // Weight: 2x delta
+    signals.push(`تراجع ملحوظ في الحضور (${severity.toFixed(1)}%) قد يشير لعدم الرضا.`);
+    riskProbability += severity * 2.5;
   }
 
-  // Signal: High Tardiness
   if (s.tardinessMinutesAvgPerDay > 30) {
-    signals.push(`متوسط تأخير يومي ${Math.round(s.tardinessMinutesAvgPerDay)} دقيقة`);
-    riskProbability += 15;
-  }
-
-  // Signal: Leave Spikes
-  if (s.recentLeaveDays > 3) {
-    signals.push(`زيادة في الإجازات المفاجئة (${s.recentLeaveDays} أيام مؤخراً)`);
-    riskProbability += 10;
-  }
-
-  // Signal: Salary Staleness
-  if (s.monthsSinceLastRaise > 18) {
-    signals.push(`لم يحصل على زيادة منذ ${Math.floor(s.monthsSinceLastRaise)} شهر`);
+    signals.push(`نمط تأخير متكرر (${Math.round(s.tardinessMinutesAvgPerDay)} د/يوم).`);
     riskProbability += 20;
   }
 
-  // Normalize probability to 0-100
-  riskProbability = Math.min(95, riskProbability);
+  if (s.recentLeaveDays > 4) {
+    signals.push(`استهلاك مكثف للإجازات مؤخراً (${s.recentLeaveDays} أيام).`);
+    riskProbability += 15;
+  }
 
-  if (riskProbability < 40) return null;
+  if (s.monthsSinceLastRaise > 12) {
+    signals.push(`تجاوز 12 شهر بدون مراجعة للراتب.`);
+    riskProbability += 25;
+  }
+
+  riskProbability = Math.min(98, riskProbability);
+
+  if (riskProbability < 45) return null;
 
   return {
     employeeId: s.id,
@@ -71,9 +77,9 @@ export function predictEmployeeChurn(s: EmployeeSignals): RetentionInsight | nul
     insightType: "flight_risk",
     score: riskProbability,
     reasoning: [
-      `احتمالية ترك العمل: ${Math.round(riskProbability)}%`,
+      `درجة الخطورة: ${Math.round(riskProbability)}%`,
       ...signals,
-      "توصية: يفضل إجراء مقابلة استباقية لفهم أسباب التراجع."
+      "الإجراء المقترح: جلسة استماع خاصة (Stay Interview) لتقييم الوضع."
     ],
     suggestedAmount: null,
     metadata: {
@@ -85,20 +91,12 @@ export function predictEmployeeChurn(s: EmployeeSignals): RetentionInsight | nul
 
 /**
  * 2. Replacement Cost ROI
- * Calculates the financial impact of losing an employee.
  */
 export function calculateReplacementCost(s: EmployeeSignals): ReplacementCostResult {
   const monthlySalary = s.basicSalary;
-  
-  // Egyptian Market Estimates:
-  // Recruitment: ~1.5x monthly salary (Ads, HR time, interviews)
-  const recruitmentCost = monthlySalary * 1.5;
-  
-  // Training: ~1x monthly salary (Onboarding, shadow period)
-  const trainingCost = monthlySalary * 1.0;
-  
-  // Productivity Loss: ~2x monthly salary (Gap period + new hire learning curve)
-  const productivityLoss = monthlySalary * 2.0;
+  const recruitmentCost = monthlySalary * 1.8; // Updated for 2026 market rates
+  const trainingCost = monthlySalary * 1.2;
+  const productivityLoss = monthlySalary * 2.5;
   
   const totalCost = recruitmentCost + trainingCost + productivityLoss;
 
@@ -110,49 +108,94 @@ export function calculateReplacementCost(s: EmployeeSignals): ReplacementCostRes
     totalCost,
     currency: "EGP",
     reasoning: [
-      `تكلفة التوظيف البديل: ${recruitmentCost.toLocaleString("ar-EG")} ج (إعلانات ومقابلات)`,
-      `تكلفة التدريب والتهيئة: ${trainingCost.toLocaleString("ar-EG")} ج`,
-      `خسارة الإنتاجية المتوقعة: ${productivityLoss.toLocaleString("ar-EG")} ج (فترة الفراغ ومنحنى التعلم)`
+      `التوظيف: ${recruitmentCost.toLocaleString("ar-EG")} ج (إعلانات، تصفية، مقابلات)`,
+      `التدريب: ${trainingCost.toLocaleString("ar-EG")} ج (وقت المشرفين والمواد التعليمية)`,
+      `فقدان الإنتاجية: ${productivityLoss.toLocaleString("ar-EG")} ج (فترة التعلم)`
     ]
   };
 }
 
 /**
- * 3. Auto-Compliance Auditor (Egypt 2026)
- * Checks for upcoming legal changes and their impact.
+ * 3. Strategic Workforce Expansion Simulator
+ * Simulates the cost of hiring new talent in specific regions/roles.
  */
-export const EGYPT_2026_LAWS = {
-  MINIMUM_WAGE: 8000, // EGP (Effective July 2026)
-  PERSONAL_EXEMPTION: 20000, // EGP (Annual)
-  EFFECTIVE_DATE: "2026-07-01"
+export function simulateExpansion(
+  roleType: "tech" | "sales" | "ops", 
+  count: number, 
+  region: "Egypt" | "KSA" | "UAE" = "Egypt"
+): ExpansionSimulationResult {
+  const avgSalaries = {
+    Egypt: { tech: 45000, sales: 25000, ops: 20000 },
+    KSA: { tech: 15000, sales: 8000, ops: 6000 }, // in SAR
+    UAE: { tech: 18000, sales: 10000, ops: 7000 }, // in AED
+  };
+
+  const baseSalary = avgSalaries[region][roleType];
+  const monthlyPayroll = baseSalary * count;
+  const annualCost = monthlyPayroll * 12 * 1.25; // Including overheads
+
+  const recommendations = [
+    `يُنصح ببدء التوظيف قبل موعد التوسع بـ 45 يوم.`,
+    `التكلفة تشمل التأمينات والضرائب المقدرة بـ 25% إضافية.`,
+    region === "KSA" ? "يجب مراعاة نسب التوطين (نطاقات) لهذا التوسع." : "يُفضل مراجعة شرائح الضرائب الجديدة لعام 2026."
+  ];
+
+  return {
+    scenarioName: `توسع ${region} - ${roleType}`,
+    totalNewHires: count,
+    estimatedMonthlyPayrollIncrease: monthlyPayroll,
+    estimatedAnnualCost: annualCost,
+    socialInsuranceImpact: monthlyPayroll * 0.11,
+    taxImpact: monthlyPayroll * 0.15,
+    onboardingComplexity: count > 5 ? "High" : "Medium",
+    recommendations
+  };
+}
+
+/**
+ * 4. Advanced Strategic Legal Auditor (MENA Region)
+ */
+export const ARAB_REGION_LAWS_2026 = {
+  EGYPT: {
+    MINIMUM_WAGE: 8000,
+    EFFECTIVE_DATE: "2026-07-01",
+    ADVICE: "يجب تحديث عقود الموظفين الحالية لتتوافق مع الزيادة لتجنب الغرامات العمالية."
+  },
+  KSA: {
+    MINIMUM_WAGE: 4000, // SAR
+    EFFECTIVE_DATE: "2026-01-01",
+    ADVICE: "تأكد من تحديث بيانات الموظفين في منصة قوى (Qiwa) لضمان الالتزام بنظام حماية الأجور."
+  }
 };
 
-export function auditLegalCompliance(employees: { id: string; basicSalary: number }[]): LegalComplianceUpdate[] {
+export function auditStrategicCompliance(employees: { id: string; basicSalary: number }[]): LegalComplianceUpdate[] {
   const updates: LegalComplianceUpdate[] = [];
   
-  // Check Minimum Wage
-  const underpaid = employees.filter(e => e.basicSalary < EGYPT_2026_LAWS.MINIMUM_WAGE);
-  if (underpaid.length > 0) {
+  // Egypt Minimum Wage Check
+  const underpaidEgypt = employees.filter(e => e.basicSalary < ARAB_REGION_LAWS_2026.EGYPT.MINIMUM_WAGE);
+  if (underpaidEgypt.length > 0) {
     updates.push({
       type: "minimum_wage",
-      title: "تعديل الحد الأدنى للأجور 2026",
+      title: "تحديث الحد الأدنى للأجور (مصر 2026)",
       currentValue: 7000,
-      newValue: EGYPT_2026_LAWS.MINIMUM_WAGE,
-      effectiveDate: EGYPT_2026_LAWS.EFFECTIVE_DATE,
-      description: `تم الإعلان عن رفع الحد الأدنى للأجور إلى ${EGYPT_2026_LAWS.MINIMUM_WAGE} ج بدءاً من يوليو 2026.`,
-      impactedEmployeesCount: underpaid.length
+      newValue: ARAB_REGION_LAWS_2026.EGYPT.MINIMUM_WAGE,
+      effectiveDate: ARAB_REGION_LAWS_2026.EGYPT.EFFECTIVE_DATE,
+      description: `رفع الحد الأدنى للأجور رسمياً إلى ${ARAB_REGION_LAWS_2026.EGYPT.MINIMUM_WAGE} ج.`,
+      impactedEmployeesCount: underpaidEgypt.length,
+      strategicAdvice: ARAB_REGION_LAWS_2026.EGYPT.ADVICE
     });
   }
 
-  // Personal Exemption Update
+  // General 2026 Tax Update
   updates.push({
     type: "tax_law",
-    title: "تحديث حد الإعفاء الشخصي",
-    currentValue: 15000,
-    newValue: EGYPT_2026_LAWS.PERSONAL_EXEMPTION,
+    title: "تحديث شرائح الضرائب 2026",
+    currentValue: "نظام 2025",
+    newValue: "نظام 2026 المطور",
     effectiveDate: "2026-01-01",
-    description: "رفع حد الإعفاء الشخصي السنوي للموظفين لتقليل العبء الضريبي.",
-    impactedEmployeesCount: employees.length
+    description: "تعديلات في الشرائح الضريبية العليا لدعم ذوي الدخل المحدود.",
+    impactedEmployeesCount: employees.length,
+    strategicAdvice: "سيقوم نيدهام بتعديل الحسابات تلقائياً، ولكن يُنصح بإبلاغ الموظفين بالتغيير في صافي الراتب."
   });
 
   return updates;

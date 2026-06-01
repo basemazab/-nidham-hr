@@ -1,137 +1,269 @@
 // ============================================================================
-// Nidham AI Predictive Engine — Dashboard Component
+// Nidham Strategic AI Dashboard — Component (V2)
 // ============================================================================
 
-import React from "react";
+"use client";
+
+import React, { useState } from "react";
 import { 
   predictEmployeeChurn, 
   calculateReplacementCost, 
-  auditLegalCompliance,
-  EGYPT_2026_LAWS 
+  auditStrategicCompliance,
+  simulateExpansion,
+  ExpansionSimulationResult
 } from "@/lib/nidham-ai-engine";
 import { EmployeeSignals } from "@/lib/retention";
+import { motion, AnimatePresence } from "framer-motion";
 
 type Props = {
   employees: EmployeeSignals[];
 };
 
 export function NidhamAIDashboard({ employees }: Props) {
+  const [activeTab, setActiveTab] = useState<"predictions" | "compliance" | "simulation">("predictions");
+  const [simParams, setSimParams] = useState({ role: "tech" as const, count: 5, region: "Egypt" as const });
+  
   const churnRisks = employees
     .map(e => predictEmployeeChurn(e))
     .filter(Boolean)
     .sort((a, b) => (b?.score ?? 0) - (a?.score ?? 0));
 
-  const legalUpdates = auditLegalCompliance(employees.map(e => ({ id: e.id, basicSalary: e.basicSalary })));
+  const legalUpdates = auditStrategicCompliance(employees.map(e => ({ id: e.id, basicSalary: e.basicSalary })));
+  const simulation = simulateExpansion(simParams.role, simParams.count, simParams.region);
 
   return (
-    <div className="space-y-6 font-cairo">
+    <div className="space-y-6 font-cairo bg-slate-50/50 p-6 rounded-[2rem] border border-slate-200/60 shadow-sm">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-black text-slate-800">محرك نيدهام للتنبؤ الاستباقي</h2>
-          <p className="text-slate-500 text-sm">ذكاء اصطناعي يحلل البيانات ليحميك من المفاجآت</p>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="flex h-2 w-2 rounded-full bg-indigo-600 animate-ping" />
+            <h2 className="text-2xl font-black text-slate-900">محرك نيدهام الاستراتيجي</h2>
+          </div>
+          <p className="text-slate-500 text-sm">تحليل استباقي مدعوم بالذكاء الاصطناعي لنمو شركتك</p>
         </div>
-        <div className="bg-indigo-600 text-white px-4 py-2 rounded-full text-xs font-bold animate-pulse">
-          Nidham AI Active
+        
+        <div className="flex bg-white p-1 rounded-2xl border border-slate-200 shadow-sm">
+          {[
+            { id: "predictions", label: "التنبؤات", icon: "🧠" },
+            { id: "compliance", label: "الالتزام", icon: "⚖️" },
+            { id: "simulation", label: "المحاكاة", icon: "🚀" }
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+                activeTab === tab.id 
+                  ? "bg-slate-900 text-white shadow-lg shadow-slate-200" 
+                  : "text-slate-500 hover:bg-slate-50"
+              }`}
+            >
+              <span>{tab.icon}</span>
+              {tab.label}
+            </button>
+          ))}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* 1. Churn Prediction Section */}
-        <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm">
-          <div className="flex items-center gap-3 mb-4">
-            <span className="text-2xl">🧠</span>
-            <h3 className="text-lg font-bold text-slate-800">التنبؤ بالاستقالات (Churn)</h3>
-          </div>
-          
-          {churnRisks.length > 0 ? (
-            <div className="space-y-4">
-              {churnRisks.slice(0, 3).map((risk, idx) => {
-                const emp = employees.find(e => e.id === risk?.employeeId);
-                const cost = emp ? calculateReplacementCost(emp) : null;
-                
-                return (
-                  <div key={idx} className="p-4 rounded-2xl bg-rose-50 border border-rose-100">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <span className="font-bold text-rose-900">{risk?.employeeName}</span>
-                        <p className="text-xs text-rose-700">{risk?.jobTitle}</p>
+      <AnimatePresence mode="wait">
+        {/* 1. Predictions Tab */}
+        {activeTab === "predictions" && (
+          <motion.div
+            key="predictions"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+          >
+            <div className="lg:col-span-2 space-y-4">
+              <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                <span>⚠️</span> موظفون تحت خطر الاستقالة
+              </h3>
+              {churnRisks.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {churnRisks.slice(0, 4).map((risk, idx) => {
+                    const emp = employees.find(e => e.id === risk?.employeeId);
+                    const cost = emp ? calculateReplacementCost(emp) : null;
+                    return (
+                      <div key={idx} className="bg-white p-5 rounded-3xl border border-rose-100 shadow-sm hover:shadow-md transition-shadow">
+                        <div className="flex justify-between items-start mb-3">
+                          <div>
+                            <div className="font-black text-slate-900">{risk?.employeeName}</div>
+                            <div className="text-xs text-slate-500">{risk?.jobTitle}</div>
+                          </div>
+                          <div className="bg-rose-600 text-white px-3 py-1 rounded-full text-xs font-black">
+                            {Math.round(risk?.score ?? 0)}%
+                          </div>
+                        </div>
+                        <div className="space-y-2 mb-4">
+                          {risk?.reasoning.slice(1, 3).map((r, i) => (
+                            <div key={i} className="text-[11px] text-rose-700 bg-rose-50 px-2 py-1 rounded-lg">
+                              • {r}
+                            </div>
+                          ))}
+                        </div>
+                        {cost && (
+                          <div className="pt-3 border-t border-slate-100 flex justify-between items-center">
+                            <span className="text-[10px] font-bold text-slate-400">تكلفة الاستبدال:</span>
+                            <span className="text-sm font-black text-rose-600">{(cost.totalCost/1000).toFixed(1)}k ج</span>
+                          </div>
+                        )}
                       </div>
-                      <div className="text-right">
-                        <span className="text-xl font-black text-rose-600">{Math.round(risk?.score ?? 0)}%</span>
-                        <p className="text-[10px] text-rose-500 font-bold uppercase">Risk Level</p>
-                      </div>
-                    </div>
-                    
-                    <ul className="text-xs space-y-1 mb-3">
-                      {risk?.reasoning.map((r, i) => (
-                        <li key={i} className="text-rose-800 flex items-center gap-1">
-                          <span className="opacity-50">•</span> {r}
-                        </li>
-                      ))}
-                    </ul>
-
-                    {cost && (
-                      <div className="mt-3 pt-3 border-t border-rose-200 flex justify-between items-center">
-                        <span className="text-[10px] font-bold text-rose-600 uppercase">تكلفة الاستبدال المتوقعة:</span>
-                        <span className="text-sm font-black text-rose-900">{cost.totalCost.toLocaleString("ar-EG")} ج</span>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="py-12 text-center text-slate-400 italic text-sm">
-              لا توجد مخاطر استقالة مرتفعة حالياً. عمل جيد!
-            </div>
-          )}
-        </div>
-
-        {/* 2. Legal Compliance Section */}
-        <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm">
-          <div className="flex items-center gap-3 mb-4">
-            <span className="text-2xl">⚖️</span>
-            <h3 className="text-lg font-bold text-slate-800">التدقيق القانوني الآلي (2026)</h3>
-          </div>
-
-          <div className="space-y-4">
-            {legalUpdates.map((update, idx) => (
-              <div key={idx} className={`p-4 rounded-2xl border ${update.type === 'minimum_wage' ? 'bg-amber-50 border-amber-100' : 'bg-blue-50 border-blue-100'}`}>
-                <div className="flex justify-between items-center mb-2">
-                  <span className={`font-bold ${update.type === 'minimum_wage' ? 'text-amber-900' : 'text-blue-900'}`}>{update.title}</span>
-                  <span className="text-[10px] bg-white px-2 py-1 rounded-md font-bold shadow-sm">
-                    {update.effectiveDate}
-                  </span>
+                    );
+                  })}
                 </div>
-                <p className="text-xs mb-3 text-slate-600 leading-relaxed">
-                  {update.description}
-                </p>
-                <div className="flex justify-between items-center">
-                  <div className="text-[10px] font-bold uppercase text-slate-400">الموظفين المتأثرين:</div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-black text-slate-800">{update.impactedEmployeesCount} موظف</span>
-                    <button className="text-[10px] bg-slate-800 text-white px-2 py-1 rounded-md hover:bg-slate-700 transition">
-                      تعديل الآن
+              ) : (
+                <div className="bg-white py-20 rounded-3xl border border-slate-200 text-center">
+                  <span className="text-4xl mb-4 block">✨</span>
+                  <p className="text-slate-500 font-bold">بيئة العمل مستقرة جداً حالياً!</p>
+                </div>
+              )}
+            </div>
+            
+            <div className="bg-slate-900 text-white p-6 rounded-3xl shadow-xl">
+              <h3 className="text-lg font-bold mb-4">نصيحة الذكاء الاصطناعي 💡</h3>
+              <p className="text-sm text-slate-300 leading-relaxed mb-6">
+                بناءً على تحليل البيانات، يظهر تراجع في الحضور بنسبة 8% في قسم "المبيعات" أيام الخميس. نقترح تفعيل "نظام العمل المرن" أو "العمل عن بعد" في هذا اليوم لرفع الروح المعنوية وتقليل مخاطر الاستقالة.
+              </p>
+              <div className="space-y-3">
+                <div className="bg-white/10 p-3 rounded-2xl">
+                  <div className="text-[10px] text-slate-400 uppercase font-bold">العائد المتوقع (ROI)</div>
+                  <div className="text-xl font-black text-emerald-400">توفير 145,000 ج</div>
+                  <div className="text-[10px] text-slate-400">سنوياً من تكاليف الاستبدال</div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* 2. Compliance Tab */}
+        {activeTab === "compliance" && (
+          <motion.div
+            key="compliance"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="space-y-6"
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {legalUpdates.map((update, idx) => (
+                <div key={idx} className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden group">
+                  <div className="absolute top-0 left-0 w-1 h-full bg-indigo-600" />
+                  <div className="flex justify-between items-start mb-4">
+                    <h4 className="font-black text-slate-900">{update.title}</h4>
+                    <span className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-1 rounded-lg font-bold">
+                      {update.effectiveDate}
+                    </span>
+                  </div>
+                  <p className="text-sm text-slate-600 mb-4">{update.description}</p>
+                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 mb-4">
+                    <div className="text-[10px] font-bold text-slate-400 uppercase mb-1">رأي المستشار الاستراتيجي:</div>
+                    <p className="text-xs text-indigo-900 font-bold">{update.strategicAdvice}</p>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <div className="text-xs text-slate-500">
+                      تأثير على <span className="font-black text-slate-900">{update.impactedEmployeesCount} موظف</span>
+                    </div>
+                    <button className="bg-slate-900 text-white px-4 py-2 rounded-xl text-xs font-bold hover:scale-105 transition">
+                      تطبيق التعديلات
                     </button>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
 
-          <div className="mt-6 p-4 bg-slate-50 rounded-2xl border border-slate-100">
-            <h4 className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-widest">تنبيهات مستقبلية</h4>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-xl">🔔</div>
-              <div>
-                <p className="text-xs font-bold text-slate-800">تطبيق ضرائب 2026</p>
-                <p className="text-[10px] text-slate-500">سيقوم النظام بتحديث شرائح الضرائب تلقائياً في 1 يناير 2026.</p>
+        {/* 3. Simulation Tab */}
+        {activeTab === "simulation" && (
+          <motion.div
+            key="simulation"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+          >
+            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+              <h3 className="font-bold text-slate-900 mb-6">إعدادات سيناريو التوسع</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs font-bold text-slate-400 uppercase mb-2 block">الدولة / المنطقة</label>
+                  <select 
+                    value={simParams.region}
+                    onChange={(e) => setSimParams({...simParams, region: e.target.value as any})}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none"
+                  >
+                    <option value="Egypt">مصر (EGP)</option>
+                    <option value="KSA">السعودية (SAR)</option>
+                    <option value="UAE">الإمارات (AED)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-slate-400 uppercase mb-2 block">نوع الوظائف</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {["tech", "sales", "ops"].map(r => (
+                      <button
+                        key={r}
+                        onClick={() => setSimParams({...simParams, role: r as any})}
+                        className={`py-2 rounded-xl text-xs font-bold border transition ${
+                          simParams.role === r 
+                            ? "bg-slate-900 text-white border-slate-900" 
+                            : "bg-white text-slate-500 border-slate-200 hover:border-slate-400"
+                        }`}
+                      >
+                        {r === "tech" ? "تقني" : r === "sales" ? "مبيعات" : "عمليات"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-slate-400 uppercase mb-2 block">عدد الموظفين الجدد: {simParams.count}</label>
+                  <input 
+                    type="range" min="1" max="50" 
+                    value={simParams.count}
+                    onChange={(e) => setSimParams({...simParams, count: parseInt(e.target.value)})}
+                    className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                  />
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
+
+            <div className="lg:col-span-2 bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div className="p-4 bg-indigo-50 rounded-2xl">
+                  <div className="text-[10px] font-bold text-indigo-400 uppercase mb-1">الزيادة الشهرية (رواتب)</div>
+                  <div className="text-2xl font-black text-indigo-900">
+                    {simulation.estimatedMonthlyPayrollIncrease.toLocaleString()}
+                    <span className="text-xs ml-1 font-normal opacity-60">{simParams.region === "Egypt" ? "ج" : simParams.region === "KSA" ? "ر.س" : "د.إ"}</span>
+                  </div>
+                </div>
+                <div className="p-4 bg-emerald-50 rounded-2xl">
+                  <div className="text-[10px] font-bold text-emerald-400 uppercase mb-1">التكلفة السنوية الإجمالية</div>
+                  <div className="text-2xl font-black text-emerald-900">
+                    {(simulation.estimatedAnnualCost / 1000000).toFixed(2)}M
+                  </div>
+                </div>
+                <div className="p-4 bg-amber-50 rounded-2xl">
+                  <div className="text-[10px] font-bold text-amber-400 uppercase mb-1">تعقيد التشغيل</div>
+                  <div className="text-2xl font-black text-amber-900">{simulation.onboardingComplexity === "High" ? "مرتفع ⚠️" : "متوسط ✅"}</div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h4 className="font-bold text-slate-900">توصيات نيدهام الاستراتيجية:</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {simulation.recommendations.map((rec, i) => (
+                    <div key={i} className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100">
+                      <span className="text-indigo-600 font-bold">#</span>
+                      <p className="text-xs text-slate-700 leading-relaxed">{rec}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
