@@ -342,7 +342,7 @@ export default function CrmLandingPage() {
             🚀 ابدأ مجاناً
           </Link>
           <a
-            href="https://wa.me/201080053809?text=أهلاً، عايز Demo حية لـ Nidham CRM"
+            href="https://wa.me/201055356622?text=أهلاً، عايز Demo حية لـ Nidham CRM"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold transition"

@@ -117,13 +117,13 @@ export default function AboutPage() {
               ليرد.
             </p>
             <p>
-              في 2024 قلت: <strong>"يلا أبني واحد بنفسي."</strong> الـ MVP الأول
+              في 2024 قلت: <strong>يلا أبني واحد بنفسي.</strong> الـ MVP الأول
               كان Excel على steroids. بعدها بسنة، بقى نظام كامل بـ AI Agent
               + موبايل app + Marketing Studio. شغّال عند الـ 200+ موظف
               بتوع الشركتين بنجاح.
             </p>
             <p className="text-lg font-bold text-brand-cyan-dark">
-              Nidham مش "نسخة معرّبة" من Bayzat. ده نظام مصري بـ 100% —
+              Nidham مش نسخة معرّبة من Bayzat. ده نظام مصري بـ 100% —
               بنيته عشان كنت محتاجه أنا الأول.
             </p>
           </div>
@@ -209,7 +209,7 @@ export default function AboutPage() {
           </p>
           <div className="grid md:grid-cols-2 gap-4 max-w-xl mx-auto">
             <a
-              href="https://wa.me/201080053809?text=أهلاً باسم، عايز أكلمك مباشرة عن Nidham"
+              href="https://wa.me/201055356622?text=أهلاً باسم، عايز أكلمك مباشرة عن Nidham"
               target="_blank"
               rel="noopener noreferrer"
               className="block p-6 rounded-3xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-xl hover:scale-[1.02] transition-all text-center"

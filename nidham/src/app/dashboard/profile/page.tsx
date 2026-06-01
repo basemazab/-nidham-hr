@@ -18,7 +18,7 @@ type Profile = {
   full_name: string | null;
   role: string;
   company_id: string;
-  companies: { name: string; industry: string | null } | null;
+  companies: { name: string; industry: string | null; contact_whatsapp: string | null } | null;
 };
 
 export default async function ProfilePage({
@@ -36,7 +36,7 @@ export default async function ProfilePage({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("full_name, role, company_id, companies(name, industry)")
+    .select("full_name, role, company_id, companies(name, industry, contact_whatsapp)")
     .eq("id", user.id)
     .single<Profile>();
 
@@ -241,6 +241,23 @@ export default async function ProfilePage({
                   <option value="other">آخر</option>
                 </select>
               </div>
+            </div>
+            <div>
+              <label htmlFor="contact_whatsapp" className="block text-sm font-medium text-slate-700 mb-2 font-cairo">
+                رقم واتساب للتوظيف (اختياري)
+              </label>
+              <input
+                id="contact_whatsapp"
+                name="contact_whatsapp"
+                type="tel"
+                disabled={!isAdmin}
+                defaultValue={profile?.companies?.contact_whatsapp ?? ""}
+                placeholder="مثال: 201000000000"
+                className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:border-brand-cyan focus:ring-2 focus:ring-brand-cyan/20 outline-none transition text-slate-900 disabled:bg-slate-50 disabled:cursor-not-allowed"
+              />
+              <p className="text-xs text-slate-400 mt-1 font-cairo">
+                الرقم ده هيظهر للمرشحين على إعلانات وظيفتك عشان يتواصلوا معاك مباشرة. اكتب الرقم بالصيغة الدولية (بدون + أو صفر في الأول)
+              </p>
             </div>
             {isAdmin && (
               <button

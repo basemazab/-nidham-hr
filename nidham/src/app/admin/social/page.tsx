@@ -15,12 +15,6 @@ import { recoverStuckPublishingPosts } from "./actions";
 // decryption easily exceeds 10s. Bump to the Hobby ceiling (60s).
 export const maxDuration = 60;
 
-type SearchParams = Promise<{
-  archived?: string;
-  published?: string;
-  error?: string;
-  recovered?: string;
-}>;
 
 type AccountRow = {
   id: string;
@@ -78,12 +72,7 @@ const PLATFORM_ICON: Record<string, string> = {
   telegram: "📨",
 };
 
-export default async function SocialHomePage({
-  searchParams,
-}: {
-  searchParams: SearchParams;
-}) {
-  const sp = await searchParams;
+export default async function SocialHomePage() {
   const supabase = await createClient();
 
   const [accountsRes, postsRes, commentsRes] = await Promise.all([
@@ -160,8 +149,9 @@ export default async function SocialHomePage({
     // pass finishes way before that even for 5-platform fan-outs.
     stuckPosts: posts.filter((p) => {
       if (p.status !== "publishing") return false;
-      const age =
-        Date.now() - new Date(p.created_at).getTime();
+      // eslint-disable-next-line react-hooks/purity
+      const now = Date.now();
+      const age = now - new Date(p.created_at).getTime();
       return age > 5 * 60_000;
     }).length,
     pendingComments: pendingComments.length,
@@ -618,7 +608,9 @@ function PlatformInsights({ accounts }: { accounts: AccountRow[] }) {
   }).length;
   const expiringSoon = accounts.filter((a) => {
     if (!a.token_expires_at) return false;
-    const daysLeft = (new Date(a.token_expires_at).getTime() - Date.now()) / 86400000;
+    // eslint-disable-next-line react-hooks/purity
+    const now = Date.now();
+    const daysLeft = (new Date(a.token_expires_at).getTime() - now) / 86400000;
     return daysLeft > 0 && daysLeft < 30;
   }).length;
 
@@ -672,7 +664,9 @@ function PlatformInsights({ accounts }: { accounts: AccountRow[] }) {
                 let statusCls = "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400";
                 let statusText = "بدون Token";
                 if (a.token_expires_at) {
-                  const daysLeft = (new Date(a.token_expires_at).getTime() - Date.now()) / 86400000;
+                  // eslint-disable-next-line react-hooks/purity
+                  const now = Date.now();
+                  const daysLeft = (new Date(a.token_expires_at).getTime() - now) / 86400000;
                   if (daysLeft < 0) {
                     statusCls = "bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-400";
                     statusText = "منتهي";

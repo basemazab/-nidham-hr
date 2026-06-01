@@ -106,7 +106,7 @@ async function processMessage(msg: IncomingMessage) {
 
   // Find the employee by phone. We try several normalisation forms
   // because employee phones might be stored as "01055356622",
-  // "+201080053809", "201080053809", etc.
+  // "+201055356622", "201055356622", etc.
   //
   // ⚠ NO company_id scoping here — we have no way to know which tenant
   // the message is for, since incoming WhatsApp messages don't carry

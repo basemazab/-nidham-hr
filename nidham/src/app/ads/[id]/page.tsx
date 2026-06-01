@@ -26,6 +26,7 @@
 // Each variant uses the exact same brand colours + logo treatment so
 // they feel like a coherent campaign rather than three random posts.
 
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 type AdId = "pain" | "roi" | "compliance";
@@ -66,20 +67,20 @@ export default async function AdCreativePage({ params }: Props) {
         </ol>
         <p className="mt-3 text-xs text-slate-500">
           الـ 3 variants:{" "}
-          <a href="/ads/pain" className="text-brand-cyan-dark hover:underline">
+          <Link href="/ads/pain" className="text-brand-cyan-dark hover:underline">
             pain
-          </a>{" "}
+          </Link>{" "}
           ·{" "}
-          <a href="/ads/roi" className="text-brand-cyan-dark hover:underline">
+          <Link href="/ads/roi" className="text-brand-cyan-dark hover:underline">
             roi
-          </a>{" "}
+          </Link>{" "}
           ·{" "}
-          <a
+          <Link
             href="/ads/compliance"
             className="text-brand-cyan-dark hover:underline"
           >
             compliance
-          </a>
+          </Link>
         </p>
       </div>
 
@@ -324,7 +325,7 @@ function ComplianceAd() {
       <div className="px-12 py-7 bg-gradient-to-r from-brand-cyan-dark to-brand-navy text-white flex items-center justify-between">
         <div>
           <div className="text-xs opacity-80 tracking-wider mb-1">
-            مبني خصيصاً لمصر — مش "نسخة معرّبة"
+            مبني خصيصاً لمصر — مش نسخة معرّبة
           </div>
           <div className="text-xl font-black">demo مجاناً 20 دقيقة</div>
         </div>

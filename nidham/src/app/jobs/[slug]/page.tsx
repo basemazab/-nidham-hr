@@ -25,7 +25,7 @@ type Job = {
   posted_at: string | null;
 };
 
-type Company = { name: string; industry: string | null };
+type Company = { name: string; industry: string | null; contact_whatsapp: string | null };
 
 const JOB_TYPE_LABELS: Record<string, string> = {
   full_time: "دوام كامل",
@@ -94,7 +94,7 @@ export default async function PublicJobDetailPage({ params }: PageProps) {
   // Company name
   const { data: company } = await supabase
     .from("companies")
-    .select("name, industry")
+    .select("name, industry, contact_whatsapp")
     .eq("id", job.company_id)
     .single<Company>();
 
@@ -171,6 +171,16 @@ export default async function PublicJobDetailPage({ params }: PageProps) {
             >
               ✦ قدم دلوقتي
             </Link>
+            {company?.contact_whatsapp && (
+              <a
+                href={`https://wa.me/${company.contact_whatsapp}?text=${encodeURIComponent(`أهلاً، أنا مهتم بوظيفة ${job.title} وعايز أسأل عن التفاصيل`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-3 rounded-xl border border-green-200 text-green-700 font-bold hover:bg-green-50 transition font-cairo"
+              >
+                💬 استفسر عن الوظيفة
+              </a>
+            )}
             <a
               href={shareUrl}
               target="_blank"

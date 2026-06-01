@@ -29,12 +29,6 @@ import { UploadButton } from "./upload-button";
 // generateBrandCover).
 export const maxDuration = 60;
 
-type SearchParams = Promise<{
-  profile?: string;
-  cover?: string;
-  uploaded?: string;
-  error?: string;
-}>;
 
 type SettingRow = {
   key: string;
@@ -64,12 +58,7 @@ function unwrapStringSetting(rows: SettingRow[], key: string): string | null {
   return null;
 }
 
-export default async function BrandingPage({
-  searchParams,
-}: {
-  searchParams: SearchParams;
-}) {
-  const sp = await searchParams;
+export default async function BrandingPage() {
   const supabase = await createClient();
 
   const { data: settings } = await supabase
@@ -297,7 +286,7 @@ export default async function BrandingPage({
         </h3>
         <ul className="text-xs text-amber-800 dark:text-amber-300 font-cairo space-y-1 list-disc pr-5">
           <li>
-            اضغط <strong>"🔄 ولّد بديل"</strong> أكتر من مرة — كل مرة AI
+            اضغط <strong>🔄 ولّد بديل</strong> أكتر من مرة — كل مرة AI
             بيـ try ستايل تاني
           </li>
           <li>

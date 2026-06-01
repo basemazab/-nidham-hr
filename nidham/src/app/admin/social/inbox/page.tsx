@@ -187,7 +187,7 @@ export default async function SocialInbox({
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-10 text-center">
           <div className="text-5xl mb-3">📭</div>
           <p className="text-sm text-slate-500 dark:text-slate-400 font-cairo mb-2">
-            مفيش تعليقات لسه. اضغط <strong>"🔄 اسحب التعليقات"</strong> فوق
+            مفيش تعليقات لسه. اضغط <strong>🔄 اسحب التعليقات</strong> فوق
             علشان نجلبها من Facebook.
           </p>
           <p className="text-xs text-slate-400 dark:text-slate-500 font-cairo">

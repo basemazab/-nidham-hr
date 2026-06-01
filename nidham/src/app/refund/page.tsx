@@ -78,7 +78,7 @@ export default function RefundPage() {
               </li>
               <li>
                 أو ابعت رسالة على واتساب{" "}
-                <a href="https://wa.me/201080053809" className="text-brand-cyan-dark hover:underline" dir="ltr">
+                <a href="https://wa.me/201055356622" className="text-brand-cyan-dark hover:underline" dir="ltr">
                   +20 105 535 6622
                 </a>
               </li>
@@ -105,7 +105,7 @@ export default function RefundPage() {
           <Section title="5. التواصل">
             <ul>
               <li>📧 إيميل: <a href="mailto:nidhamhr@proton.me" className="text-brand-cyan-dark hover:underline" dir="ltr">nidhamhr@proton.me</a></li>
-              <li>📱 واتساب: <a href="https://wa.me/201080053809" className="text-brand-cyan-dark hover:underline" dir="ltr">+20 105 535 6622</a></li>
+              <li>📱 واتساب: <a href="https://wa.me/201055356622" className="text-brand-cyan-dark hover:underline" dir="ltr">+20 105 535 6622</a></li>
               <li>⏰ ساعات العمل: السبت - الخميس، 9 ص - 6 م</li>
             </ul>
           </Section>

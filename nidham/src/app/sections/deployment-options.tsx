@@ -44,7 +44,7 @@ export function DeploymentOptionsSection() {
               <div className="text-xs text-slate-400 font-cairo mb-1">المناسب لـ</div>
               <div className="text-sm text-slate-200 font-cairo">البنوك، الجهات الحكومية، المستشفيات، المصانع، أي شركة عندها متطلبات سيادة بيانات أو قطاع منظّم.</div>
             </div>
-            <a href="https://wa.me/201080053809?text=أهلاً، عايز أعرف تفاصيل نسخة Nidham Enterprise" target="_blank" rel="noopener noreferrer"
+            <a href="https://wa.me/201055356622?text=أهلاً، عايز أعرف تفاصيل نسخة Nidham Enterprise" target="_blank" rel="noopener noreferrer"
               className="block w-full text-center px-5 py-3 rounded-xl bg-gradient-to-r from-brand-gold to-amber-600 text-slate-900 font-bold text-sm hover:shadow-xl transition font-cairo">
               احجز جلسة تعريفية
             </a>

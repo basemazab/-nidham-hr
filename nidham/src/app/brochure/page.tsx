@@ -124,7 +124,7 @@ export default function BrochurePage() {
                 </div>
               </div>
               <a
-                href="https://wa.me/201080053809?text=أهلاً، عايز أعرف عن Nidham Beta"
+                href="https://wa.me/201055356622?text=أهلاً، عايز أعرف عن Nidham Beta"
                 className="px-6 py-3 rounded-xl bg-white text-brand-cyan-dark font-black font-cairo whitespace-nowrap"
               >
                 💬 احجز مكانك
@@ -341,7 +341,7 @@ export default function BrochurePage() {
 
             <div className="grid md:grid-cols-2 gap-4 mb-8">
               <a
-                href="https://wa.me/201080053809?text=أهلاً، عايز أبدأ Nidham Beta"
+                href="https://wa.me/201055356622?text=أهلاً، عايز أبدأ Nidham Beta"
                 className="px-6 py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-white font-black font-cairo text-lg transition"
               >
                 💬 احجز Beta عبر WhatsApp
@@ -361,7 +361,7 @@ export default function BrochurePage() {
               <div>
                 <div className="text-amber-300 font-bold mb-1">📱 واتساب</div>
                 <a
-                  href="https://wa.me/201080053809"
+                  href="https://wa.me/201055356622"
                   className="font-mono hover:text-amber-200"
                   dir="ltr"
                 >

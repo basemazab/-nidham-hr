@@ -103,6 +103,7 @@ export async function updateMyCompany(formData: FormData) {
 
   const companyName = String(formData.get("company_name") ?? "").trim();
   const industry = String(formData.get("industry") ?? "").trim() || null;
+  const contactWhatsapp = String(formData.get("contact_whatsapp") ?? "").trim() || null;
 
   if (!companyName) {
     redirect(
@@ -112,7 +113,7 @@ export async function updateMyCompany(formData: FormData) {
 
   const { error } = await supabase
     .from("companies")
-    .update({ name: companyName, industry })
+    .update({ name: companyName, industry, contact_whatsapp: contactWhatsapp })
     .eq("id", profile.company_id);
 
   if (error) {

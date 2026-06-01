@@ -16,13 +16,6 @@ import {
 // saveSocialAccount runs the encryption RPC which adds ~500ms.
 export const maxDuration = 60;
 
-type SearchParams = Promise<{
-  saved?: string;
-  deleted?: string;
-  toggled?: string;
-  error?: string;
-  long_lived?: string;
-}>;
 
 type AccountRow = {
   id: string;
@@ -90,12 +83,7 @@ const PLATFORM_GUIDE: Record<
   },
 };
 
-export default async function SocialAccountsPage({
-  searchParams,
-}: {
-  searchParams: SearchParams;
-}) {
-  const sp = await searchParams;
+export default async function SocialAccountsPage() {
   const supabase = await createClient();
   const { data: accountsData } = await supabase
     .from("social_accounts")
@@ -117,7 +105,9 @@ export default async function SocialAccountsPage({
   const expiringAccounts = accounts
     .filter((a) => a.is_active && a.token_expires_at)
     .map((a) => {
-      const ms = new Date(a.token_expires_at as string).getTime() - Date.now();
+      // eslint-disable-next-line react-hooks/purity
+      const now = Date.now();
+      const ms = new Date(a.token_expires_at as string).getTime() - now;
       const days = Math.floor(ms / 86_400_000);
       return { account: a, days };
     })
@@ -457,7 +447,9 @@ function TokenExpiryChip({ expiresAt }: { expiresAt: string | null }) {
       </div>
     );
   }
-  const ms = new Date(expiresAt).getTime() - Date.now();
+  // eslint-disable-next-line react-hooks/purity
+  const now = Date.now();
+  const ms = new Date(expiresAt).getTime() - now;
   const days = Math.floor(ms / (24 * 60 * 60 * 1000));
   const cls =
     days < 0

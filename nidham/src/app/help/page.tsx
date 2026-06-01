@@ -190,7 +190,7 @@ export default function HelpPage() {
           <p className="text-sm font-cairo text-amber-900">
             💡 ما لقيتش إجابة لسؤالك؟ ابعت على{" "}
             <a
-              href="https://wa.me/201080053809"
+              href="https://wa.me/201055356622"
               className="font-bold underline"
               dir="ltr"
             >
@@ -242,7 +242,7 @@ export default function HelpPage() {
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <a
-              href="https://wa.me/201080053809"
+              href="https://wa.me/201055356622"
               className="px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 font-bold transition"
             >
               💬 واتساب

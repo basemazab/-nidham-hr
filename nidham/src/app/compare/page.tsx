@@ -365,7 +365,7 @@ export default function ComparePage() {
               🚀 ابدأ تجربة مجانية
             </Link>
             <a
-              href="https://wa.me/201080053809?text=أهلاً، شفت صفحة المقارنة وعايز أسأل عن نِظام"
+              href="https://wa.me/201055356622?text=أهلاً، شفت صفحة المقارنة وعايز أسأل عن نِظام"
               target="_blank"
               rel="noopener noreferrer"
               className="px-8 py-3 rounded-xl border-2 border-white/40 text-white font-bold font-cairo text-sm hover:bg-white/10 transition"

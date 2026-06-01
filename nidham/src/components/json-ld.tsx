@@ -41,14 +41,14 @@ export function OrganizationSchema() {
     },
     contactPoint: {
       "@type": "ContactPoint",
-      telephone: "+201080053809",
+      telephone: "+201055356622",
       contactType: "customer service",
       areaServed: "EG",
       availableLanguage: ["Arabic", "English"],
     },
     sameAs: [
       "https://www.facebook.com/profile.php?id=61589810406479",
-      "https://wa.me/201080053809",
+      "https://wa.me/201055356622",
     ],
   };
   return (
