@@ -20,8 +20,8 @@ export function Footer() {
           <h4 className="text-white font-bold mb-3 font-cairo">المنصة</h4>
           <ul className="space-y-2 font-cairo">
             <li><Link href="/signup" className="hover:text-white transition">تسجيل شركة (Cloud)</Link></li>
-            <li><a href="https://wa.me/201055356622?text=أهلاً، عايز أعرف تفاصيل نسخة Nidham Enterprise" target="_blank" rel="noopener noreferrer" className="hover:text-white transition">نسخة Enterprise (On-Premise)</a></li>
-            <li><a href="https://wa.me/201055356622?text=أهلاً، عايز أعرف تفاصيل استوديو التسويق Enterprise" target="_blank" rel="noopener noreferrer" className="hover:text-amber-300 transition">✦ استوديو التسويق</a></li>
+            <li><a href="https://wa.me/201080053809?text=أهلاً، عايز أعرف تفاصيل نسخة Nidham Enterprise" target="_blank" rel="noopener noreferrer" className="hover:text-white transition">نسخة Enterprise (On-Premise)</a></li>
+            <li><a href="https://wa.me/201080053809?text=أهلاً، عايز أعرف تفاصيل استوديو التسويق Enterprise" target="_blank" rel="noopener noreferrer" className="hover:text-amber-300 transition">✦ استوديو التسويق</a></li>
             <li><Link href="/login" className="hover:text-white transition">دخول</Link></li>
             <li><Link href="/download" className="hover:text-white transition">تطبيق الموبايل</Link></li>
           </ul>
@@ -29,7 +29,7 @@ export function Footer() {
         <div>
           <h4 className="text-white font-bold mb-3 font-cairo">تواصل</h4>
           <ul className="space-y-2 font-cairo">
-            <li><a href="https://wa.me/201055356622" target="_blank" rel="noopener noreferrer" className="hover:text-white transition">💬 واتساب</a></li>
+            <li><a href="https://wa.me/201080053809" target="_blank" rel="noopener noreferrer" className="hover:text-white transition">💬 واتساب</a></li>
             <li><a href="mailto:nidhamhr@proton.me" className="hover:text-white transition">✉ nidhamhr@proton.me</a></li>
           </ul>
         </div>

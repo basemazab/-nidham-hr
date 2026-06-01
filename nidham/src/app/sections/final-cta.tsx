@@ -10,7 +10,7 @@ export function FinalCTASection() {
           <Link href="/signup" className="px-8 py-4 rounded-xl bg-white text-brand-cyan-dark font-black text-lg shadow-2xl hover:scale-105 transition-all font-cairo">
             ابدأ التجربة المجانية الآن
           </Link>
-          <a href="https://wa.me/201055356622" target="_blank" rel="noopener noreferrer" className="px-8 py-4 rounded-xl border-2 border-white/40 text-white font-bold text-lg hover:bg-white/10 transition-all font-cairo">
+          <a href="https://wa.me/201080053809" target="_blank" rel="noopener noreferrer" className="px-8 py-4 rounded-xl border-2 border-white/40 text-white font-bold text-lg hover:bg-white/10 transition-all font-cairo">
             💬 كلّمنا على واتساب
           </a>
         </div>

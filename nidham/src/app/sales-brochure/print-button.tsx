@@ -68,7 +68,7 @@ export function PrintButton() {
       </button>
 
       <a
-        href="https://wa.me/201055356622?text=أهلاً، شفت كتيب نِظام وعايز أتكلم عن النظام"
+        href="https://wa.me/201080053809?text=أهلاً، شفت كتيب نِظام وعايز أتكلم عن النظام"
         target="_blank"
         rel="noopener noreferrer"
         className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-lg transition active:scale-95"

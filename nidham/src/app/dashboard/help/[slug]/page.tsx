@@ -137,7 +137,7 @@ export default async function ArticlePage({ params }: PageProps) {
             </p>
           </div>
           <a
-            href="https://wa.me/201055356622"
+            href="https://wa.me/201080053809"
             target="_blank"
             rel="noopener noreferrer"
             className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs font-cairo whitespace-nowrap"

@@ -50,7 +50,7 @@ export default function ContactPage() {
         {/* Primary CTAs — WhatsApp first because Egyptian SMB owners prefer it */}
         <section className="grid md:grid-cols-2 gap-5 mb-10">
           <a
-            href="https://wa.me/201055356622?text=أهلاً، عايز أعرف أكتر عن Nidham"
+            href="https://wa.me/201080053809?text=أهلاً، عايز أعرف أكتر عن Nidham"
             target="_blank"
             rel="noopener noreferrer"
             className="block p-7 rounded-3xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-xl hover:shadow-2xl hover:scale-[1.02] transition-all"

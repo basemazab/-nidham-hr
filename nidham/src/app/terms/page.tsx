@@ -240,7 +240,7 @@ export default function TermsPage() {
             <ul>
               <li>📧 إيميل: <a href="mailto:nidhamhr@proton.me" className="text-brand-cyan-dark hover:underline" dir="ltr">nidhamhr@proton.me</a></li>
               <li>📍 العنوان: HR BASEM AZAB، دمياط، مصر</li>
-              <li>📱 واتساب رسمي: <a href="https://wa.me/201055356622" className="text-brand-cyan-dark hover:underline" dir="ltr">+20 105 535 6622</a></li>
+              <li>📱 واتساب رسمي: <a href="https://wa.me/201080053809" className="text-brand-cyan-dark hover:underline" dir="ltr">+20 105 535 6622</a></li>
             </ul>
           </Section>
 

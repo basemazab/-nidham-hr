@@ -214,7 +214,7 @@ export default function IntegrationsPage() {
             للـ Enterprise customers — بنبني custom integrations في 2-4 أسابيع
           </p>
           <a
-            href="https://wa.me/201055356622?text=أهلاً، عايز أعرف عن custom integrations في Nidham"
+            href="https://wa.me/201080053809?text=أهلاً، عايز أعرف عن custom integrations في Nidham"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-block px-6 py-3 rounded-xl bg-white text-brand-cyan-dark font-black font-cairo hover:bg-cyan-50 transition"

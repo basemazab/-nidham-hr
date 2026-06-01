@@ -165,7 +165,7 @@ export default function BetaTermsPage() {
             <ol>
               <li>
                 ابعت رسالة واتساب على{" "}
-                <a href="https://wa.me/201055356622?text=أهلاً، عايز أنضم لـ Nidham Beta" className="text-brand-cyan-dark hover:underline" dir="ltr">
+                <a href="https://wa.me/201080053809?text=أهلاً، عايز أنضم لـ Nidham Beta" className="text-brand-cyan-dark hover:underline" dir="ltr">
                   +20 105 535 6622
                 </a>
               </li>
@@ -181,7 +181,7 @@ export default function BetaTermsPage() {
 
           <Section title="9. التواصل">
             <ul>
-              <li>📱 واتساب: <a href="https://wa.me/201055356622" className="text-brand-cyan-dark hover:underline" dir="ltr">+20 105 535 6622</a></li>
+              <li>📱 واتساب: <a href="https://wa.me/201080053809" className="text-brand-cyan-dark hover:underline" dir="ltr">+20 105 535 6622</a></li>
               <li>📧 إيميل: <a href="mailto:nidhamhr@proton.me" className="text-brand-cyan-dark hover:underline" dir="ltr">nidhamhr@proton.me</a></li>
             </ul>
           </Section>

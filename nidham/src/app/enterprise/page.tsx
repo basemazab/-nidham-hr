@@ -376,7 +376,7 @@ export default function EnterprisePage() {
                 احجز Demo
               </Link>
               <Link
-                href="https://wa.me/201055356622"
+                href="https://wa.me/201080053809"
                 target="_blank"
                 className="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/50 px-8 py-3.5 text-base font-bold text-slate-200 backdrop-blur transition-all hover:bg-slate-800 hover:text-white"
               >

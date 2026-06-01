@@ -93,7 +93,7 @@ export default function InvestorsPage() {
                   استعرض المقاييس
                 </Link>
                 <Link
-                  href="https://wa.me/201055356622"
+                  href="https://wa.me/201080053809"
                   target="_blank"
                   className="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/50 px-6 py-3 text-base font-bold text-slate-200 backdrop-blur transition-all hover:bg-slate-800 hover:text-white"
                 >
@@ -333,7 +333,7 @@ export default function InvestorsPage() {
             </p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
               <Link
-                href="https://wa.me/201055356622"
+                href="https://wa.me/201080053809"
                 target="_blank"
                 className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-cyan-600 px-8 py-3.5 text-base font-bold text-white shadow-lg transition-all hover:from-cyan-600 hover:to-cyan-700 hover:shadow-xl"
               >

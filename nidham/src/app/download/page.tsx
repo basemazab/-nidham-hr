@@ -73,7 +73,7 @@ export default function DownloadPage() {
               التطبيق في مرحلة beta الآن. لو HR في شركتك بعتلك كود دعوة،
               ابعتلنا على{" "}
               <a
-                href="https://wa.me/201055356622"
+                href="https://wa.me/201080053809"
                 className="text-brand-cyan hover:underline"
               >
                 واتساب

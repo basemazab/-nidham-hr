@@ -209,7 +209,7 @@ export default function AboutPage() {
           </p>
           <div className="grid md:grid-cols-2 gap-4 max-w-xl mx-auto">
             <a
-              href="https://wa.me/201055356622?text=أهلاً باسم، عايز أكلمك مباشرة عن Nidham"
+              href="https://wa.me/201080053809?text=أهلاً باسم، عايز أكلمك مباشرة عن Nidham"
               target="_blank"
               rel="noopener noreferrer"
               className="block p-6 rounded-3xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-xl hover:scale-[1.02] transition-all text-center"

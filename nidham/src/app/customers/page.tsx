@@ -270,7 +270,7 @@ export default function CustomersPage() {
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             <a
-              href="https://wa.me/201055356622?text=أهلاً، عايز أنضم لـ Nidham Beta"
+              href="https://wa.me/201080053809?text=أهلاً، عايز أنضم لـ Nidham Beta"
               target="_blank"
               rel="noopener noreferrer"
               className="px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 font-bold font-cairo transition"

@@ -80,7 +80,7 @@ export function MarketingStudioSection() {
         <div className="text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-200 text-[10px] font-bold mb-4 font-cairo">👑 متاح للنسخة Enterprise فقط</div>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <a href="https://wa.me/201055356622?text=أهلاً، عايز أعرف تفاصيل استوديو التسويق Enterprise" target="_blank" rel="noopener noreferrer"
+            <a href="https://wa.me/201080053809?text=أهلاً، عايز أعرف تفاصيل استوديو التسويق Enterprise" target="_blank" rel="noopener noreferrer"
               className="px-8 py-4 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 text-white font-black text-lg shadow-2xl hover:shadow-amber-500/50 hover:scale-105 transition-all font-cairo">
               ✦ احجز جلسة تعريفية
             </a>

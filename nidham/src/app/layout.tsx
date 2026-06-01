@@ -222,7 +222,7 @@ export default function RootLayout({
           <PWAInstaller />
           {/* Floating WhatsApp CTA — يظهر على كل الصفحات العامة */}
           <a
-            href="https://wa.me/201055356622?text=أهلاً، شفت موقع نِظام وعايز أسأل عن النظام"
+            href="https://wa.me/201080053809?text=أهلاً، شفت موقع نِظام وعايز أسأل عن النظام"
             target="_blank"
             rel="noopener noreferrer"
             className="fixed bottom-20 left-4 sm:left-6 z-50 w-14 h-14 rounded-full bg-[#25D366] hover:bg-[#20bd5a] shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 flex items-center justify-center text-white text-2xl"
