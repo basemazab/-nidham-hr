@@ -1,6 +1,3 @@
-import { db } from "@/server/db";
-import { eq, and, gte, lte } from "drizzle-orm";
-
 export interface VisitorData {
   ip: string;
   userAgent: string;
