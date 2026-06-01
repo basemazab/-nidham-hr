@@ -14,6 +14,7 @@
 // Output:
 //   ~/Desktop/نظام_HR_يوتيوب/videos/{name}.webm
 
+import os from "os";
 import { chromium, type Browser, type Page } from "playwright";
 import * as fs from "fs/promises";
 import * as path from "path";
@@ -24,8 +25,8 @@ dotenv.config({ path: ".env.local" });
 const BASE_URL =
   process.env.NIDHAM_BASE_URL?.replace(/\/$/, "") ??
   "https://nidhamhr.com";
-const EMAIL = process.env.NIDHAM_EMAIL;
-const PASSWORD = process.env.NIDHAM_PASSWORD;
+const EMAIL: string = process.env.NIDHAM_EMAIL ?? "";
+const PASSWORD: string = process.env.NIDHAM_PASSWORD ?? "";
 
 if (!EMAIL || !PASSWORD) {
   console.error("Missing NIDHAM_EMAIL or NIDHAM_PASSWORD in .env.local");
@@ -33,7 +34,7 @@ if (!EMAIL || !PASSWORD) {
 }
 
 const DESKTOP = path.join(
-  require("os").homedir(),
+  os.homedir(),
   "OneDrive",
   "سطح المكتب",
   "نظام_HR_يوتيوب",
