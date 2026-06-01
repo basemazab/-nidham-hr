@@ -15,7 +15,7 @@ export interface AuthPayload {
 export async function verifyToken(token: string): Promise<AuthPayload | null> {
   try {
     const verified = await jwtVerify(token, JWT_SECRET);
-    return verified.payload as AuthPayload;
+    return verified.payload as unknown as AuthPayload;
   } catch (error) {
     return null;
   }
