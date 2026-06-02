@@ -21,6 +21,7 @@
 //     uses Nidham for 3 months.
 
 import Link from "next/link";
+import { ReviewSchema, VideoObjectSchema } from "@/components/json-ld";
 
 export const metadata = {
   title: "عملاء نِظام HR — شركات مصرية بتستخدم النظام | تجارب حقيقية",
@@ -121,7 +122,15 @@ const CASE_STUDIES: CaseStudy[] = [
 
 export default function CustomersPage() {
   return (
-    <main className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-cyan-50/30 py-12 px-6">
+    <>
+      <ReviewSchema items={CASE_STUDIES.map((cs) => ({
+        author: cs.quote.author,
+        reviewBody: cs.quote.text,
+        ratingValue: 5,
+        datePublished: "2026-01-15",
+      }))} />
+      <VideoObjectSchema />
+      <main className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-cyan-50/30 py-12 px-6">
       <div className="max-w-5xl mx-auto">
         <Link
           href="/"
@@ -312,6 +321,7 @@ export default function CustomersPage() {
         </footer>
       </div>
     </main>
+    </>
   );
 }
 

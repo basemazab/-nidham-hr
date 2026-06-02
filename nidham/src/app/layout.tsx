@@ -12,6 +12,8 @@ import {
   OrganizationSchema,
   SoftwareApplicationSchema,
   WebsiteSchema,
+  LocalBusinessSchema,
+  VideoObjectSchema,
 } from "@/components/json-ld";
 
 const tajawal = Tajawal({
@@ -175,6 +177,13 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://connect.facebook.net" />
+        {/* Google Search Console verification — set NEXT_PUBLIC_GOOGLE_VERIFICATION in Vercel env */}
+        {process.env.NEXT_PUBLIC_GOOGLE_VERIFICATION && (
+          <meta
+            name="google-site-verification"
+            content={process.env.NEXT_PUBLIC_GOOGLE_VERIFICATION}
+          />
+        )}
       </head>
       <body className="min-h-full flex flex-col font-sans">
         {/* SEO: schema.org structured data on every page.
@@ -184,6 +193,8 @@ export default function RootLayout({
         <OrganizationSchema />
         <SoftwareApplicationSchema />
         <WebsiteSchema />
+        <LocalBusinessSchema />
+        <VideoObjectSchema />
         <ThemeProvider>
           <AppProviders>
           <Suspense fallback={null}>

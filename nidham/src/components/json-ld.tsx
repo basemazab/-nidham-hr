@@ -267,6 +267,121 @@ export function BlogPostingSchema({
 }
 
 // ── Breadcrumb (cleaner search result presentation) ──
+// ── Review (customer testimonials → trust signals for AI) ──
+export function ReviewSchema({
+  items,
+}: {
+  items: { author: string; reviewBody: string; ratingValue?: number; datePublished?: string }[];
+}) {
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "Review",
+    itemReviewed: {
+      "@type": "SoftwareApplication",
+      name: "Nidham HR",
+      alternateName: "نِظام",
+      applicationCategory: "BusinessApplication",
+      url: SITE,
+    },
+    review: items.map((r) => ({
+      "@type": "Review",
+      author: { "@type": "Person", name: r.author },
+      reviewBody: r.reviewBody,
+      ...(r.ratingValue ? { reviewRating: { "@type": "Rating", ratingValue: r.ratingValue, bestRating: "5" } } : {}),
+      ...(r.datePublished ? { datePublished: r.datePublished } : {}),
+      publisher: { "@id": `${SITE}/#organization` },
+    })),
+  };
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+}
+
+// ── VideoObject (prepares for video content → boosts Gemini/Perplexity visibility) ──
+export function VideoObjectSchema() {
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "VideoObject",
+    "@id": `${SITE}/#video`,
+    name: "نِظام HR — نظام إدارة موارد بشرية مصري بالذكاء الاصطناعي",
+    description:
+      "شوف بنفسك ازاي Nidham HR بيحل مشاكل المرتبات والحضور والموظفين في الشركات المصرية. حضور GPS، رواتب آلية، نماذج تأمينات، AI Agent.",
+    thumbnailUrl: `${SITE}/api/og?title=${encodeURIComponent("نظام HR مصري بالذكاء الاصطناعي | نِظام")}`,
+    uploadDate: "2026-01-01",
+    duration: "PT2M",
+    publisher: { "@id": `${SITE}/#organization` },
+  };
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+}
+
+// ── LocalBusiness (enhanced organization with physical location) ──
+export function LocalBusinessSchema() {
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    "@id": `${SITE}/#localbusiness`,
+    name: "Nidham HR",
+    alternateName: "نِظام",
+    url: SITE,
+    logo: `${SITE}/icon.svg`,
+    description:
+      "شركة نِظام لتكنولوجيا الموارد البشرية — نظام HR + Payroll + CRM + AI للشركات المصرية.",
+    foundingDate: "2026",
+    address: [
+      {
+        "@type": "PostalAddress",
+        addressLocality: "دمياط",
+        addressRegion: "دمياط",
+        addressCountry: "EG",
+      },
+      {
+        "@type": "PostalAddress",
+        addressLocality: "القاهرة",
+        addressRegion: "القاهرة",
+        addressCountry: "EG",
+      },
+    ],
+    contactPoint: {
+      "@type": "ContactPoint",
+      telephone: "+201055356622",
+      contactType: "customer service",
+      areaServed: "EG",
+      availableLanguage: ["Arabic", "English"],
+    },
+    sameAs: [
+      "https://www.facebook.com/profile.php?id=61589810406479",
+      "https://wa.me/201055356622",
+    ],
+    priceRange: "$$",
+    areaServed: "EG",
+    hasOfferCatalog: {
+      "@type": "OfferCatalog",
+      name: "نظام HR",
+      itemListElement: [
+        { "@type": "Offer", itemOffered: { "@type": "Service", name: "نظام موارد بشرية (HRMS)" } },
+        { "@type": "Offer", itemOffered: { "@type": "Service", name: "نظام رواتب ومرتبات" } },
+        { "@type": "Offer", itemOffered: { "@type": "Service", name: "نظام حضور وانصراف" } },
+        { "@type": "Offer", itemOffered: { "@type": "Service", name: "نظام CRM" } },
+        { "@type": "Offer", itemOffered: { "@type": "Service", name: "AI Agent للموارد البشرية" } },
+      ],
+    },
+  };
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+}
+
 export function BreadcrumbSchema({
   items,
 }: {
