@@ -6,19 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireHR } from "@/lib/permissions";
 import { arabicizeDbError } from "@/lib/i18n";
 import { bustDashboardCache } from "@/lib/cache";
-
-function asText(value: FormDataEntryValue | null): string | null {
-  if (value === null) return null;
-  const trimmed = String(value).trim();
-  return trimmed.length === 0 ? null : trimmed;
-}
-
-function asNumber(value: FormDataEntryValue | null): number | null {
-  const text = asText(value);
-  if (text === null) return null;
-  const n = Number(text);
-  return Number.isFinite(n) ? n : null;
-}
+import { asText, asNumber } from "@/lib/form-helpers";
 
 export async function renewContract(id: string, formData: FormData) {
   const { profile } = await requireHR();

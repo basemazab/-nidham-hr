@@ -169,6 +169,15 @@ export default function Post() {
         تعملها. لو اتغيرت شرايح التأمينات لـ 2026، النظام بيطبقها من أول دورة
         مرتبات بعد الإعلان.
       </p>
+
+      <div className="key-takeaway">
+        <div className="key-takeaway-label">اقرا كمان</div>
+        <p>
+          <Link href="/blog/labor-law-compliance-nidham">التوافق مع قانون العمل 12/2003 — أتمتة الالتزام القانوني</Link>
+          · <Link href="/blog/social-insurance-form-1-egypt">نموذج 1 تأمينات — الشرح الكامل</Link>
+          · <Link href="/pricing">الأسعار والباقات</Link>
+        </p>
+      </div>
     </>
   );
 }

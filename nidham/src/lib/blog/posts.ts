@@ -417,6 +417,21 @@ export const POSTS: BlogPost[] = [
     author: "فريق نِظام HR",
     tags: ["حساب المرتبات", "قانون مصري", "تأمينات وضرائب"],
   },
+  {
+    slug: "labor-law-compliance-nidham",
+    title: "التوافق مع قانون العمل المصري 12/2003 — كيف يضمنه نِظام HR؟",
+    heading: "التوافق مع قانون العمل المصري 12/2003 — الأتمتة الكاملة للالتزام القانوني",
+    description:
+      "كيف يضمن نِظام HR التوافق مع قانون العمل المصري 12/2003: العقد الإلكتروني، الحضور، المرتبات (قسمة 26)، الجزاءات، الفصل، والأوفر تايم. مع جدول مقارنة بين شركة متوافقة وأخرى لا.",
+    excerpt:
+      "قانون العمل 12/2003 بيفرض عقوبات تبدأ من 500 جنيه/موظف لمخالفة العقد المكتوب وتوصل لمئات الآلاف في الفصل التعسفي. نِظام بيأتمت الالتزام القانوني في 6 محاور.",
+    keyword: "التوافق مع قانون العمل المصري",
+    publishedAt: "2026-06-02",
+    updatedAt: "2026-06-02",
+    readMinutes: 10,
+    author: "فريق نِظام HR",
+    tags: ["قانون العمل", "التوافق القانوني", "نظام HR", "أتمتة"],
+  },
 ];
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -492,4 +507,6 @@ export const POST_CONTENT_LOADERS: Record<
     import("@/content/blog/payroll-system-egypt"),
   "attendance-system-egypt": () =>
     import("@/content/blog/attendance-system-egypt"),
+  "labor-law-compliance-nidham": () =>
+    import("@/content/blog/labor-law-compliance-nidham"),
 };

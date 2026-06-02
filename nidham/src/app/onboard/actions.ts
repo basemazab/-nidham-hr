@@ -7,12 +7,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-
-function asText(v: FormDataEntryValue | null): string | null {
-  if (v === null) return null;
-  const s = String(v).trim();
-  return s.length > 0 ? s : null;
-}
+import { asText } from "@/lib/form-helpers";
 
 /**
  * Save the current onboarding step. The employee record is identified

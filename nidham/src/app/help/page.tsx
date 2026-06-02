@@ -9,7 +9,7 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "مركز المساعدة | نِظام",
+  title: { absolute: "مركز المساعدة | نِظام" },
   description:
     "إجابات على أكتر الأسئلة شيوعاً عن Nidham — التسجيل، المرتبات، التأمينات، الـ AI Agent، وأكتر.",
 };

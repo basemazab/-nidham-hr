@@ -13,7 +13,7 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "الشروط والأحكام | نِظام",
+  title: { absolute: "الشروط والأحكام | نِظام" },
   description:
     "الشروط والأحكام بتاعت Nidham — العقد القانوني بينك وبينّا، حقوقك، واجباتنا، وضوابط الاستخدام.",
 };

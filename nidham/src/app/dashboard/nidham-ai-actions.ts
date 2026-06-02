@@ -57,38 +57,47 @@ export async function loadNidhamAISignals(): Promise<EmployeeSignals[]> {
   const sixtyDaysAgoIso = sixtyDaysAgo.toISOString().split("T")[0];
   const todayIso = today.toISOString().split("T")[0];
 
-  const [empRes, attRes, salaryRes, leaveRes] = await Promise.all([
-    supabase
-      .from("employees")
-      .select(
-        "id, company_id, full_name, job_title, department, hire_date, basic_salary, housing_allowance, transport_allowance, other_allowances, incentive_allowance, pay_frequency, status",
-      )
-      .eq("company_id", companyId)
-      .eq("status", "active")
-      .returns<EmployeeRow[]>(),
+  const { data: empData } = await supabase
+    .from("employees")
+    .select(
+      "id, company_id, full_name, job_title, department, hire_date, basic_salary, housing_allowance, transport_allowance, other_allowances, incentive_allowance, pay_frequency, status",
+    )
+    .eq("company_id", companyId)
+    .eq("status", "active")
+    .returns<EmployeeRow[]>();
+
+  const employees = empData ?? [];
+  const empIds = employees.map((e) => e.id);
+  if (empIds.length === 0) {
+    return [];
+  }
+
+  const [attRes, salaryRes, leaveRes] = await Promise.all([
     supabase
       .from("attendance")
       .select(
         "employee_id, date, status, tardiness_minutes, early_leave_minutes",
       )
+      .in("employee_id", empIds)
       .gte("date", ninetyDaysAgoIso)
       .lte("date", todayIso)
       .returns<AttendanceRow[]>(),
     supabase
       .from("salary_history")
       .select("employee_id, change_date")
+      .in("employee_id", empIds)
       .order("change_date", { ascending: false })
       .returns<SalaryHistoryRow[]>(),
     supabase
       .from("leave_requests")
       .select("employee_id, days_count, status")
+      .in("employee_id", empIds)
       .gte("start_date", thirtyDaysAgoIso)
       .lte("start_date", todayIso)
       .eq("status", "approved")
       .returns<LeaveRow[]>(),
   ]);
 
-  const employees = empRes.data ?? [];
   const attendance = attRes.data ?? [];
   const salaryHistory = salaryRes.data ?? [];
   const leaves = leaveRes.data ?? [];

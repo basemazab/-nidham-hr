@@ -4,8 +4,8 @@
  */
 
 export function asText(value: FormDataEntryValue | null): string | null {
-  if (value === null) return null;
-  const trimmed = String(value).trim();
+  if (value === null || typeof value !== "string") return null;
+  const trimmed = value.trim();
   return trimmed.length === 0 ? null : trimmed;
 }
 

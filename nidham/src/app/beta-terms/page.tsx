@@ -13,7 +13,7 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "شروط برنامج Beta | نِظام",
+  title: { absolute: "شروط برنامج Beta | نِظام" },
   description:
     "شروط الانضمام لبرنامج Nidham Beta — 3 شهور مجاناً + 50% خصم سنة، في مقابل feedback + testimonial اختياري.",
 };

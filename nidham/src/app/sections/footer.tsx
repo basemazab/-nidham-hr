@@ -52,6 +52,7 @@ export function Footer() {
           <Link href="/terms" className="hover:text-white transition">الشروط والأحكام</Link><span className="text-slate-700">·</span>
           <Link href="/refund" className="hover:text-white transition">سياسة الاسترداد</Link><span className="text-slate-700">·</span>
           <Link href="/beta-terms" className="hover:text-white transition">شروط Beta</Link><span className="text-slate-700">·</span>
+          <Link href="/faq" className="hover:text-amber-300 transition">الأسئلة الشائعة</Link><span className="text-slate-700">·</span>
           <Link href="/help" className="hover:text-white transition">مركز المساعدة</Link><span className="text-slate-700">·</span>
           <Link href="/contact" className="hover:text-white transition">تواصل معانا</Link>
         </div>

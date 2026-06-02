@@ -11,7 +11,7 @@ import { PWAInstallButton } from "@/components/pwa-install-button";
 // abstract "download a mobile app" message — there is no separate
 // mobile app, the PWA IS the app.
 export const metadata = {
-  title: "للموظفين — تسجيل الحضور | نِظام",
+  title: { absolute: "للموظفين — تسجيل الحضور | نِظام" },
 };
 
 export default function MobileOnlyPage() {

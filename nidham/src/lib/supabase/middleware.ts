@@ -80,5 +80,24 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
+  // 2FA gate: if user is authenticated but missing the nidham_2fa_pass
+  // cookie, check whether 2FA is enabled for this account and redirect
+  // to /login/2fa if so.  The cookie is set by verifyLogin2fa() after
+  // a successful TOTP challenge.  Without this guard a user with 2FA
+  // enabled could skip the challenge by navigating directly to /dashboard.
+  if (user && isProtectedPage) {
+    const twofaCookie = request.cookies.get("nidham_2fa_pass");
+    if (!twofaCookie) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("two_factor_enabled")
+        .eq("id", user.id)
+        .single<{ two_factor_enabled: boolean | null }>();
+      if (profile?.two_factor_enabled === true) {
+        return NextResponse.redirect(new URL("/login/2fa", request.url));
+      }
+    }
+  }
+
   return supabaseResponse;
 }
