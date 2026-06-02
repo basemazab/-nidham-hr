@@ -8,7 +8,7 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "سياسة الاسترداد | نِظام",
+  title: { absolute: "سياسة الاسترداد | نِظام" },
   description:
     "30 يوم ضمان استرداد على أول دفعة. مفيش شروط مخفية ولا أسئلة محرجة.",
 };

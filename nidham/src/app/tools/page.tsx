@@ -13,7 +13,7 @@ import { BlogNav, BlogFooter } from "@/components/blog-chrome";
 //   • Shareable URL for sales/marketing ("شوف الحاسبات المجانية")
 
 export const metadata: Metadata = {
-  title: "أدوات HR مجانية للشركات المصرية — حاسبات مرتبات وتأمينات | نِظام HR",
+  title: { absolute: "أدوات HR مجانية للشركات المصرية — حاسبات مرتبات وتأمينات | نِظام HR" },
   description:
     "حاسبات HR مجانية: المرتب الصافي، نهاية الخدمة، التأمينات الاجتماعية. مبنية على آخر تحديثات قانون 12/2003 وقانون 148/2019 لـ 2026.",
   alternates: { canonical: "/tools" },

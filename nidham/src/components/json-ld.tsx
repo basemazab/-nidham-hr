@@ -382,6 +382,45 @@ export function LocalBusinessSchema() {
   );
 }
 
+// ── HowTo (rich result for the calculator tools) ──
+export function HowToSchema({
+  name,
+  description,
+  steps,
+  image,
+  estimatedCost,
+}: {
+  name: string;
+  description: string;
+  steps: { name: string; text: string; image?: string }[];
+  image?: string;
+  estimatedCost?: { currency: string; value: string };
+}) {
+  const schema: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name,
+    description,
+    step: steps.map((s, i) => ({
+      "@type": "HowToStep",
+      position: i + 1,
+      name: s.name,
+      text: s.text,
+      ...(s.image ? { image: s.image } : {}),
+    })),
+    ...(image ? { image } : {}),
+    ...(estimatedCost
+      ? { estimatedCost: { "@type": "MonetaryAmount", currency: estimatedCost.currency, value: estimatedCost.value } }
+      : {}),
+  };
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+}
+
 export function BreadcrumbSchema({
   items,
 }: {

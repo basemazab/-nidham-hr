@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { InsuranceCalculator } from "./calculator";
 import { BlogNav, BlogFooter } from "@/components/blog-chrome";
-import { BreadcrumbSchema } from "@/components/json-ld";
+import { BreadcrumbSchema, HowToSchema } from "@/components/json-ld";
 import { EmbedSnippet } from "@/components/embed-snippet";
 
 // ============================================================================
@@ -12,7 +12,7 @@ import { EmbedSnippet } from "@/components/embed-snippet";
 // Law 148/2019 + 2026 NOSI decree (min 2,700 / max 16,700 / 11% + 18.75%)
 
 export const metadata: Metadata = {
-  title: "حاسبة التأمينات الاجتماعية في مصر 2026 — قانون 148/2019 | نِظام HR",
+  title: { absolute: "حاسبة التأمينات الاجتماعية في مصر 2026 — قانون 148/2019 | نِظام HR" },
   description:
     "احسب التأمينات الاجتماعية المستحقة على الموظف وصاحب العمل في مصر 2026 — 11% الموظف، 18.75% الشركة، مع تطبيق الحد الأدنى (2,700) والأقصى (16,700).",
   alternates: { canonical: "/tools/social-insurance" },
@@ -43,6 +43,34 @@ export default function SocialInsurancePage() {
             url: "/tools/social-insurance",
           },
         ]}
+      />
+      <HowToSchema
+        name="حساب التأمينات الاجتماعية في مصر 2026"
+        description="حساب نصيب الموظف (11%) وصاحب العمل (18.75%) من الأجر التأميني حسب قانون 148/2019 و2026 NOSI."
+        image={`${process.env.NEXT_PUBLIC_SITE_URL || "https://www.nidhamhr.com"}/api/og?title=${encodeURIComponent("حاسبة التأمينات الاجتماعية 2026")}`}
+        steps={[
+          {
+            name: "أدخل إجمالي المرتب",
+            text: "اكتب إجمالي مرتب الموظف الشامل لكافة البدلات.",
+          },
+          {
+            name: "يُحدد الأجر التأميني",
+            text: "يُطبق الحد الأدنى (2,700 ج) والحد الأقصى (16,700 ج) للأجر التأميني حسب إعلان NOSI 2026.",
+          },
+          {
+            name: "احسب نصيب الموظف",
+            text: "11% من الأجر التأميني يخصم من الموظف (معفى من الضريبة).",
+          },
+          {
+            name: "احسب نصيب الشركة",
+            text: "18.75% من الأجر التأميني تتحمله الشركة كاملًا.",
+          },
+          {
+            name: "شوف الإجمالي",
+            text: "النتيجة تظهر المبلغ اللي بيدفع للتأمينات شهريًا للموظف ده، شاملًا نصيب الطرفين.",
+          },
+        ]}
+        estimatedCost={{ currency: "EGP", value: "0" }}
       />
 
       <header className="px-6 pt-12 pb-6 max-w-3xl mx-auto w-full">

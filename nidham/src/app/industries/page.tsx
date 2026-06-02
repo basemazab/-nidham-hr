@@ -3,7 +3,7 @@ import Link from "next/link";
 import { BlogNav, BlogFooter } from "@/components/blog-chrome";
 
 export const metadata: Metadata = {
-  title: "نظام HR متخصص لقطاعك — صناعة، شحن، مطاعم، ريتيل | نِظام HR",
+  title: { absolute: "نظام HR متخصص لقطاعك — صناعة، شحن، مطاعم، ريتيل | نِظام HR" },
   description:
     "نظام HR متخصص لكل قطاع في مصر: المصانع (ورديات + أوفر تايم)، شركات الشحن (GPS + CRM)، المطاعم والكافيهات (بقشيش + ورديات)، ومحلات الريتيل (فروع متعددة + عمولات).",
   alternates: { canonical: "/industries" },

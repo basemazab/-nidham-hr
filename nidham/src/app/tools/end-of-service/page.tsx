@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { EosCalculator } from "./calculator";
 import { BlogNav, BlogFooter } from "@/components/blog-chrome";
-import { BreadcrumbSchema } from "@/components/json-ld";
+import { BreadcrumbSchema, HowToSchema } from "@/components/json-ld";
 import { EmbedSnippet } from "@/components/embed-snippet";
 
 // ============================================================================
@@ -16,7 +16,7 @@ import { EmbedSnippet } from "@/components/embed-snippet";
 // Same architecture as salary-calculator: server shell + client form.
 
 export const metadata: Metadata = {
-  title: "حاسبة مكافأة نهاية الخدمة في مصر 2026 — قانون 12/2003 | نِظام HR",
+  title: { absolute: "حاسبة مكافأة نهاية الخدمة في مصر 2026 — قانون 12/2003 | نِظام HR" },
   description:
     "احسب مكافأة نهاية الخدمة لأي موظف في مصر حسب قانون العمل 12/2003 المادة 122 — نص شهر للسنين الأولى، شهر كامل بعد كده. مجاناً ودقيق.",
   alternates: { canonical: "/tools/end-of-service" },
@@ -44,6 +44,30 @@ export default function EosCalculatorPage() {
           { name: "أدوات مجانية", url: "/tools" },
           { name: "حاسبة نهاية الخدمة", url: "/tools/end-of-service" },
         ]}
+      />
+      <HowToSchema
+        name="حساب مكافأة نهاية الخدمة في مصر 2026"
+        description="حساب مكافأة نهاية الخدمة المستحقة للموظف حسب قانون العمل المصري 12/2003 المادة 122."
+        image={`${process.env.NEXT_PUBLIC_SITE_URL || "https://www.nidhamhr.com"}/api/og?title=${encodeURIComponent("حاسبة نهاية الخدمة 2026")}`}
+        steps={[
+          {
+            name: "أدخل بيانات العقد",
+            text: "حدد تاريخ بدء العمل وتاريخ الانتهاء وآخر مرتب إجمالي للموظف.",
+          },
+          {
+            name: "حدد سبب انتهاء العلاقة",
+            text: "اختر سبب انتهاء العقد: استقالة، إنهاء من الشركة، أو بلوغ سن المعاش. كل حالة ليها قواعد مختلفة في القانون.",
+          },
+          {
+            name: "احسب المكافأة",
+            text: "يُطبق قانون 12/2003: 0.5 شهر لكل سنة في الـ5 سنين الأولى، وشهر كامل لكل سنة بعد كده.",
+          },
+          {
+            name: "راجع التفاصيل",
+            text: "النتيجة تظهر المكافأة إجماليًا وتفصيل سنة بسنة مع شرح القاعدة القانونية المطبقة.",
+          },
+        ]}
+        estimatedCost={{ currency: "EGP", value: "0" }}
       />
 
       <header className="px-6 pt-12 pb-6 max-w-3xl mx-auto w-full">

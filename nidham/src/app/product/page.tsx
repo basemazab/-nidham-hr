@@ -24,7 +24,7 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "نظام HR مصري متكامل — إدارة موظفين، مرتبات، حضور، AI | نِظام",
+  title: { absolute: "نظام HR مصري متكامل — إدارة موظفين، مرتبات، حضور، AI | نِظام" },
   description:
     "نظام HR مصري 100%: إدارة الموظفين، مرتبات متوافقة مع قانون 2026، حضور GPS + سيلفي، AI Agent بالعربي، واتساب بوت، نماذج تأمينات. شوف الجولة بالصور. جرّب مجاناً 14 يوم.",
   alternates: { canonical: "/product" },

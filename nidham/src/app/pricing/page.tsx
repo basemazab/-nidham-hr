@@ -13,7 +13,7 @@ import Link from "next/link";
 import { FAQPageSchema } from "@/components/json-ld";
 
 export const metadata = {
-  title: "أسعار نظام HR ومرتبات مصري — من 0 ج/شهر (مجاني) | نِظام",
+  title: { absolute: "أسعار نظام HR ومرتبات مصري — من 0 ج/شهر (مجاني) | نِظام" },
   description:
     "أسعار نظام HR ومرتبات في مصر: مجاني للأبد (5 موظفين)، Starter 500 ج/شهر، Pro 1,500 ج/شهر (100 موظف)، Business 3,500 ج/شهر. 14 يوم تجربة مجانية — خصم 20% سنوي. أرخص 60-85% من Bayzat و ZenHR.",
   alternates: { canonical: "/pricing" },

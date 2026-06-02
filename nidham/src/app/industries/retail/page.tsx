@@ -4,7 +4,7 @@ import { IndustryPage, type IndustryPageData } from "@/components/industry-page"
 // Target: "نظام HR للمحلات" / "نظام HR للريتيل" / "إدارة موظفين متجر"
 
 export const metadata: Metadata = {
-  title: "نظام HR للمحلات والريتيل في مصر — فروع متعددة + كاشير | نِظام HR",
+  title: { absolute: "نظام HR للمحلات والريتيل في مصر — فروع متعددة + كاشير | نِظام HR" },
   description:
     "نظام HR للمحلات والـ Chains: إدارة كل فرع بـ Dashboard منفصل، حضور بالـ GPS لكل موقع، حساب العمولات للـ Sales، تقارير لكل مدير فرع.",
   alternates: { canonical: "/industries/retail" },

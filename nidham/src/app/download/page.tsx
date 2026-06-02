@@ -12,7 +12,7 @@ import { QRCodeSVG } from "qrcode.react";
 // pre-launch. Once the app ships, drop the disabled styling and
 // fill in the real store URLs.
 export const metadata = {
-  title: "تطبيق Nidham للموظفين | نِظام",
+  title: { absolute: "تطبيق Nidham للموظفين | نِظام" },
 };
 
 const STORE_LINKS = {

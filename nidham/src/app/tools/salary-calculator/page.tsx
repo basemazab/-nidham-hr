@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { SalaryCalculator } from "./calculator";
 import { BlogNav, BlogFooter } from "@/components/blog-chrome";
-import { BreadcrumbSchema } from "@/components/json-ld";
+import { BreadcrumbSchema, HowToSchema } from "@/components/json-ld";
 import { EmbedSnippet } from "@/components/embed-snippet";
 
 // ============================================================================
@@ -22,7 +22,7 @@ import { EmbedSnippet } from "@/components/embed-snippet";
 //   (other Arabic HR/finance blogs will link to it).
 
 export const metadata: Metadata = {
-  title: "حاسبة مرتب الموظف في مصر 2026 — صافي + تأمينات + ضرائب | نِظام HR",
+  title: { absolute: "حاسبة مرتب الموظف في مصر 2026 — صافي + تأمينات + ضرائب | نِظام HR" },
   description:
     "حاسبة مرتب صافي للموظف في مصر 2026 — تحسب التأمينات الاجتماعية (11%) وضريبة كسب العمل بالشرايح المتدرجة وتعطيك الصافي خطوة بخطوة. مجاناً.",
   alternates: { canonical: "/tools/salary-calculator" },
@@ -50,6 +50,30 @@ export default function SalaryCalculatorPage() {
           { name: "أدوات مجانية", url: "/tools" },
           { name: "حاسبة المرتبات", url: "/tools/salary-calculator" },
         ]}
+      />
+      <HowToSchema
+        name="حساب صافي مرتب الموظف في مصر 2026"
+        description="حساب المرتب الصافي بعد خصم التأمينات الاجتماعية وضريبة كسب العمل، بناءً على قانون 148/2019 وشرايح الضرائب 2026."
+        image={`${process.env.NEXT_PUBLIC_SITE_URL || "https://www.nidhamhr.com"}/api/og?title=${encodeURIComponent("حاسبة مرتب موظف في مصر 2026")}`}
+        steps={[
+          {
+            name: "أدخل المرتب الإجمالي",
+            text: "اكتب إجمالي مرتب الموظف (basic + housing + transport + other allowances).",
+          },
+          {
+            name: "أدخل البدلات",
+            text: "حدد قيمة بدل السكن والانتقال والبدلات الأخرى. بعضها معفى من التأمينات حسب القانون.",
+          },
+          {
+            name: "احسب الخصومات",
+            text: "يحسب النظام تلقائياً: تأمينات الموظف 11% من الأجر التأميني، وضريبة كسب العمل بالشرايح المتدرجة (صفر، 10%، 15%، 20%، 22.5%، 25%) بعد إعفاء 45,000 جنيه.",
+          },
+          {
+            name: "شوف الصافي",
+            text: "النتيجة النهائية تظهر المرتب الصافي اللي يستلمه الموظف بعد كل الخصومات، مع تفصيل لكل بند.",
+          },
+        ]}
+        estimatedCost={{ currency: "EGP", value: "0" }}
       />
 
       <header className="px-6 pt-12 pb-6 max-w-3xl mx-auto w-full">

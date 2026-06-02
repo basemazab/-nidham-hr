@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 
 export const metadata = {
-  title: "بوابة المطورين — API وتكاملات نظام HR | نِظام",
+  title: { absolute: "بوابة المطورين — API وتكاملات نظام HR | نِظام" },
   description:
     "REST API لنظام HR: توثيق كامل، Authentication، Endpoints (موظفين، مرتبات، حضور، عملاء)، Webhooks، SDKs. ابدأ التكامل في دقائق.",
   alternates: { canonical: "/developers" },

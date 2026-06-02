@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "نظام CRM مصري — إدارة العملاء والمبيعات للشركات المصرية | نِظام",
+  title: { absolute: "نظام CRM مصري — إدارة العملاء والمبيعات للشركات المصرية | نِظام" },
   description:
     "نظام CRM مصري 100%: Pipeline مبيعات، إدارة العملاء المتوقعين، تفاعلات يومية، عقود وتجديدات، تقارير وتحليلات. مدمج مع HR و التسويق في نظام واحد. جرب 14 يوم مجاناً.",
   alternates: { canonical: "/crm" },

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "تكاملات نظام HR — ZKTeco، Excel، بنوك، Meta، وAPI | نِظام",
+  title: { absolute: "تكاملات نظام HR — ZKTeco، Excel، بنوك، Meta، وAPI | نِظام" },
   description:
     "التكاملات المتاحة في نِظام HR: أجهزة ZKTeco/Hikvision، استيراد Excel/CSV، تصدير ملفات بنكية، تكامل إعلانات Meta، و REST API مفتوح. نظام HR يشتغل مع أدواتك.",
   alternates: { canonical: "/integrations" },
