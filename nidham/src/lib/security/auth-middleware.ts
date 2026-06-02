@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || "your-secret-key-change-in-production"
-);
+// Read lazily inside verifyToken so a MISSING secret fails CLOSED (rejects
+// every token) instead of silently falling back to a public default — that
+// default would let anyone forge an admin bearer token.
+const RAW_JWT_SECRET = process.env.JWT_SECRET;
 
 export interface AuthPayload {
   userId: string;
@@ -13,10 +14,19 @@ export interface AuthPayload {
 }
 
 export async function verifyToken(token: string): Promise<AuthPayload | null> {
+  if (!RAW_JWT_SECRET) {
+    console.error(
+      "[auth-middleware] JWT_SECRET is not set — rejecting all bearer tokens",
+    );
+    return null;
+  }
   try {
-    const verified = await jwtVerify(token, JWT_SECRET);
+    const verified = await jwtVerify(
+      token,
+      new TextEncoder().encode(RAW_JWT_SECRET),
+    );
     return verified.payload as unknown as AuthPayload;
-  } catch (error) {
+  } catch {
     return null;
   }
 }
