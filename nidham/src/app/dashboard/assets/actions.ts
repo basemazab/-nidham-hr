@@ -9,18 +9,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireHR } from "@/lib/permissions";
 import { arabicizeDbError } from "@/lib/i18n";
+import { asText, asNumber } from "@/lib/form-helpers";
 
-function asText(v: FormDataEntryValue | null): string | null {
-  if (v === null) return null;
-  const t = String(v).trim();
-  return t.length === 0 ? null : t;
-}
-function asNumber(v: FormDataEntryValue | null): number | null {
-  const t = asText(v);
-  if (t === null) return null;
-  const n = Number(t);
-  return Number.isFinite(n) ? n : null;
-}
 function asInt(v: FormDataEntryValue | null): number | null {
   const t = asText(v);
   if (t === null) return null;

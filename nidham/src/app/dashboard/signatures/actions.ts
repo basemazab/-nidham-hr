@@ -3,12 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireHR } from "@/lib/permissions";
-
-function asText(value: FormDataEntryValue | null): string | null {
-  if (value === null) return null;
-  const s = String(value).trim();
-  return s.length > 0 ? s : null;
-}
+import { asText } from "@/lib/form-helpers";
 
 export async function createSignatureRequest(formData: FormData) {
   const { supabase, profile } = await requireHR();
@@ -80,7 +75,7 @@ export async function createSignatureRequest(formData: FormData) {
 }
 
 export async function cancelSignatureRequest(formData: FormData) {
-  const { supabase } = await requireHR();
+  const { supabase, profile } = await requireHR();
   const id = asText(formData.get("id"));
   if (!id) {
     redirect("/dashboard/signatures?error=" + encodeURIComponent("ID مفقود"));
@@ -90,6 +85,7 @@ export async function cancelSignatureRequest(formData: FormData) {
     .from("signature_requests")
     .update({ status: "cancelled" })
     .eq("id", id)
+    .eq("company_id", profile.company_id)
     .eq("status", "pending");
 
   if (error) {

@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { asText } from "@/lib/form-helpers";
 
 export async function listNotifications() {
   const supabase = await createClient();
@@ -27,10 +28,18 @@ export async function listNotifications() {
 
 export async function markAsRead(id: string) {
   const supabase = await createClient();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("id, company_id")
+    .maybeSingle();
+  if (!profile) return;
+
   const { error } = await supabase
     .from("notifications")
     .update({ read_at: new Date().toISOString() })
-    .eq("id", id);
+    .eq("id", id)
+    .eq("company_id", profile.company_id)
+    .eq("user_id", profile.id);
 
   if (error) throw new Error(error.message);
   revalidatePath("/dashboard/notifications");
@@ -59,10 +68,18 @@ export async function markAllAsRead() {
 
 export async function deleteNotification(id: string) {
   const supabase = await createClient();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("id, company_id")
+    .maybeSingle();
+  if (!profile) return;
+
   const { error } = await supabase
     .from("notifications")
     .delete()
-    .eq("id", id);
+    .eq("id", id)
+    .eq("company_id", profile.company_id)
+    .eq("user_id", profile.id);
 
   if (error) throw new Error(error.message);
   revalidatePath("/dashboard/notifications");

@@ -4,20 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/permissions";
 import { bustDashboardCache } from "@/lib/cache";
-
-function asNumber(value: FormDataEntryValue | null): number | null {
-  if (value === null || typeof value !== "string") return null;
-  const t = value.trim();
-  if (t.length === 0) return null;
-  const n = Number(t);
-  return Number.isFinite(n) ? n : null;
-}
-
-function asText(value: FormDataEntryValue | null): string | null {
-  if (value === null || typeof value !== "string") return null;
-  const t = value.trim();
-  return t.length === 0 ? null : t;
-}
+import { asNumber, asText } from "@/lib/form-helpers";
 
 function asBool(value: FormDataEntryValue | null): boolean {
   return value !== null && (value === "on" || value === "true" || value === "1");

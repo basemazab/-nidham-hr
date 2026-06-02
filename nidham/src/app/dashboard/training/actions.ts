@@ -4,12 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireHR } from "@/lib/permissions";
-
-function asText(v: FormDataEntryValue | null): string | null {
-  if (v === null) return null;
-  const t = String(v).trim();
-  return t.length === 0 ? null : t;
-}
+import { asText } from "@/lib/form-helpers";
 
 function asInt(v: FormDataEntryValue | null): number | null {
   const t = asText(v);

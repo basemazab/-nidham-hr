@@ -5,12 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/permissions";
 import { bustDashboardCache } from "@/lib/cache";
-
-function asText(value: FormDataEntryValue | null): string | null {
-  if (value === null) return null;
-  const trimmed = String(value).trim();
-  return trimmed.length === 0 ? null : trimmed;
-}
+import { asText } from "@/lib/form-helpers";
 
 export async function createInvitation(formData: FormData) {
   const { supabase, profile } = await requireAdmin();
@@ -66,13 +61,13 @@ export async function createInvitation(formData: FormData) {
 }
 
 export async function cancelInvitation(id: string) {
-  await requireAdmin();
-  const supabase = await createClient();
+  const { supabase, profile } = await requireAdmin();
 
   await supabase
     .from("team_invitations")
     .update({ status: "cancelled" })
-    .eq("id", id);
+    .eq("id", id)
+    .eq("company_id", profile.company_id);
 
   revalidatePath("/dashboard/team");
   bustDashboardCache();
@@ -156,8 +151,7 @@ export async function removeMember(formData: FormData) {
 }
 
 export async function resendInvitation(id: string) {
-  await requireAdmin();
-  const supabase = await createClient();
+  const { supabase, profile } = await requireAdmin();
 
   // Reset expiry to 7 days from now
   const newExpiry = new Date();
@@ -169,7 +163,8 @@ export async function resendInvitation(id: string) {
       status: "pending",
       expires_at: newExpiry.toISOString(),
     })
-    .eq("id", id);
+    .eq("id", id)
+    .eq("company_id", profile.company_id);
 
   revalidatePath("/dashboard/team");
   bustDashboardCache();

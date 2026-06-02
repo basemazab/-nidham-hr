@@ -6,12 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireHR } from "@/lib/permissions";
 import { arabicizeDbError } from "@/lib/i18n";
 import { bustDashboardCache } from "@/lib/cache";
-
-function asText(value: FormDataEntryValue | null): string | null {
-  if (value === null) return null;
-  const trimmed = String(value).trim();
-  return trimmed.length === 0 ? null : trimmed;
-}
+import { asText } from "@/lib/form-helpers";
 
 async function getCurrentCompanyId(
   supabase: Awaited<ReturnType<typeof createClient>>,
