@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { SalaryCalculator } from "./calculator";
 import { BlogNav, BlogFooter } from "@/components/blog-chrome";
-import { BreadcrumbSchema } from "@/components/json-ld";
+import { BreadcrumbSchema, HowToSchema } from "@/components/json-ld";
 import { EmbedSnippet } from "@/components/embed-snippet";
 
 // ============================================================================
@@ -22,7 +22,11 @@ import { EmbedSnippet } from "@/components/embed-snippet";
 //   (other Arabic HR/finance blogs will link to it).
 
 export const metadata: Metadata = {
-  title: "حاسبة مرتب الموظف في مصر 2026 — صافي + تأمينات + ضرائب | نِظام HR",
+  // `absolute` bypasses the root layout's "%s | نِظام HR" template so the
+  // brand suffix isn't appended twice (this title already ends with it).
+  title: {
+    absolute: "حاسبة مرتب الموظف في مصر 2026 — صافي + تأمينات + ضرائب | نِظام HR",
+  },
   description:
     "حاسبة مرتب صافي للموظف في مصر 2026 — تحسب التأمينات الاجتماعية (11%) وضريبة كسب العمل بالشرايح المتدرجة وتعطيك الصافي خطوة بخطوة. مجاناً.",
   alternates: { canonical: "/tools/salary-calculator" },
@@ -49,6 +53,16 @@ export default function SalaryCalculatorPage() {
           { name: "الرئيسية", url: "/" },
           { name: "أدوات مجانية", url: "/tools" },
           { name: "حاسبة المرتبات", url: "/tools/salary-calculator" },
+        ]}
+      />
+      <HowToSchema
+        name="كيفية حساب صافي مرتب الموظف في مصر 2026"
+        description="خطوات حساب صافي المرتب بعد التأمينات الاجتماعية وضريبة كسب العمل طبقاً لتحديثات 2026."
+        steps={[
+          { name: "أدخل الأجر الأساسي والبدلات", text: "اكتب الراتب الأساسي الشهري بالإضافة لبدلات السكن والمواصلات والحوافز الثابتة." },
+          { name: "خصم التأمينات الاجتماعية", text: "النظام يحسب 11% من الأجر التأميني (بين 2,700 و16,700 جنيه) كنصيب الموظف طبقاً لقانون 148/2019." },
+          { name: "خصم ضريبة كسب العمل", text: "تُحسب الضريبة على الشرائح المتدرجة لسنة 2026 بعد خصم الإعفاء الشخصي 20,000 جنيه سنوياً." },
+          { name: "اعرض الصافي", text: "النتيجة هي صافي المرتب الذي يستلمه الموظف بعد كل الخصومات." },
         ]}
       />
 

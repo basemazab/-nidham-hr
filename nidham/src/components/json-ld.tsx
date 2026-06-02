@@ -404,3 +404,38 @@ export function BreadcrumbSchema({
     />
   );
 }
+
+// ── HowTo (step-by-step rich result for calculator/tool pages) ──
+//
+// Eligible for the "HowTo" rich result on Google: a numbered, expandable
+// step list under the search result. Strong CTR boost for "ازاي احسب..."
+// queries that the calculator tools target.
+export function HowToSchema({
+  name,
+  description,
+  steps,
+}: {
+  name: string;
+  description: string;
+  steps: { name: string; text: string }[];
+}) {
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name,
+    description,
+    inLanguage: "ar-EG",
+    step: steps.map((s, index) => ({
+      "@type": "HowToStep",
+      position: index + 1,
+      name: s.name,
+      text: s.text,
+    })),
+  };
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+}

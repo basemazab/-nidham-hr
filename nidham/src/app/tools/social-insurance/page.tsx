@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { InsuranceCalculator } from "./calculator";
 import { BlogNav, BlogFooter } from "@/components/blog-chrome";
-import { BreadcrumbSchema } from "@/components/json-ld";
+import { BreadcrumbSchema, HowToSchema } from "@/components/json-ld";
 import { EmbedSnippet } from "@/components/embed-snippet";
 
 // ============================================================================
@@ -12,7 +12,9 @@ import { EmbedSnippet } from "@/components/embed-snippet";
 // Law 148/2019 + 2026 NOSI decree (min 2,700 / max 16,700 / 11% + 18.75%)
 
 export const metadata: Metadata = {
-  title: "حاسبة التأمينات الاجتماعية في مصر 2026 — قانون 148/2019 | نِظام HR",
+  title: {
+    absolute: "حاسبة التأمينات الاجتماعية في مصر 2026 — قانون 148/2019 | نِظام HR",
+  },
   description:
     "احسب التأمينات الاجتماعية المستحقة على الموظف وصاحب العمل في مصر 2026 — 11% الموظف، 18.75% الشركة، مع تطبيق الحد الأدنى (2,700) والأقصى (16,700).",
   alternates: { canonical: "/tools/social-insurance" },
@@ -42,6 +44,16 @@ export default function SocialInsurancePage() {
             name: "حاسبة التأمينات الاجتماعية",
             url: "/tools/social-insurance",
           },
+        ]}
+      />
+      <HowToSchema
+        name="كيفية حساب التأمينات الاجتماعية في مصر 2026"
+        description="خطوات حساب نصيب الموظف وصاحب العمل من التأمينات الاجتماعية طبقاً لقانون 148/2019 وتحديثات NOSI 2026."
+        steps={[
+          { name: "أدخل الأجر الشهري", text: "اكتب الأجر الشهري الشامل الخاضع للتأمين." },
+          { name: "تطبيق الحد الأدنى والأقصى", text: "يُقيَّد الأجر التأميني بين 2,700 و16,700 جنيه طبقاً لقرار NOSI 2026." },
+          { name: "حساب النصيبين", text: "11% على الموظف و18.75% على صاحب العمل من الأجر التأميني." },
+          { name: "اعرض الإجمالي", text: "النتيجة هي إجمالي الاشتراك الشهري المستحق للهيئة القومية للتأمينات." },
         ]}
       />
 

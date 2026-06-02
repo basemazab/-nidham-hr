@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { EosCalculator } from "./calculator";
 import { BlogNav, BlogFooter } from "@/components/blog-chrome";
-import { BreadcrumbSchema } from "@/components/json-ld";
+import { BreadcrumbSchema, HowToSchema } from "@/components/json-ld";
 import { EmbedSnippet } from "@/components/embed-snippet";
 
 // ============================================================================
@@ -16,7 +16,9 @@ import { EmbedSnippet } from "@/components/embed-snippet";
 // Same architecture as salary-calculator: server shell + client form.
 
 export const metadata: Metadata = {
-  title: "حاسبة مكافأة نهاية الخدمة في مصر 2026 — قانون 12/2003 | نِظام HR",
+  title: {
+    absolute: "حاسبة مكافأة نهاية الخدمة في مصر 2026 — قانون 12/2003 | نِظام HR",
+  },
   description:
     "احسب مكافأة نهاية الخدمة لأي موظف في مصر حسب قانون العمل 12/2003 المادة 122 — نص شهر للسنين الأولى، شهر كامل بعد كده. مجاناً ودقيق.",
   alternates: { canonical: "/tools/end-of-service" },
@@ -43,6 +45,16 @@ export default function EosCalculatorPage() {
           { name: "الرئيسية", url: "/" },
           { name: "أدوات مجانية", url: "/tools" },
           { name: "حاسبة نهاية الخدمة", url: "/tools/end-of-service" },
+        ]}
+      />
+      <HowToSchema
+        name="كيفية حساب مكافأة نهاية الخدمة في مصر"
+        description="خطوات حساب مكافأة نهاية الخدمة طبقاً لقانون العمل المصري 12/2003 المادة 122."
+        steps={[
+          { name: "أدخل تاريخ التعيين وآخر يوم عمل", text: "يحسب النظام مدة الخدمة بالسنوات." },
+          { name: "أدخل آخر راتب أساسي", text: "تُحسب المكافأة على آخر أجر أساسي للموظف." },
+          { name: "تطبيق القانون", text: "نصف شهر عن كل سنة في أول 5 سنوات، وشهر كامل عن كل سنة بعدها." },
+          { name: "اعرض المكافأة", text: "النتيجة هي إجمالي مكافأة نهاية الخدمة المستحقة للموظف." },
         ]}
       />
 
