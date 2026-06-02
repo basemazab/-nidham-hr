@@ -44,7 +44,6 @@ import {
 } from "@/lib/marketing-inbox/meta-client";
 import {
   generateMarketingReply,
-  tryTemplateMatch,
   type ConversationTurn,
 } from "@/lib/marketing-inbox/ai-reply";
 
@@ -102,7 +101,6 @@ export async function POST(req: NextRequest) {
   // Acknowledge fast — Meta times out after 20s. We process async after
   // responding 200. (If processing throws, we'll log but not retry.)
   processEventAsync(payload, rawBody, signatureHeader).catch((err) => {
-     
     console.error("[meta-webhook] async processing failed:", err);
   });
 
@@ -142,7 +140,7 @@ async function processEventAsync(
     const channel = payload.object === "instagram" ? "instagram" : "messenger";
 
     // Find tenant by page_id
-    let { data: settings } = await supabase
+    const { data: settings } = await supabase
       .from("marketing_inbox_settings")
       .select(
         "company_id, meta_page_token, meta_app_secret, ai_enabled, ai_system_prompt, ai_business_context, ai_handoff_keywords, auto_push_to_crm, channel_messenger, channel_instagram",
@@ -150,35 +148,32 @@ async function processEventAsync(
       .eq("meta_page_id", pageId)
       .maybeSingle();
 
-    // لو الصفحة مش مربوطة بـ Page ID صح، السيستم هيسحب داتا شركتك فوراً عشان الـ AI يرد
-    if (!settings) {
-      const { data: fallbackSettings } = await supabase
-        .from("marketing_inbox_settings")
-        .select("company_id, meta_page_token, meta_app_secret, ai_enabled, ai_system_prompt, ai_business_context, ai_handoff_keywords, auto_push_to_crm, channel_messenger, channel_instagram")
-        .eq("company_id", "a323ffe2-e31e-4ced-ab6e-92f6ed6d5ec7")
-        .maybeSingle();
-      
-      if (fallbackSettings) {
-        settings = fallbackSettings;
-      }
-    }
-
+    // No tenant owns this Page ID → drop the event. We must NEVER fall back
+    // to another company's settings: that would cross-leak their page token,
+    // AI business context, and CRM leads. Resolve strictly by meta_page_id.
     if (!settings) {
       continue;
     }
 
-    // Verify signature (the page must have an app_secret set for this to work)
-    if (settings.meta_app_secret) {
-      const valid = verifyMetaSignature({
-        rawBody,
-        signatureHeader,
-        appSecret: settings.meta_app_secret,
-      });
-      if (!valid) {
-         
-        console.warn("[meta-webhook] signature mismatch for page", pageId);
-        continue;
-      }
+    // Verify signature — MANDATORY. A page with no app_secret configured
+    // can't be authenticated, so we drop the event rather than trust an
+    // unsigned payload (which would let anyone forge inbound messages).
+    if (!settings.meta_app_secret) {
+      console.warn(
+        "[meta-webhook] no app_secret for page",
+        pageId,
+        "— dropping unverifiable event",
+      );
+      continue;
+    }
+    const valid = verifyMetaSignature({
+      rawBody,
+      signatureHeader,
+      appSecret: settings.meta_app_secret,
+    });
+    if (!valid) {
+      console.warn("[meta-webhook] signature mismatch for page", pageId);
+      continue;
     }
 
     // Process each message in the entry
@@ -213,7 +208,6 @@ async function processEventAsync(
 
       if (insertErr) {
         if (insertErr.code !== "23505") {
-           
           console.error("[meta-webhook] insert message failed:", insertErr);
         }
         continue;
@@ -293,7 +287,6 @@ async function upsertConversation(args: {
     .single();
 
   if (error || !created) {
-     
     console.error("[meta-webhook] upsert conv failed:", error);
     return null;
   }
@@ -351,7 +344,6 @@ async function runAiReply(args: {
     });
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err);
-     
     console.error("[meta-webhook] AI generation failed:", errMsg);
     await args.supabase
       .from("marketing_inbox_conversations")
@@ -462,7 +454,6 @@ async function pushToCRM(args: {
     .single();
 
   if (error || !customer) {
-     
     console.error("[meta-webhook] push to CRM failed:", error);
     return;
   }

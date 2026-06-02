@@ -143,13 +143,18 @@ async function computeAndInsertEntries(
           .from("employees")
           .select("id, full_name, basic_salary, housing_allowance, transport_allowance, other_allowances, incentive_allowance, pay_frequency, hire_date, termination_date")
           .eq("company_id", companyId)
-          .eq("status", "active")
+          // Include staff terminated INSIDE this cycle so their final
+          // pro-rated paycheck + EOS is generated (the EOS block below only
+          // fires for rows the query returns). Earlier-terminated staff are
+          // excluded — their termination_date falls outside the window.
+          .or(`status.eq.active,and(status.eq.terminated,termination_date.gte.${startDate},termination_date.lte.${endDate})`)
           .or("pay_frequency.eq.monthly,pay_frequency.is.null")
       : supabase
           .from("employees")
           .select("id, full_name, basic_salary, housing_allowance, transport_allowance, other_allowances, incentive_allowance, pay_frequency, hire_date, termination_date")
           .eq("company_id", companyId)
-          .eq("status", "active")
+          // Same terminated-in-cycle inclusion as the monthly branch.
+          .or(`status.eq.active,and(status.eq.terminated,termination_date.gte.${startDate},termination_date.lte.${endDate})`)
           .eq("pay_frequency", "weekly");
 
   const [employeesRes, attendanceRes, companyRes, holidaysRes] = await Promise.all([
