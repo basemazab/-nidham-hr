@@ -35,6 +35,7 @@ export type CreateEmployeeParams = {
   employee_code: string | null;
   job_title: string | null;
   department: string | null;
+  reports_to: string | null;
   phone: string | null;
   email: string | null;
   hire_date: string | null;
@@ -107,6 +108,7 @@ export async function updateEmployee(
       employee_code: params.employee_code,
       job_title: params.job_title,
       department: params.department,
+      reports_to: params.reports_to,
       phone: params.phone,
       email: params.email,
       hire_date: params.hire_date,

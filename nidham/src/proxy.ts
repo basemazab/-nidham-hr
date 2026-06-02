@@ -19,6 +19,12 @@ export const config = {
     // both from app/sitemap.ts and app/robots.ts, but the proxy was
     // running on them and returning HTML 404. Search engines need
     // raw text/xml responses.
-    "/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|offline.html|robots.txt|sitemap.xml|sitemap-.*\\.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|woff|woff2|ttf|otf|webmanifest|xml|txt)$).*)",
+    //
+    // .well-known/* is excluded too: Vercel serves /.well-known/vercel/jwe
+    // (the deployment-protection JWE endpoint) plus other well-known URIs
+    // from its own infra. If the proxy intercepts them and runs the
+    // Supabase session refresh, Vercel can't serve the endpoint and it
+    // returns 503. Auth never applies to .well-known, so bypass it.
+    "/((?!_next/static|_next/image|favicon.ico|\\.well-known|manifest.webmanifest|sw.js|offline.html|robots.txt|sitemap.xml|sitemap-.*\\.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|woff|woff2|ttf|otf|webmanifest|xml|txt)$).*)",
   ],
 };

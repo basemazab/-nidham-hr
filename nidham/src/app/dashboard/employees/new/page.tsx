@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
+import { getMyProfile } from "@/lib/permissions";
 import { createEmployee } from "../actions";
 
 type SearchParams = Promise<{ error?: string }>;
@@ -9,6 +11,17 @@ export default async function NewEmployeePage({
   searchParams: SearchParams;
 }) {
   const { error } = await searchParams;
+
+  // Active employees for the "direct manager" picker (org-chart hierarchy).
+  const supabase = await createClient();
+  const { profile } = await getMyProfile();
+  const { data: managerOptions } = await supabase
+    .from("employees")
+    .select("id, full_name")
+    .eq("company_id", profile?.company_id ?? "")
+    .eq("status", "active")
+    .order("full_name")
+    .returns<{ id: string; full_name: string }[]>();
 
   return (
     <main className="flex-1 px-6 py-8 bg-gradient-to-b from-slate-50 via-white to-cyan-50/30 min-h-screen">
@@ -96,6 +109,26 @@ export default async function NewEmployeePage({
                   className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:border-brand-cyan focus:ring-2 focus:ring-brand-cyan/20 outline-none transition text-slate-900"
                 />
               </div>
+            </div>
+
+            {/* Direct manager — drives the org chart (/dashboard/org-chart) */}
+            <div>
+              <label htmlFor="reports_to" className="block text-sm font-medium text-slate-700 mb-2 font-cairo">
+                المدير المباشر
+                <span className="text-slate-400 text-xs mr-2">— بيظهر في الهيكل التنظيمي</span>
+              </label>
+              <select
+                id="reports_to"
+                name="reports_to"
+                className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:border-brand-cyan focus:ring-2 focus:ring-brand-cyan/20 outline-none transition text-slate-900 bg-white"
+              >
+                <option value="">— بدون مدير (قمة الهيكل) —</option>
+                {(managerOptions ?? []).map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.full_name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="grid md:grid-cols-2 gap-4">

@@ -15,6 +15,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { verifyTotpCode } from "@/lib/totp";
 import { checkLoginRateLimit } from "@/lib/rate-limit";
+import { signTwoFaPass } from "@/lib/twofa-cookie";
 
 async function getClientIp(): Promise<string> {
   const h = await headers();
@@ -65,7 +66,7 @@ export async function verifyLogin2fa(formData: FormData) {
   // cookie (dies on tab close). Httponly + secure + sameSite=lax keep
   // it out of JS and CSRF reach.
   const cookieStore = await cookies();
-  cookieStore.set("nidham_2fa_pass", "ok", {
+  cookieStore.set("nidham_2fa_pass", await signTwoFaPass(user.id), {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",

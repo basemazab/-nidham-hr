@@ -77,6 +77,7 @@ type Employee = {
   employee_code: string | null;
   job_title: string | null;
   department: string | null;
+  reports_to: string | null;
   phone: string | null;
   email: string | null;
   hire_date: string | null;
@@ -149,6 +150,16 @@ export default async function EditEmployeePage({ params, searchParams }: PagePro
   const { profile: currentProfile } = await getMyProfile();
   const isAdmin = currentProfile?.role === "admin";
   const callerCompanyId = currentProfile?.company_id ?? "";
+
+  // Active colleagues for the "direct manager" picker (can't report to self).
+  const { data: managerOptions } = await supabase
+    .from("employees")
+    .select("id, full_name")
+    .eq("company_id", callerCompanyId)
+    .eq("status", "active")
+    .neq("id", id)
+    .order("full_name")
+    .returns<{ id: string; full_name: string }[]>();
 
   // Fetch shifts + rotations for the assignment card + resolve today's
   // shift for the badge. Doing this here keeps the card a pure client
@@ -455,6 +466,27 @@ export default async function EditEmployeePage({ params, searchParams }: PagePro
                   className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:border-brand-cyan focus:ring-2 focus:ring-brand-cyan/20 outline-none transition text-slate-900"
                 />
               </div>
+            </div>
+
+            {/* Direct manager — drives the org chart (/dashboard/org-chart) */}
+            <div>
+              <label htmlFor="reports_to" className="block text-sm font-medium text-slate-700 mb-2 font-cairo">
+                المدير المباشر
+                <span className="text-slate-400 text-xs mr-2">— بيظهر في الهيكل التنظيمي</span>
+              </label>
+              <select
+                id="reports_to"
+                name="reports_to"
+                defaultValue={employee.reports_to ?? ""}
+                className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:border-brand-cyan focus:ring-2 focus:ring-brand-cyan/20 outline-none transition text-slate-900 bg-white"
+              >
+                <option value="">— بدون مدير (قمة الهيكل) —</option>
+                {(managerOptions ?? []).map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.full_name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="grid md:grid-cols-2 gap-4">

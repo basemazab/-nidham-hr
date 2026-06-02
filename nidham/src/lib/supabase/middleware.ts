@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { verifyTwoFaPass } from "@/lib/twofa-cookie";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -43,13 +44,40 @@ export async function updateSession(request: NextRequest) {
   const isAuthPage = path.startsWith("/login") || path.startsWith("/signup");
   const isProtectedPage =
     path.startsWith("/dashboard") || path.startsWith("/admin");
+  const is2faPage = path === "/login/2fa";
 
   if (!user && isProtectedPage) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  if (user && isAuthPage) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+  // Enforce the TOTP second factor. A user who passed the password step has
+  // an active Supabase session, but until they clear the 6-digit challenge
+  // their session carries no valid `nidham_2fa_pass` cookie. Without this
+  // gate they could navigate straight to /dashboard and skip 2FA entirely,
+  // AND /login/2fa was unreachable (auth-page users got bounced to /dashboard).
+  if (user && (isProtectedPage || isAuthPage)) {
+    const passCookie = request.cookies.get("nidham_2fa_pass")?.value;
+    let twoFaPending = false;
+    // Fast path: a valid pass cookie (HMAC-bound to this user) means 2FA is
+    // already cleared — no DB hit. Otherwise check whether 2FA is enabled.
+    if (!(passCookie && (await verifyTwoFaPass(user.id, passCookie)))) {
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("two_factor_enabled")
+        .eq("id", user.id)
+        .single<{ two_factor_enabled: boolean | null }>();
+      twoFaPending = prof?.two_factor_enabled === true;
+    }
+
+    if (twoFaPending) {
+      // Must finish the challenge first — allow only the /login/2fa page.
+      if (!is2faPage) {
+        return NextResponse.redirect(new URL("/login/2fa", request.url));
+      }
+    } else if (isAuthPage) {
+      // Fully authenticated (or 2FA not enabled) → keep them out of auth pages.
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
   }
 
   return supabaseResponse;
