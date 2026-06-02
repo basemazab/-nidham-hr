@@ -131,13 +131,8 @@ export function SoftwareApplicationSchema() {
       "متوافق مع PDPL 151/2020",
     ],
     inLanguage: ["ar", "en"],
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: "4.8",
-      ratingCount: "12",
-      bestRating: "5",
-      worstRating: "1",
-    },
+    // ⚠ aggregateRating intentionally omitted — no real user reviews yet.
+    // Google policy prohibits fabricated ratings (manual action risk).
     publisher: { "@id": `${SITE}/#organization` },
   };
   return (

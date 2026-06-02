@@ -6,25 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireHR } from "@/lib/permissions";
 import { arabicizeDbError } from "@/lib/i18n";
 import { bustDashboardCache } from "@/lib/cache";
-
-// ----------------------------------------------------------------------------
-// Helpers
-// ----------------------------------------------------------------------------
-
-function asText(value: FormDataEntryValue | null): string | null {
-  // Reject non-string FormData entries (e.g., File objects) instead of
-  // letting String() coerce them to "[object File]".
-  if (value === null || typeof value !== "string") return null;
-  const t = value.trim();
-  return t.length === 0 ? null : t;
-}
-
-function asNumber(value: FormDataEntryValue | null): number | null {
-  const t = asText(value);
-  if (t === null) return null;
-  const n = Number(t);
-  return Number.isFinite(n) ? n : null;
-}
+import { asText, asNumber } from "@/lib/form-helpers";
 
 function asInt(value: FormDataEntryValue | null): number | null {
   const t = asText(value);

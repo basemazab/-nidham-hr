@@ -30,6 +30,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "مدونة نِظام HR — مقالات HR ومرتبات للشركات المصرية",
     description: "أدلة حساب المرتبات، التأمينات، قانون العمل، ومقارنة أنظمة HR في مصر.",
+    images: "/api/og?title=" + encodeURIComponent("مدونة نِظام HR — موارد للـ HR في مصر"),
   },
 };
 

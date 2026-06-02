@@ -165,6 +165,14 @@ export default function Post() {
         أيوه. كل فرع ليه Geofence مستقل. الموظف بيسجّل حضور من الفرع
         التابع له. التقرير بيجمّع حضور كل الفروع في شاشة واحدة.
       </p>
+
+      <div className="key-takeaway">
+        <div className="key-takeaway-label">اقرا كمان</div>
+        <p>
+          <Link href="/blog/labor-law-compliance-nidham">التوافق مع قانون العمل 12/2003 — إزاي نِظام بيأتمت الالتزام القانوني</Link>
+          · <Link href="/features">كل مميزات نِظام</Link>
+        </p>
+      </div>
     </>
   );
 }

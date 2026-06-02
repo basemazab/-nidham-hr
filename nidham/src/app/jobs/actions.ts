@@ -3,19 +3,7 @@
 import { redirect } from "next/navigation";
 import { createPublicClient } from "@/lib/supabase/public";
 import { extractPdfText } from "@/lib/pdf-extract";
-
-function asText(value: FormDataEntryValue | null): string | null {
-  if (value === null || typeof value !== "string") return null;
-  const t = value.trim();
-  return t.length === 0 ? null : t;
-}
-
-function asNumber(value: FormDataEntryValue | null): number | null {
-  const t = asText(value);
-  if (t === null) return null;
-  const n = Number(t);
-  return Number.isFinite(n) ? n : null;
-}
+import { asText, asNumber } from "@/lib/form-helpers";
 
 /**
  * Public form submission for /jobs/[slug]/apply.

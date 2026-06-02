@@ -158,6 +158,17 @@ export default function FeaturesPage() {
         </div>
       </section>
 
+      {/* Internal links */}
+      <section className="max-w-3xl mx-auto px-4 pb-6 text-center">
+        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm font-cairo text-slate-500">
+          <Link href="/blog/labor-law-compliance-nidham" className="hover:text-brand-cyan-dark transition underline underline-offset-2">📋 التوافق مع قانون العمل 12/2003</Link>
+          <span className="text-slate-300">·</span>
+          <Link href="/blog/social-insurance-form-1-egypt" className="hover:text-brand-cyan-dark transition underline underline-offset-2">📄 نموذج 1 تأمينات</Link>
+          <span className="text-slate-300">·</span>
+          <Link href="/pricing" className="hover:text-brand-cyan-dark transition underline underline-offset-2">💰 الأسعار</Link>
+        </div>
+      </section>
+
       {/* CTA */}
       <section className="max-w-3xl mx-auto px-4 pb-12 text-center">
         <div className="bg-gradient-to-br from-indigo-500 to-violet-600 rounded-3xl p-8 sm:p-12 shadow-xl">

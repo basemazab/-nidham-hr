@@ -141,6 +141,7 @@ export default function Post() {
 
       <h2>اقرا أكتر</h2>
       <ul>
+        <li><Link href="/blog/labor-law-compliance-nidham">التوافق مع قانون العمل — إزاي نِظام بيأتمت الالتزام القانوني</Link></li>
         <li><Link href="/blog/how-to-calculate-egypt-salary-2026">حساب مرتب الموظف في مصر 2026</Link></li>
         <li><Link href="/blog/end-of-service-calculator-egypt">حساب نهاية الخدمة</Link></li>
         <li><Link href="/blog/7-hr-mistakes-egyptian-companies">7 أخطاء HR شائعة</Link></li>

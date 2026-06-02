@@ -55,6 +55,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       title: post.title,
       description: post.description,
       url,
+      images: [{ url: `${SITE}/api/og?title=${encodeURIComponent(post.title)}`, width: 1200, height: 630, alt: post.title }],
       publishedTime: post.publishedAt,
       modifiedTime: post.updatedAt,
       authors: [post.author],
@@ -64,6 +65,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       card: "summary_large_image",
       title: post.title,
       description: post.description,
+      images: `${SITE}/api/og?title=${encodeURIComponent(post.title)}`,
     },
   };
 }

@@ -274,6 +274,13 @@ export default function Post() {
         من الأجر التأميني المعلن.
       </p>
 
+      <h2>اقرا كمان</h2>
+      <ul>
+        <li><Link href="/blog/labor-law-compliance-nidham">التوافق مع قانون العمل المصري 12/2003 — إزاي نِظام بيأتمت الالتزام القانوني</Link></li>
+        <li><Link href="/blog/income-tax-egypt-2026-explained">ضريبة كسب العمل 2026 — الشرايح المتدرجة</Link></li>
+        <li><Link href="/features">كل مميزات نِظام HR</Link></li>
+      </ul>
+
       <h2>مصادر رسمية</h2>
       <ul>
         <li>الهيئة القومية للتأمين الاجتماعي: nosi.gov.eg</li>

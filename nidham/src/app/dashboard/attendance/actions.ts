@@ -158,5 +158,3 @@ export async function deleteOneAttendance(formData: FormData) {
   revalidatePath("/dashboard/reports/attendance");
   redirect("/dashboard/attendance?date=" + encodeURIComponent(date));
 }
-
-export { parseTime, clampMinutes } from "@/services/attendance.service";

@@ -150,35 +150,24 @@ async function processEventAsync(
       .eq("meta_page_id", pageId)
       .maybeSingle();
 
-    // لو الصفحة مش مربوطة بـ Page ID صح، السيستم هيسحب داتا شركتك فوراً عشان الـ AI يرد
-    if (!settings) {
-      const { data: fallbackSettings } = await supabase
-        .from("marketing_inbox_settings")
-        .select("company_id, meta_page_token, meta_app_secret, ai_enabled, ai_system_prompt, ai_business_context, ai_handoff_keywords, auto_push_to_crm, channel_messenger, channel_instagram")
-        .eq("company_id", "a323ffe2-e31e-4ced-ab6e-92f6ed6d5ec7")
-        .maybeSingle();
-      
-      if (fallbackSettings) {
-        settings = fallbackSettings;
-      }
-    }
-
     if (!settings) {
       continue;
     }
 
-    // Verify signature (the page must have an app_secret set for this to work)
-    if (settings.meta_app_secret) {
-      const valid = verifyMetaSignature({
-        rawBody,
-        signatureHeader,
-        appSecret: settings.meta_app_secret,
-      });
-      if (!valid) {
-         
-        console.warn("[meta-webhook] signature mismatch for page", pageId);
-        continue;
-      }
+    // Verify signature — إجباري. لو مفيش app_secret نرفض الحدث.
+    const appSecret = settings.meta_app_secret;
+    if (!appSecret) {
+      console.warn("[meta-webhook] missing meta_app_secret for page", pageId);
+      continue;
+    }
+    const valid = verifyMetaSignature({
+      rawBody,
+      signatureHeader,
+      appSecret,
+    });
+    if (!valid) {
+      console.warn("[meta-webhook] signature mismatch for page", pageId);
+      continue;
     }
 
     // Process each message in the entry

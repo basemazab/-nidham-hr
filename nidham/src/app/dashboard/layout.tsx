@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import { getMyFeatureOverrides } from "@/lib/subscriptions-server";
@@ -31,6 +32,21 @@ export default async function DashboardLayout({
   } = await supabase.auth.getUser();
 
   if (!user) redirect("/login");
+
+  // Defense-in-depth: even if middleware somehow misses the 2FA check,
+  // verify the nidham_2fa_pass cookie is present when 2FA is enabled.
+  const cookieStore = await cookies();
+  const twofaPass = cookieStore.get("nidham_2fa_pass");
+  if (!twofaPass) {
+    const { data: twofaProfile } = await supabase
+      .from("profiles")
+      .select("two_factor_enabled")
+      .eq("id", user.id)
+      .single<{ two_factor_enabled: boolean | null }>();
+    if (twofaProfile?.two_factor_enabled === true) {
+      redirect("/login/2fa");
+    }
+  }
 
   const [profileRes, superAdminRes, companyForSubRes] = await Promise.all([
     supabase
