@@ -131,13 +131,10 @@ export function SoftwareApplicationSchema() {
       "متوافق مع PDPL 151/2020",
     ],
     inLanguage: ["ar", "en"],
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: "4.8",
-      ratingCount: "12",
-      bestRating: "5",
-      worstRating: "1",
-    },
+    // NOTE: aggregateRating intentionally omitted. A hardcoded rating (we had
+    // a fabricated 4.8/12) violates Google's review-snippet policy and risks a
+    // manual action that strips ALL rich results site-wide. Re-add ONLY when
+    // wired to real, verifiable reviews (e.g. a reviews table) — never hardcoded.
     publisher: { "@id": `${SITE}/#organization` },
   };
   return (

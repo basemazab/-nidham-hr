@@ -7,7 +7,7 @@ import { IndustryPage, type IndustryPageData } from "@/components/industry-page"
 // Target keywords: "نظام HR للمصانع" / "إدارة موظفين مصنع" / "حضور وانصراف مصنع"
 
 export const metadata: Metadata = {
-  title: "نظام HR للمصانع المصرية — إدارة عمالة + ورديات + مرتبات | نِظام HR",
+  title: { absolute: "نظام HR للمصانع المصرية — إدارة عمالة + ورديات + مرتبات | نِظام HR" },
   description:
     "نظام HR متخصص للمصانع: إدارة عمال الإنتاج، نظام الورديات الثلاثية، حساب الأوفر تايم بالنسب القانونية، حضور بالبصمة أو GPS، نماذج تأمينات.",
   alternates: { canonical: "/industries/manufacturing" },

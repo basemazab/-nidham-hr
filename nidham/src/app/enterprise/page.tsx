@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 
 export const metadata = {
-  title: "Enterprise — حلول HR للشركات الكبيرة 500+ موظف | نِظام",
+  title: { absolute: "Enterprise — حلول HR للشركات الكبيرة 500+ موظف | نِظام HR" },
   description:
     "نظام HR للشركات الكبيرة والمؤسسات: On-premise deployment، RBAC متقدم، تشفير PII، SSO/SAML، Audit Log، SLA 99.99%، Custom integrations. خوادم مصرية or On-premise — اختار انت.",
   alternates: { canonical: "/enterprise" },

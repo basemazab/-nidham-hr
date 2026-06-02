@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "أمان وحماية نظام HR — تشفير AES-256 + PDPL + Audit Log | نِظام",
+  title: { absolute: "أمان وحماية نظام HR — تشفير AES-256 + PDPL + Audit Log | نِظام HR" },
   description:
     "نظام HR آمن: تشفير AES-256 للبيانات الحساسة، متوافق مع قانون حماية البيانات المصري 151/2020، Audit Log كامل، صلاحيات RBAC، 2FA، خوادم مصرية على Azure.",
   alternates: { canonical: "/security" },

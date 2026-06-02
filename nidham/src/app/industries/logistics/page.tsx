@@ -7,7 +7,7 @@ import { IndustryPage, type IndustryPageData } from "@/components/industry-page"
 // Target keywords: "نظام HR شركات شحن" / "إدارة سائقين" / "حضور سائقين GPS"
 
 export const metadata: Metadata = {
-  title: "نظام HR لشركات الشحن واللوجستيات — إدارة سائقين + GPS | نِظام HR",
+  title: { absolute: "نظام HR لشركات الشحن واللوجستيات — إدارة سائقين + GPS | نِظام HR" },
   description:
     "نظام HR + CRM للشركات اللوجستيات: تتبع السائقين بـ GPS، حضور من المخزن أو موقع العميل، إدارة عملاء الشركات، تكامل مع TMS، نماذج التأمينات.",
   alternates: { canonical: "/industries/logistics" },

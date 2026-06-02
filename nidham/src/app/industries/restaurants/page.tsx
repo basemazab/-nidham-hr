@@ -4,7 +4,7 @@ import { IndustryPage, type IndustryPageData } from "@/components/industry-page"
 // Target: "نظام HR للمطاعم" / "إدارة موظفين مطعم" / "حضور وانصراف مطعم"
 
 export const metadata: Metadata = {
-  title: "نظام HR للمطاعم والكافيهات في مصر — ورديات + بقشيش | نِظام HR",
+  title: { absolute: "نظام HR للمطاعم والكافيهات في مصر — ورديات + بقشيش | نِظام HR" },
   description:
     "نظام HR متخصص للمطاعم والكافيهات: جدولة ورديات الويترز والشيفات، حساب البقشيش (Tips Pool)، حضور بالموبايل، حساب الأوفر تايم بنسب القانون.",
   alternates: { canonical: "/industries/restaurants" },
