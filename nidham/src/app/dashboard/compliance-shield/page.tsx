@@ -5,6 +5,7 @@ import {
   scanCompliance,
   type ComplianceEmployee,
   type LeaveBalanceRow,
+  type CompanyDocument,
   type Severity,
 } from "@/lib/compliance-shield";
 
@@ -39,7 +40,7 @@ export default async function ComplianceShieldPage() {
 
   const year = new Date().getFullYear();
 
-  const [companyRes, employeesRes, balancesRes] = await Promise.all([
+  const [companyRes, employeesRes, balancesRes, docsRes] = await Promise.all([
     supabase
       .from("companies")
       .select("social_insurance_enabled, income_tax_enabled")
@@ -57,6 +58,11 @@ export default async function ComplianceShieldPage() {
       .eq("year", year)
       .eq("leave_type", "annual")
       .returns<LeaveBalanceRow[]>(),
+    supabase
+      .from("company_documents")
+      .select("name, expiry_date, reminder_days")
+      .eq("company_id", companyId)
+      .returns<CompanyDocument[]>(),
   ]);
 
   const result = scanCompliance({
@@ -66,6 +72,7 @@ export default async function ComplianceShieldPage() {
       income_tax_enabled: companyRes.data?.income_tax_enabled ?? false,
     },
     annualBalances: balancesRes.data ?? [],
+    documents: docsRes.data ?? [],
     today: new Date(),
   });
 
@@ -191,6 +198,7 @@ export default async function ComplianceShieldPage() {
             <div>🛡️ التزامات حجم الشركة (50+)</div>
             <div>🛡️ التزام رصيد الإجازات المتراكم</div>
             <div>🛡️ لائحة الجزاءات والسلامة المهنية</div>
+            <div>🛡️ تواريخ انتهاء المستندات والتراخيص</div>
           </div>
           <p className="text-xs text-slate-400 dark:text-slate-500 font-cairo mt-4">
             الأرقام تقديرية للتنبيه والوقاية، ولا تُغني عن المراجعة القانونية. الدرع

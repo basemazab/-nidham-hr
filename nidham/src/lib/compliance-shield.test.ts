@@ -108,6 +108,24 @@ describe("scanCompliance", () => {
     expect(res.grade.label).toBe("ممتاز");
   });
 
+  it("flags expired and soon-to-expire documents", () => {
+    const res = scanCompliance({
+      employees: [emp({})],
+      company: { social_insurance_enabled: false, income_tax_enabled: false },
+      annualBalances: [],
+      documents: [
+        { name: "السجل التجاري", expiry_date: "2025-01-01" }, // expired
+        { name: "البطاقة الضريبية", expiry_date: "2026-06-20", reminder_days: 30 }, // ~17 days → soon
+        { name: "رخصة المصنع", expiry_date: "2027-01-01" }, // fine
+      ],
+      today: TODAY,
+    });
+    const expired = res.risks.find((r) => r.id === "documents-expired");
+    const soon = res.risks.find((r) => r.id === "documents-expiring");
+    expect(expired?.severity).toBe("high");
+    expect(soon?.severity).toBe("medium");
+  });
+
   it("computes a compliance index that drops with risk severity", () => {
     const employees = Array.from({ length: 50 }, () => emp({}));
     const res = scanCompliance({

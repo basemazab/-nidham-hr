@@ -56,10 +56,18 @@ export type LeaveBalanceRow = {
   used_days: number;
 };
 
+export type CompanyDocument = {
+  name: string;
+  expiry_date: string;
+  reminder_days?: number | null;
+};
+
 export type ComplianceScanInput = {
   employees: ComplianceEmployee[];
   company: ComplianceCompany;
   annualBalances: LeaveBalanceRow[];
+  /** Tracked documents/licenses with expiry dates (optional). */
+  documents?: CompanyDocument[];
   /** today, injected so the function stays pure/testable */
   today: Date;
 };
@@ -96,7 +104,7 @@ function gradeFor(score: number): ComplianceGrade {
   return { label: "خطر", tone: "rose" };
 }
 
-const MONITORED_OBLIGATIONS = 7;
+const MONITORED_OBLIGATIONS = 8;
 
 function daysBetween(a: Date, b: Date): number {
   return Math.floor((a.getTime() - b.getTime()) / (1000 * 60 * 60 * 24));
@@ -257,6 +265,43 @@ export function scanCompliance(input: ComplianceScanInput): ComplianceScanResult
       estFine: null,
       actionLabel: "تقويم الإجازات",
       actionHref: "/dashboard/team-calendar",
+    });
+  }
+
+  // ── 6. Document / license expiry ────────────────────────────────────────
+  const documents = input.documents ?? [];
+  const expired = documents.filter((d) => new Date(d.expiry_date) < today);
+  const expiringSoon = documents.filter((d) => {
+    const exp = new Date(d.expiry_date);
+    if (exp < today) return false;
+    return daysBetween(exp, today) <= (d.reminder_days ?? 30);
+  });
+  if (expired.length > 0) {
+    risks.push({
+      id: "documents-expired",
+      severity: "high",
+      title: `${expired.length} مستند/ترخيص منتهي`,
+      detail: `منتهي بالفعل: ${expired.slice(0, 3).map((d) => d.name).join("، ")}${
+        expired.length > 3 ? "…" : ""
+      }. التشغيل بمستند منتهي يعرّضك لغرامات أو إيقاف نشاط.`,
+      legalRef: "تراخيص ومستندات النشاط",
+      estFine: null,
+      actionLabel: "راجع المستندات",
+      actionHref: "/dashboard/documents",
+    });
+  }
+  if (expiringSoon.length > 0) {
+    risks.push({
+      id: "documents-expiring",
+      severity: "medium",
+      title: `${expiringSoon.length} مستند قرب ينتهي`,
+      detail: `قرب الانتهاء: ${expiringSoon.slice(0, 3).map((d) => d.name).join("، ")}${
+        expiringSoon.length > 3 ? "…" : ""
+      }. جدّدها قبل ميعادها لتجنّب أي توقف.`,
+      legalRef: "تراخيص ومستندات النشاط",
+      estFine: null,
+      actionLabel: "راجع المستندات",
+      actionHref: "/dashboard/documents",
     });
   }
 

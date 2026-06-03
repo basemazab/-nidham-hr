@@ -4,6 +4,7 @@ import {
   scanCompliance,
   type ComplianceEmployee,
   type LeaveBalanceRow,
+  type CompanyDocument,
 } from "@/lib/compliance-shield";
 import { PrintButton } from "./print-button";
 
@@ -36,7 +37,7 @@ export default async function ComplianceReportPage() {
   const companyName = profile?.companies?.name ?? "شركتك";
 
   const year = new Date().getFullYear();
-  const [companyRes, employeesRes, balancesRes] = await Promise.all([
+  const [companyRes, employeesRes, balancesRes, docsRes] = await Promise.all([
     supabase
       .from("companies")
       .select("social_insurance_enabled, income_tax_enabled")
@@ -54,6 +55,11 @@ export default async function ComplianceReportPage() {
       .eq("year", year)
       .eq("leave_type", "annual")
       .returns<LeaveBalanceRow[]>(),
+    supabase
+      .from("company_documents")
+      .select("name, expiry_date, reminder_days")
+      .eq("company_id", companyId)
+      .returns<CompanyDocument[]>(),
   ]);
 
   const now = new Date();
@@ -64,6 +70,7 @@ export default async function ComplianceReportPage() {
       income_tax_enabled: companyRes.data?.income_tax_enabled ?? false,
     },
     annualBalances: balancesRes.data ?? [],
+    documents: docsRes.data ?? [],
     today: now,
   });
 
@@ -174,6 +181,7 @@ export default async function ComplianceReportPage() {
           <div>• التزامات حجم الشركة (50+)</div>
           <div>• التزام رصيد الإجازات المتراكم</div>
           <div>• لائحة الجزاءات والسلامة المهنية</div>
+          <div>• تواريخ انتهاء المستندات والتراخيص</div>
         </div>
 
         {/* Footer */}

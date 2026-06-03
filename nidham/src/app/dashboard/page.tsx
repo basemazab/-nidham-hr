@@ -10,6 +10,7 @@ import {
   scanCompliance,
   type ComplianceEmployee,
   type LeaveBalanceRow,
+  type CompanyDocument,
 } from "@/lib/compliance-shield";
 
 type Profile = {
@@ -60,7 +61,7 @@ export default async function DashboardPage({
   const callerCompanyId = profile?.company_id ?? "";
   const complianceYear = new Date().getFullYear();
 
-  const [employeesData, customersCount, interactionsCount, companyFlags, leaveBalances, aiSignals] =
+  const [employeesData, customersCount, interactionsCount, companyFlags, leaveBalances, companyDocuments, aiSignals] =
     await Promise.all([
       // Full employee rows (compliance fields) — also gives us the headcount,
       // so we drop the separate count query. RLS scopes to the caller's tenant.
@@ -89,6 +90,11 @@ export default async function DashboardPage({
         .eq("year", complianceYear)
         .eq("leave_type", "annual")
         .returns<LeaveBalanceRow[]>(),
+      supabase
+        .from("company_documents")
+        .select("name, expiry_date, reminder_days")
+        .eq("company_id", callerCompanyId)
+        .returns<CompanyDocument[]>(),
       loadNidhamAISignals(),
     ]);
 
@@ -106,6 +112,7 @@ export default async function DashboardPage({
       income_tax_enabled: companyFlags.data?.income_tax_enabled ?? false,
     },
     annualBalances: leaveBalances.data ?? [],
+    documents: companyDocuments.data ?? [],
     today: new Date(),
   });
 
