@@ -21,6 +21,7 @@ import { NextResponse, after } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { sendText, normalizeEgyptPhone } from "@/lib/whatsapp";
 import { routeBotMessage } from "@/lib/whatsapp-bot";
+import { verifyMetaSignature } from "@/lib/marketing-inbox/meta-client";
 
 type IncomingMessage = {
   from: string;
@@ -64,9 +65,29 @@ export async function POST(req: Request) {
   // Always return 200 quickly — Meta retries aggressively on non-2xx,
   // and we don't want to backfill duplicates if our handler is slow.
   // Background-process the message after returning.
+
+  // Verify the payload is genuinely from Meta: HMAC-SHA256 over the RAW body
+  // keyed by our app secret (x-hub-signature-256 header). Without this, anyone
+  // could POST forged "messages" to make the bot fire replies or probe the
+  // employee-by-phone lookup. Fail closed — ack with 200 but do NOT process
+  // when the signature is missing/invalid (or no app secret is configured).
+  const rawBody = await req.text();
+  const appSecret = process.env.META_APP_SECRET;
+  const signatureValid =
+    !!appSecret &&
+    verifyMetaSignature({
+      rawBody,
+      signatureHeader: req.headers.get("x-hub-signature-256"),
+      appSecret,
+    });
+  if (!signatureValid) {
+    console.warn("[whatsapp-webhook] rejected unsigned/invalid payload");
+    return NextResponse.json({ ok: true });
+  }
+
   let body: WebhookPayload;
   try {
-    body = (await req.json()) as WebhookPayload;
+    body = JSON.parse(rawBody) as WebhookPayload;
   } catch {
     return NextResponse.json({ ok: true });
   }
