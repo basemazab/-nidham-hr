@@ -207,6 +207,22 @@ export default async function DashboardPage({
           </div>
         </div>
 
+        {/* KPI cards — at-a-glance company metrics. These counts were fetched
+            on every load but never rendered; now surfaced as the dashboard's
+            top row, each linking to its module. */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <KpiCard emoji="👥" label="إجمالي الموظفين" value={empCount} accent="cyan" href="/dashboard/employees" />
+          <KpiCard emoji="🤝" label="العملاء" value={custCount} accent="emerald" href="/dashboard/customers" />
+          <KpiCard emoji="💬" label="التفاعلات" value={intCount} accent="violet" href="/dashboard/interactions" />
+          <KpiCard
+            emoji="💎"
+            label="أيام الباقة المتبقية"
+            value={subscription ? Math.max(0, subDaysLeft) : 0}
+            accent="amber"
+            href="/dashboard/subscription"
+          />
+        </div>
+
         {/* Nidham AI Predictive Engine Section */}
         <section className="mb-8">
           <NidhamAIDashboard employees={aiSignals} />
@@ -222,29 +238,40 @@ export default async function DashboardPage({
   );
 }
 
-function FirstStepCard({
-  num,
+// At-a-glance metric card for the dashboard top row. RTL: the accent bar sits
+// on the leading (right) edge. Tabular numerals keep the figures aligned.
+function KpiCard({
   emoji,
-  title,
+  label,
+  value,
+  accent,
   href,
 }: {
-  num: string;
   emoji: string;
-  title: string;
+  label: string;
+  value: number;
+  accent: "cyan" | "emerald" | "violet" | "amber";
   href: string;
 }) {
+  const accentBar: Record<typeof accent, string> = {
+    cyan: "border-r-brand-cyan",
+    emerald: "border-r-emerald-500",
+    violet: "border-r-violet-500",
+    amber: "border-r-amber-500",
+  };
   return (
     <Link
       href={href}
-      className="bg-white/10 border border-white/20 p-4 rounded-2xl hover:bg-white/20 transition group"
+      className={`group bg-white rounded-xl border border-slate-200 border-r-4 ${accentBar[accent]} p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-150`}
     >
-      <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-xs font-black">
-          {num}
-        </div>
-        <span className="text-xl">{emoji}</span>
-        <span className="font-bold font-cairo group-hover:underline">{title}</span>
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-2xl">{emoji}</span>
+        <span className="text-slate-300 group-hover:text-slate-400 transition">↗</span>
       </div>
+      <div className="text-3xl font-black text-slate-800 font-cairo tabular-nums">
+        {value.toLocaleString("ar-EG")}
+      </div>
+      <div className="text-xs text-slate-500 font-cairo mt-1">{label}</div>
     </Link>
   );
 }
