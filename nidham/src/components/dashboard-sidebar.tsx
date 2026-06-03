@@ -182,6 +182,11 @@ export function DashboardSidebar({
 }: Props) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  // Collapsible nav groups the user has expanded (besides the active group,
+  // which is always shown). Tames the long 40+ item list into a tidy outline.
+  const [openSections, setOpenSections] = useState<Set<NavSectionKey>>(
+    () => new Set(),
+  );
 
   // Close mobile drawer whenever the route changes. The setState is
   // intentional here — we're syncing UI to an external state (the URL),
@@ -220,9 +225,24 @@ export function DashboardSidebar({
   // sections are dropped so users on a single-feature plan don't see
   // headers above zero items.
   const groupedSections = SECTION_ORDER.map(({ key, label }) => ({
+    key,
     label,
     items: NAV_ITEMS.filter((i) => i.section === key && canSee(i)),
   })).filter((s) => s.items.length > 0);
+
+  // The group holding the current route stays open; the rest collapse by
+  // default so the sidebar reads as a short, scannable outline.
+  const activeSectionKey: NavSectionKey =
+    NAV_ITEMS.find((i) => isActive(i.href))?.section ?? "home";
+  const sectionOpen = (key: NavSectionKey) =>
+    key === "home" || key === activeSectionKey || openSections.has(key);
+  const toggleSection = (key: NavSectionKey) =>
+    setOpenSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
 
   return (
     <>
@@ -281,6 +301,9 @@ export function DashboardSidebar({
                   isActive={isActive}
                   plan={plan}
                   featureOverrides={featureOverrides}
+                  collapsible={!!s.label}
+                  open={sectionOpen(s.key)}
+                  onToggle={() => toggleSection(s.key)}
                 />
               ))}
             </nav>
@@ -312,6 +335,9 @@ export function DashboardSidebar({
               isActive={isActive}
               plan={plan}
               featureOverrides={featureOverrides}
+              collapsible={!!s.label}
+              open={sectionOpen(s.key)}
+              onToggle={() => toggleSection(s.key)}
             />
           ))}
         </nav>
@@ -342,23 +368,49 @@ function NavSection({
   isActive,
   plan,
   featureOverrides,
+  collapsible = false,
+  open = true,
+  onToggle,
 }: {
   label: string;
   items: NavItem[];
   isActive: (href: string) => boolean;
   plan?: Plan | null;
   featureOverrides?: Partial<Record<Feature, boolean>>;
+  collapsible?: boolean;
+  open?: boolean;
+  onToggle?: () => void;
 }) {
   if (items.length === 0) return null;
   return (
     <>
-      {/* Empty label = unlabeled section (used for the "home" link only) —
-          rendered without a header so it sits flush at the top of the nav. */}
-      {label && (
+      {/* Empty label = the "home" link section — no header, always visible.
+          Labelled sections are collapsible: the header toggles its items. */}
+      {label && collapsible ? (
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-expanded={open}
+          className="w-full flex items-center justify-between gap-2 px-3 py-1.5 mb-1 rounded-lg text-[10px] text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/50 font-bold tracking-wider font-cairo uppercase transition"
+        >
+          <span>{label}</span>
+          <svg
+            className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${
+              open ? "rotate-180" : ""
+            }`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+      ) : label ? (
         <div className="text-[10px] text-slate-400 dark:text-slate-500 font-bold tracking-wider mb-2 px-3 font-cairo uppercase">
           {label}
         </div>
-      )}
+      ) : null}
+      {open && (
       <div className="space-y-1 mb-5">
         {items.map((item) => {
           const active = isActive(item.href);
@@ -397,6 +449,7 @@ function NavSection({
           );
         })}
       </div>
+      )}
     </>
   );
 }
