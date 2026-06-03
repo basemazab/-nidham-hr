@@ -108,6 +108,28 @@ describe("scanCompliance", () => {
     expect(res.grade.label).toBe("ممتاز");
   });
 
+  it("flags employees whose 3-month probation is about to end", () => {
+    // 80 days before 2026-06-03 ≈ 2026-03-15 → inside the 75-90 window.
+    const res = scanCompliance({
+      employees: [emp({ hire_date: "2026-03-15" })],
+      company: { social_insurance_enabled: false, income_tax_enabled: false },
+      annualBalances: [],
+      today: TODAY,
+    });
+    const risk = res.risks.find((r) => r.id === "probation-ending");
+    expect(risk?.severity).toBe("medium");
+  });
+
+  it("does not flag probation for a long-tenured employee", () => {
+    const res = scanCompliance({
+      employees: [emp({ hire_date: "2020-01-01" })],
+      company: { social_insurance_enabled: false, income_tax_enabled: false },
+      annualBalances: [],
+      today: TODAY,
+    });
+    expect(res.risks.find((r) => r.id === "probation-ending")).toBeUndefined();
+  });
+
   it("flags expired and soon-to-expire documents", () => {
     const res = scanCompliance({
       employees: [emp({})],

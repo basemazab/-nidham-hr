@@ -199,6 +199,7 @@ export default async function ComplianceShieldPage() {
             <div>🛡️ التزام رصيد الإجازات المتراكم</div>
             <div>🛡️ لائحة الجزاءات والسلامة المهنية</div>
             <div>🛡️ تواريخ انتهاء المستندات والتراخيص</div>
+            <div>🛡️ انتهاء فترات الاختبار</div>
           </div>
           <p className="text-xs text-slate-400 dark:text-slate-500 font-cairo mt-4">
             الأرقام تقديرية للتنبيه والوقاية، ولا تُغني عن المراجعة القانونية. الدرع

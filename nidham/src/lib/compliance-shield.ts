@@ -104,7 +104,7 @@ function gradeFor(score: number): ComplianceGrade {
   return { label: "خطر", tone: "rose" };
 }
 
-const MONITORED_OBLIGATIONS = 8;
+const MONITORED_OBLIGATIONS = 9;
 
 function daysBetween(a: Date, b: Date): number {
   return Math.floor((a.getTime() - b.getTime()) / (1000 * 60 * 60 * 24));
@@ -268,7 +268,31 @@ export function scanCompliance(input: ComplianceScanInput): ComplianceScanResult
     });
   }
 
-  // ── 6. Document / license expiry ────────────────────────────────────────
+  // ── 6. Probation period ending (Art. 33 — max 3 months) ─────────────────
+  // If the employer doesn't act before the 3-month probation ends, the hire
+  // becomes permanent by operation of law. Flag actives hired 75-90 days ago
+  // so the owner decides (confirm / end) in time. hire_date only — no schema.
+  const probationEnding = active.filter((e) => {
+    if (!e.hire_date) return false;
+    const d = daysBetween(today, new Date(e.hire_date));
+    return d >= 75 && d <= 90;
+  });
+  if (probationEnding.length > 0) {
+    risks.push({
+      id: "probation-ending",
+      severity: "medium",
+      title: `${probationEnding.length} موظف فترة اختبارهم بتنتهي قريب`,
+      detail: `${probationEnding.slice(0, 3).map((e) => e.full_name || "موظف").join("، ")}${
+        probationEnding.length > 3 ? "…" : ""
+      }. قرّر التثبيت أو الإنهاء قبل انتهاء الـ3 شهور — بعدها العقد بيتحوّل دائم تلقائياً.`,
+      legalRef: "قانون العمل 12/2003 — المادة 33",
+      estFine: null,
+      actionLabel: "راجع الموظفين",
+      actionHref: "/dashboard/employees",
+    });
+  }
+
+  // ── 7. Document / license expiry ────────────────────────────────────────
   const documents = input.documents ?? [];
   const expired = documents.filter((d) => new Date(d.expiry_date) < today);
   const expiringSoon = documents.filter((d) => {

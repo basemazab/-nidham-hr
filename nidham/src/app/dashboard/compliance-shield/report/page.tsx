@@ -182,6 +182,7 @@ export default async function ComplianceReportPage() {
           <div>• التزام رصيد الإجازات المتراكم</div>
           <div>• لائحة الجزاءات والسلامة المهنية</div>
           <div>• تواريخ انتهاء المستندات والتراخيص</div>
+          <div>• انتهاء فترات الاختبار (المادة 33)</div>
         </div>
 
         {/* Footer */}
