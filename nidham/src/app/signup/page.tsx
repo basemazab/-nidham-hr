@@ -8,7 +8,7 @@ import { POLICY_VERSION } from "../privacy/page";
 // user intended (lets the dashboard show "you picked Pro" in the welcome
 // flow). The signup action whitelists allowed values, so a forged query
 // can't write arbitrary text into the company record.
-type SearchParams = Promise<{ error?: string; plan?: string }>;
+type SearchParams = Promise<{ error?: string; plan?: string; ref?: string }>;
 
 const PLAN_LABEL: Record<string, string> = {
   free: "مجاني (5 موظفين)",
@@ -29,8 +29,11 @@ export default async function SignupPage({
 }: {
   searchParams: SearchParams;
 }) {
-  const { error, plan } = await searchParams;
+  const { error, plan, ref } = await searchParams;
   const planChoice = plan && PLAN_LABEL[plan] ? plan : "";
+  // Referral code from a shared link (/signup?ref=CODE). Whitelisted to a
+  // short alnum token so a forged query can't smuggle junk into the form.
+  const refCode = ref && /^[A-Za-z0-9]{4,16}$/.test(ref) ? ref.toUpperCase() : "";
 
   return (
     <main className="flex-1 flex items-center justify-center px-6 py-12 bg-gradient-to-b from-slate-50 via-white to-cyan-50/30">
@@ -72,10 +75,25 @@ export default async function SignupPage({
             </div>
           )}
 
+          {/* Referral invite chip — reassures the invited user they'll get a
+              free month, which lifts signup conversion on shared links. */}
+          {refCode && (
+            <div className="mb-4 p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-900 text-sm font-cairo flex items-center gap-2">
+              <span>🎁</span>
+              <span>
+                وصلتك دعوة! هتاخد <strong>شهر مجاني</strong> على اشتراكك بعد ما
+                تسجّل (وصاحب الدعوة كمان).
+              </span>
+            </div>
+          )}
+
           <form action={signup} className="space-y-4">
             {/* Carries the pricing-page plan choice into the signup action
                 so the dashboard's welcome flow can pre-select it. */}
             {planChoice && <input type="hidden" name="plan" value={planChoice} />}
+            {/* Referral code carried from a shared invite link → recorded by
+                the signup action so the referrer can earn the free month. */}
+            {refCode && <input type="hidden" name="ref" value={refCode} />}
             <div>
               <label
                 htmlFor="company_name"

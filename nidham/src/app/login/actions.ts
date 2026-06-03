@@ -251,6 +251,33 @@ export async function signup(formData: FormData) {
     }
   }
 
+  // Referral attribution — if the signup carried a ?ref=CODE, link this new
+  // company to its referrer so the owner can later approve the "1 free month
+  // for both" reward. Best-effort + additive: wrapped so it can NEVER break
+  // signup. Uses the service client (bypasses RLS) because the new user has
+  // no right to write into another tenant's referral row; record_referral()
+  // validates the code + blocks self-referral server-side.
+  const refCode = (formData.get("ref") as string | null)?.trim();
+  if (refCode && data?.user?.id) {
+    try {
+      const { data: refProfile } = await supabase
+        .from("profiles")
+        .select("company_id")
+        .eq("id", data.user.id)
+        .maybeSingle<{ company_id: string }>();
+      if (refProfile?.company_id) {
+        const serviceClient = createServiceClient();
+        await serviceClient.rpc("record_referral", {
+          p_code: refCode,
+          p_new_company_id: refProfile.company_id,
+          p_new_company_name: (formData.get("company_name") as string) ?? null,
+        });
+      }
+    } catch (err) {
+      console.error("[signup] referral attribution failed:", err);
+    }
+  }
+
   // Redirect to dashboard with welcome + plan hint so the dashboard can
   // render a first-run UX (welcome modal + "we noticed you picked Pro,
   // your trial expires in 14 days — upgrade anytime").
