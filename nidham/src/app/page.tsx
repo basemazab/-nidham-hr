@@ -35,7 +35,7 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
     { question: "كم تكلفة نظام HR للشركات الصغيرة في مصر؟", answer: "نِظام يبدأ من 749 جنيه مصري شهرياً لـ 25 موظف (باقة Starter). الباقة Pro 2,430 جنيه لـ 100 موظف، والباقة Business 5,990 جنيه لـ 500 موظف. كل الباقات تشمل دعم فني وتحديثات قانونية." },
     { question: "إيه الفرق بين نِظام و Bayzat أو ZenHR؟", answer: "نِظام مصمم خصيصاً للسوق المصري — متوافق مع قانون العمل المصري 12/2003 والتأمينات 148/2019، ويدعم اللغة العربية بالكامل، ويشمل CRM واستوديو تسويق بـ AI. Bayzat و ZenHR مصممان للسوق الخليجي ويفتقران للتوافق القانوني المصري." },
     { question: "هل نظام الحضور بالـ GPS قانوني في مصر؟", answer: "نعم، الحضور بالـ GPS قانوني في مصر. نِظام يستخدم GPS + سيلفي لتسجيل الحضور، مع geofence قابل للتعديل حول موقع الشركة. القانون لا يشترط طريقة محددة لتسجيل الحضور طالما موثقة." },
-    { question: "ازاي أحسب المرتب في مصر بعد التأمينات والضريبة؟", answer: "نِظام يحسب المرتب تلقائياً: خصم التأمينات 14% (11% موظف + 3% شركة) بحد أقصى 11,700 جنيه، وضريبة الدخل حسب الشرائح: أول 45,000 معفى، و10% لـ 45-65 ألف حتى 27.5% لأكثر من 300 ألف." },
+    { question: "ازاي أحسب المرتب في مصر بعد التأمينات والضريبة؟", answer: "نِظام يحسب المرتب تلقائياً: التأمينات الاجتماعية 11% على الموظف (و18.75% على صاحب العمل) على الأجر التأميني بين 2,700 و16,700 جنيه (قيم 2026)، وضريبة كسب العمل بالشرائح بعد إعفاء شخصي 20,000 جنيه سنوياً — أول 40,000 بنسبة 0%، ثم 10% و15% و20% و22.5% و25% وحتى 27.5% لما يزيد عن 1.2 مليون." },
     { question: "هل يوفر نِظام فحص السير الذاتية بالذكاء الاصطناعي؟", answer: "نعم، نِظام يشمل فحص CVs بالـ AI — بيحلل السيرة الذاتية، يحسب درجة التطابق مع الوظيفة (0-100)، ويقترح أسئلة مقابلة شخصية مخصصة لكل مرشح." },
     { question: "هل يمكن تجربة نِظام مجاناً؟", answer: "نعم، نِظام يوفر تجربة مجانية لمدة 14 يوم بدون بطاقة ائتمان. تشمل كل الميزات بما فيها AI والحضور بالـ GPS. تقدر تلغي أي وقت." },
     { question: "هل نِظام مناسب للشركات الناشئة والصغيرة؟", answer: "بالتأكيد. نِظام مصمم للشركات الناشئة والصغيرة في مصر — يبدأ من 749 جنيه شهرياً، يوفر حل متكامل بديل لـ Excel، ويوفر وقت الـ HR مع أتمتة الرواتب والحضور والإجازات." },
@@ -69,6 +69,7 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
       )}
       <HeroSection />
       <ProofStrip />
+      <ComplianceShieldHighlight />
       <CoreModulesSection />
       <DynamicLiveScreenshots />
       <DynamicBridgeAnalytics />
@@ -133,10 +134,42 @@ function HeroSection() {
   );
 }
 
+function ComplianceShieldHighlight() {
+  return (
+    <section className="px-6 py-12">
+      <div className="max-w-5xl mx-auto rounded-3xl bg-gradient-to-br from-slate-900 via-slate-900 to-brand-navy text-white p-8 md:p-10 shadow-xl relative overflow-hidden">
+        <div aria-hidden className="absolute -top-6 -left-4 text-[160px] opacity-[0.07] leading-none">🛡️</div>
+        <div className="relative flex flex-col md:flex-row md:items-center gap-6">
+          <div className="flex-1">
+            <div className="inline-block px-3 py-1 rounded-full bg-cyan-500/20 border border-cyan-400/40 text-cyan-200 text-xs font-bold mb-3 font-cairo">
+              ✦ جديد · ميزة حصرية
+            </div>
+            <h2 className="text-2xl md:text-3xl font-black font-cairo mb-2 leading-tight">
+              درع الامتثال — أول نظام HR مصري
+              <br className="hidden md:block" /> بيحميك من الغرامات قبل ما تحصل
+            </h2>
+            <p className="text-slate-300 font-cairo leading-relaxed max-w-2xl">
+              بيفحص بيانات شركتك تلقائياً وينبّهك قبل أي غرامة من مكتب العمل أو
+              التأمينات — بالقيمة بالجنيه والمادة القانونية. كل نظام تاني بينظّم؛
+              نِظام بيحميك.
+            </p>
+          </div>
+          <Link
+            href="/compliance-shield"
+            className="shrink-0 inline-flex items-center gap-2 px-7 py-4 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-900 font-black text-lg shadow-lg transition font-cairo whitespace-nowrap"
+          >
+            اعرف أكتر ←
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function ProofStrip() {
   const items = [
     { stat: "21", label: "يوم إجازة سنوية محسوبين تلقائيًا" },
-    { stat: "14%", label: "تأمينات اجتماعية، مخصومة لحد سقف المرتب" },
+    { stat: "11%", label: "تأمينات اجتماعية على الموظف، لحد سقف الأجر التأميني" },
     { stat: "100م", label: "geofence حول مكتبك للحضور" },
     { stat: "6", label: "أدوات AI تسويق بتحل محل وكالة كاملة" },
     { stat: "AI", label: "بيقرا CVs، يصمم حملات، ويجيب leads" },
