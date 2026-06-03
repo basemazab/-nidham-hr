@@ -43,6 +43,23 @@ export type BlogPost = {
 // ── Posts (newest first — order here controls /blog index order) ────────────
 export const POSTS: BlogPost[] = [
   {
+    slug: "hr-system-factories-contractors-egypt",
+    title:
+      "نظام HR وحضور ومرتبات للمصانع والمقاولات في مصر — بدون أجهزة بصمة",
+    heading:
+      "نظام HR للمصانع والمقاولات في مصر — حضور GPS، تأمينات ومرتبات تلقائية",
+    description:
+      "نظام HR للمصانع وشركات المقاولات في مصر: حضور GPS+سيلفي من موبايل العامل بدون أجهزة بصمة، ورديات ودوام ليلي محسوب، تأمينات 148/2019 ومرتبات تلقائية 2026، ومكافأة نهاية الخدمة موثّقة. ابدأ مجاناً.",
+    excerpt:
+      "عمالة موزّعة على مواقع وورديات؟ خُد الحضور بالـGPS من موبايل العامل بدون أجهزة بصمة، واحسب التأمينات والمرتبات تلقائياً لأي عدد عمالة. مصمم للمصانع والمقاولات المصرية.",
+    keyword: "نظام HR للمصانع",
+    publishedAt: "2026-06-03",
+    updatedAt: "2026-06-03",
+    readMinutes: 9,
+    author: "فريق نِظام HR",
+    tags: ["مصانع", "مقاولات", "حضور وانصراف", "GPS", "تأمينات", "صناعي"],
+  },
+  {
     slug: "hr-guide-egypt",
     title: "الدليل الشامل لإدارة الموارد البشرية في مصر — قانون العمل، تأمينات، ضرائب، وأنظمة HR",
     heading: "دليل HR الشامل في مصر — كل ما يحتاج المدير وصاحب العمل معرفته",
@@ -457,6 +474,8 @@ export const POST_CONTENT_LOADERS: Record<
   string,
   () => Promise<{ default: React.ComponentType }>
 > = {
+  "hr-system-factories-contractors-egypt": () =>
+    import("@/content/blog/hr-system-factories-contractors-egypt"),
   "bayzat-alternative-egypt-2026": () =>
     import("@/content/blog/bayzat-alternative-egypt-2026"),
   "how-to-calculate-egypt-salary-2026": () =>
