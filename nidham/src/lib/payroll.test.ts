@@ -252,6 +252,28 @@ describe("calculatePayroll — Egyptian ÷26 default", () => {
     expect(result.absenceDeduction).toBe(200);
     expect(result.netSalary).toBe(4_800);
   });
+
+  it("computes social insurance on the FIXED insurable wage, not the variable gross (Law 148/2019)", () => {
+    // Insurable wage = basic + fixed allowances, clamped to the NOSI
+    // floor/ceiling. One-off bonuses, overtime, and absence/tardiness
+    // deductions must NOT move it. Here the fixed wage is 10,000, so the
+    // employee share is 10,000 × 11% = 1,100 — regardless of the 5,000 bonus
+    // and the 1 absent day that change take-home gross.
+    const result = calculatePayroll(
+      {
+        basicSalary: 10_000,
+        housingAllowance: 0,
+        transportAllowance: 0,
+        otherAllowances: 0,
+        bonuses: 5_000,
+      },
+      { attended: 25, halfDay: 0, leave: 0, absent: 1 },
+      26,
+      { socialInsuranceEnabled: true },
+    );
+    // SI on the fixed 10,000 wage — NOT on (10,000 + 5,000 bonus − absence).
+    expect(result.socialInsurance).toBe(1_100);
+  });
 });
 
 describe("calculateDailyWage — daily-paid workers", () => {

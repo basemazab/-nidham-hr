@@ -603,10 +603,17 @@ export function calculatePayroll(
   const grossSalary =
     monthlyBase + bonuses + overtime - absenceDeduction - tardinessDeduction;
 
-  // 6. Social insurance (on insurable wage, capped) -- opt-in per company.
+  // 6. Social insurance — opt-in per company. Computed on the INSURABLE WAGE,
+  //    NOT the attendance-adjusted gross. Under Law 148/2019 the insurable
+  //    wage is the employee's fixed monthly wage (basic + fixed allowances),
+  //    clamped to the NOSI floor/ceiling (2,700–16,700 for 2026). It does NOT
+  //    include one-off bonuses or overtime, and is NOT reduced by mid-month
+  //    absence/tardiness — those affect take-home pay, not the declared wage.
+  //    (calculateSocialInsurance applies the floor/ceiling + 11% employee rate.)
   //    Most SMBs don't file with NOSI; default off keeps net = gross.
+  const insurableWage = fullMonthlyBase;
   const socialInsurance = settings.socialInsuranceEnabled
-    ? calculateSocialInsurance(grossSalary)
+    ? calculateSocialInsurance(insurableWage)
     : 0;
 
   // 7. Income tax on taxable income (gross - social insurance) -- opt-in.
