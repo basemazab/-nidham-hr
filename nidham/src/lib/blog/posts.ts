@@ -43,6 +43,21 @@ export type BlogPost = {
 // ── Posts (newest first — order here controls /blog index order) ────────────
 export const POSTS: BlogPost[] = [
   {
+    slug: "avoid-labor-office-fines-egypt",
+    title: "إزاي تتجنّب غرامات مكتب العمل والتأمينات في مصر 2026 — دليل عملي | نِظام HR",
+    heading: "كيف تتجنّب غرامات مكتب العمل والتأمينات في مصر 2026",
+    description:
+      "دليل عملي لتجنّب أشهر غرامات مكتب العمل والتأمينات في مصر: تأخير نموذج 1، الإجازات، مستحقات المفصولين، التزامات الـ50 موظف، والبيانات الناقصة. وإزاي تراقبها تلقائياً.",
+    excerpt:
+      "معظم الغرامات متوقَّعة وممكن تتجنّبها بالكامل لو اتنبّهت بدري. أهم غرامات مكتب العمل والتأمينات وإزاي تتفاداها — مع المراقبة التلقائية.",
+    keyword: "غرامات مكتب العمل",
+    publishedAt: "2026-06-03",
+    updatedAt: "2026-06-03",
+    readMinutes: 8,
+    author: "فريق نِظام HR",
+    tags: ["امتثال", "غرامات", "مكتب العمل", "تأمينات", "قانون العمل"],
+  },
+  {
     slug: "zenhr-alternative-egypt",
     title: "أفضل بديل لـ ZenHR في مصر 2026 — مقارنة بالأرقام | نِظام HR",
     heading: "بديل ZenHR للشركات المصرية — مقارنة شاملة 2026",
@@ -504,6 +519,8 @@ export const POST_CONTENT_LOADERS: Record<
   string,
   () => Promise<{ default: React.ComponentType }>
 > = {
+  "avoid-labor-office-fines-egypt": () =>
+    import("@/content/blog/avoid-labor-office-fines-egypt"),
   "zenhr-alternative-egypt": () =>
     import("@/content/blog/zenhr-alternative-egypt"),
   "odoo-hr-alternative-egypt": () =>
