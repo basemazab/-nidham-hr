@@ -1,7 +1,10 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { generateText } from "ai";
-import { pickAgentModelLargeContext } from "@/lib/ai-models";
+import {
+  callWithFallback,
+  pickAgentModelLargeContext,
+} from "@/lib/ai-models";
 
 export const maxDuration = 60;
 
@@ -90,12 +93,21 @@ ${additionalContext ? `\nسياق إضافي:\n${additionalContext}` : ""}
 
 اكتب المستند بصيغة عربية فصحى قانونية واضحة، مع فراغات للتوقيعات والتواريخ.`;
 
-    const model = pickAgentModelLargeContext();
-    const result = await generateText({
-      model: model.model,
-      prompt,
-      temperature: 0.3,
-    });
+    // Use Gemini-first picker because legal documents (contracts,
+    // resignation letters, warnings) commonly run 800-1500 tokens, and
+    // Groq's 8-12k TPM per-request cap leaves little headroom once the
+    // prompt + system are factored in. The fallback chain still swings
+    // through Groq if Gemini is exhausted.
+    const result = await callWithFallback(
+      (picked) =>
+        generateText({
+          model: picked.model,
+          prompt,
+          temperature: 0.3,
+          maxRetries: 0, // we do our own retry through callWithFallback
+        }),
+      pickAgentModelLargeContext,
+    );
 
     return Response.json({
       ok: true,

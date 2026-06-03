@@ -262,16 +262,23 @@ function KpiCard({
   return (
     <Link
       href={href}
-      className={`group bg-white rounded-xl border border-slate-200 border-r-4 ${accentBar[accent]} p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-150`}
+      className={`group bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 border-r-4 ${accentBar[accent]} p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-150`}
     >
       <div className="flex items-center justify-between mb-2">
         <span className="text-2xl">{emoji}</span>
-        <span className="text-slate-300 group-hover:text-slate-400 transition">↗</span>
+        <span className="text-slate-300 dark:text-slate-600 group-hover:text-slate-400 transition">↗</span>
       </div>
-      <div className="text-3xl font-black text-slate-800 font-cairo tabular-nums">
-        {value.toLocaleString("ar-EG")}
+      {/* Arabic numeral zero "٠" renders as a tiny dot in Cairo font and reads
+          as a smudge. Show an em-dash placeholder when the metric is empty —
+          clearer signal that there's intentionally nothing to count yet. */}
+      <div className="text-3xl font-black text-slate-800 dark:text-slate-100 font-cairo tabular-nums">
+        {value > 0 ? (
+          value.toLocaleString("ar-EG")
+        ) : (
+          <span className="text-slate-300 dark:text-slate-600">—</span>
+        )}
       </div>
-      <div className="text-xs text-slate-500 font-cairo mt-1">{label}</div>
+      <div className="text-xs text-slate-500 dark:text-slate-400 font-cairo mt-1">{label}</div>
     </Link>
   );
 }

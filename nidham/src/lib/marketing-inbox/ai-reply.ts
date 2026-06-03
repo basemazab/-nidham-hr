@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { generateText } from "ai";
-import { pickAgentModel } from "@/lib/ai-models";
+import { callWithFallback } from "@/lib/ai-models";
 
 export const AiReplyResultSchema = z.object({
   reply: z
@@ -133,14 +133,18 @@ ${conversationContext ? `المحادثة قبل كده:\n${conversationContext}
 اكتب JSON فقط — من غير أي كلام تاني.
   `.trim();
 
-  const { model } = pickAgentModel();
-
-  const result = await generateText({
-    model,
-    system: systemPrompt,
-    prompt: userPrompt,
-    temperature: 0.4,
-  });
+  // Wrapped in callWithFallback so a Groq quota / overload doesn't kill
+  // the whole inbox-AI feature — the chain transparently swaps to a
+  // smaller Groq model, then Gemini.
+  const result = await callWithFallback((picked) =>
+    generateText({
+      model: picked.model,
+      system: systemPrompt,
+      prompt: userPrompt,
+      temperature: 0.4,
+      maxRetries: 0, // we do our own retry through callWithFallback
+    }),
+  );
 
   const text = result.text.trim();
   const jsonStart = text.indexOf("{");

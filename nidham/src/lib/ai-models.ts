@@ -327,9 +327,17 @@ export function isRetryableError(err: unknown): boolean {
 //
 // Use this from any feature that wants resilient AI calls without
 // hand-rolling the retry logic per call site.
+//
+// `pickPrimary` lets the caller flip the chain head: most features want
+// the default Groq-first order (`pickAgentModel`); the chat-agent / file-
+// upload routes need `pickAgentModelLargeContext` (Gemini first) because
+// Groq's per-request TPM cap chokes on 5-12k-token file payloads.
+// Either way the FALLBACK direction is symmetric — pickFallbackAgentModel
+// flips providers, so a Gemini-first chain still falls back through Groq.
 // ----------------------------------------------------------------------------
 export async function callWithFallback<T>(
   fn: (model: AgentModelInfo) => Promise<T>,
+  pickPrimary: () => AgentModelInfo = pickAgentModel,
 ): Promise<T> {
   const tried: string[] = [];
   let lastError: unknown = null;
@@ -338,7 +346,7 @@ export async function callWithFallback<T>(
   // Four tiers cover the realistic Groq case:
   //   gpt-oss-120b -> gpt-oss-20b -> llama-4-scout -> Gemini Flash Lite
   // (or Gemini -> gpt-oss-120b if Gemini was primary)
-  let cursor: AgentModelInfo | null = pickAgentModel();
+  let cursor: AgentModelInfo | null = pickPrimary();
   for (let i = 0; i < 4 && cursor; i++) {
     const label = `${cursor.provider}:${cursor.modelName}`;
     tried.push(label);
