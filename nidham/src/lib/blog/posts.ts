@@ -43,6 +43,36 @@ export type BlogPost = {
 // ── Posts (newest first — order here controls /blog index order) ────────────
 export const POSTS: BlogPost[] = [
   {
+    slug: "zenhr-alternative-egypt",
+    title: "أفضل بديل لـ ZenHR في مصر 2026 — مقارنة بالأرقام | نِظام HR",
+    heading: "بديل ZenHR للشركات المصرية — مقارنة شاملة 2026",
+    description:
+      "تدوّر على بديل ZenHR في مصر؟ مقارنة بالأرقام بين ZenHR ونِظام HR: التسعير بالجنيه، التوافق الأصلي مع قانون 12/2003 والتأمينات 148/2019، حضور GPS، وبوت واتساب. باقة مجانية.",
+    excerpt:
+      "ZenHR نظام إقليمي قوي بس مسعّر بالدولار ومبني لعدة دول. شوف بديل مصري أرخص بالجنيه، بيحسب التأمينات والضرايب المصرية تلقائياً، ويدعم العربي المصري.",
+    keyword: "بديل ZenHR",
+    publishedAt: "2026-06-03",
+    updatedAt: "2026-06-03",
+    readMinutes: 7,
+    author: "فريق نِظام HR",
+    tags: ["مقارنة", "ZenHR", "بدائل", "HR", "تسعير"],
+  },
+  {
+    slug: "odoo-hr-alternative-egypt",
+    title: "بديل Odoo HR للشركات المصرية 2026 — مقارنة | نِظام HR",
+    heading: "بديل Odoo HR والمرتبات في مصر — مقارنة 2026",
+    description:
+      "Odoo ERP قوي بس موديول المرتبات فيه عام وبيحتاج تخصيص وشريك تنفيذ للتوافق المصري. قارن بين Odoo HR ونِظام HR: التكلفة، سرعة التشغيل، والمرتبات المصرية الجاهزة. ابدأ مجاناً.",
+    excerpt:
+      "Odoo نظام ERP شامل لكن HR والمرتبات فيه محتاج تخصيص وتنفيذ وتكلفة. لو محتاج HR مصري يشتغل من اليوم الأول من غير تعقيد، شوف المقارنة.",
+    keyword: "بديل Odoo HR",
+    publishedAt: "2026-06-03",
+    updatedAt: "2026-06-03",
+    readMinutes: 7,
+    author: "فريق نِظام HR",
+    tags: ["مقارنة", "Odoo", "اودو", "ERP", "بدائل"],
+  },
+  {
     slug: "hr-system-factories-contractors-egypt",
     title:
       "نظام HR وحضور ومرتبات للمصانع والمقاولات في مصر — بدون أجهزة بصمة",
@@ -474,6 +504,10 @@ export const POST_CONTENT_LOADERS: Record<
   string,
   () => Promise<{ default: React.ComponentType }>
 > = {
+  "zenhr-alternative-egypt": () =>
+    import("@/content/blog/zenhr-alternative-egypt"),
+  "odoo-hr-alternative-egypt": () =>
+    import("@/content/blog/odoo-hr-alternative-egypt"),
   "hr-system-factories-contractors-egypt": () =>
     import("@/content/blog/hr-system-factories-contractors-egypt"),
   "bayzat-alternative-egypt-2026": () =>
