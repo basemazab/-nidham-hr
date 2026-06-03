@@ -95,7 +95,7 @@ describe("scanCompliance", () => {
     expect(risk?.severity).toBe("medium");
   });
 
-  it("a clean small company has no high-severity risks", () => {
+  it("a clean small company has no high-severity risks and a top-tier index", () => {
     const res = scanCompliance({
       employees: [emp({}), emp({})],
       company: { social_insurance_enabled: false, income_tax_enabled: false },
@@ -103,5 +103,22 @@ describe("scanCompliance", () => {
       today: TODAY,
     });
     expect(res.highCount).toBe(0);
+    // Only a single low advisory (insurance disabled) → score stays ≥ 90.
+    expect(res.score).toBeGreaterThanOrEqual(90);
+    expect(res.grade.label).toBe("ممتاز");
+  });
+
+  it("computes a compliance index that drops with risk severity", () => {
+    const employees = Array.from({ length: 50 }, () => emp({}));
+    const res = scanCompliance({
+      employees,
+      company: { social_insurance_enabled: false, income_tax_enabled: false },
+      annualBalances: [],
+      today: TODAY,
+    });
+    // 50+ headcount adds a high (harassment) + medium (safety) + lows.
+    expect(res.score).toBeLessThan(75);
+    expect(res.score).toBeGreaterThanOrEqual(0);
+    expect(["يحتاج إجراء", "خطر"]).toContain(res.grade.label);
   });
 });

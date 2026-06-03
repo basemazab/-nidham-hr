@@ -64,6 +64,13 @@ export type ComplianceScanInput = {
   today: Date;
 };
 
+export type ComplianceGrade = {
+  /** Arabic label: ممتاز / جيد / يحتاج إجراء / خطر */
+  label: string;
+  /** Tailwind tone key used by the UI */
+  tone: "emerald" | "cyan" | "amber" | "rose";
+};
+
 export type ComplianceScanResult = {
   risks: ComplianceRisk[];
   /** Sum of quantifiable estFine values — the headline "exposure" number. */
@@ -72,7 +79,22 @@ export type ComplianceScanResult = {
   monitoredCount: number;
   highCount: number;
   mediumCount: number;
+  /** 0-100 compliance index — a single number owners can track over time. */
+  score: number;
+  grade: ComplianceGrade;
 };
+
+// Severity weights for the compliance index. A clean company = 100; each
+// open risk deducts by severity. Advisories (low) barely move it; high-risk
+// legal gaps move it a lot.
+const SCORE_WEIGHT: Record<Severity, number> = { high: 18, medium: 8, low: 3 };
+
+function gradeFor(score: number): ComplianceGrade {
+  if (score >= 90) return { label: "ممتاز", tone: "emerald" };
+  if (score >= 75) return { label: "جيد", tone: "cyan" };
+  if (score >= 50) return { label: "يحتاج إجراء", tone: "amber" };
+  return { label: "خطر", tone: "rose" };
+}
 
 const MONITORED_OBLIGATIONS = 7;
 
@@ -243,11 +265,16 @@ export function scanCompliance(input: ComplianceScanInput): ComplianceScanResult
   const order: Record<Severity, number> = { high: 0, medium: 1, low: 2 };
   risks.sort((a, b) => order[a.severity] - order[b.severity]);
 
+  const deduction = risks.reduce((sum, r) => sum + SCORE_WEIGHT[r.severity], 0);
+  const score = Math.max(0, Math.min(100, 100 - deduction));
+
   return {
     risks,
     exposureEGP,
     monitoredCount: MONITORED_OBLIGATIONS,
     highCount: risks.filter((r) => r.severity === "high").length,
     mediumCount: risks.filter((r) => r.severity === "medium").length,
+    score,
+    grade: gradeFor(score),
   };
 }

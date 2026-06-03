@@ -269,7 +269,7 @@ export function DashboardSidebar({
   return (
     <>
       {/* Mobile top bar — visible only on small screens */}
-      <header className="md:hidden sticky top-0 z-40 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 py-3 flex items-center justify-between">
+      <header className="md:hidden print:hidden sticky top-0 z-40 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 py-3 flex items-center justify-between">
         <Logo />
         <div className="flex items-center gap-2">
           <NotificationBell />
@@ -350,7 +350,7 @@ export function DashboardSidebar({
       {/* Desktop sidebar — visible on md+.
           Widened from w-64 → w-72 to give the bumped 14–15px nav text room
           to breathe instead of clipping. Matches the mobile drawer width. */}
-      <aside className="hidden md:flex w-72 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 flex-col shrink-0">
+      <aside className="hidden md:flex print:hidden w-72 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 flex-col shrink-0">
         <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
           <Logo />
           <NotificationBell />

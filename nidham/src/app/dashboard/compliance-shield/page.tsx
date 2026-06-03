@@ -10,6 +10,13 @@ import {
 
 export const dynamic = "force-dynamic";
 
+const GRADE_TEXT: Record<"emerald" | "cyan" | "amber" | "rose", string> = {
+  emerald: "text-emerald-400",
+  cyan: "text-cyan-300",
+  amber: "text-amber-300",
+  rose: "text-rose-400",
+};
+
 const SEV: Record<Severity, { ring: string; chip: string; label: string; dot: string }> = {
   high: { ring: "border-rose-200 dark:border-rose-900", chip: "bg-rose-100 text-rose-800 border-rose-300", label: "خطر عالٍ", dot: "bg-rose-500" },
   medium: { ring: "border-amber-200 dark:border-amber-900", chip: "bg-amber-100 text-amber-800 border-amber-300", label: "تنبيه", dot: "bg-amber-500" },
@@ -71,10 +78,28 @@ export default async function ComplianceShieldPage() {
         <div className="rounded-2xl p-8 mb-6 text-white shadow-xl bg-gradient-to-br from-slate-900 via-slate-800 to-brand-navy relative overflow-hidden">
           <div className="absolute top-0 left-0 text-[120px] opacity-10 leading-none -mt-4 -ml-2">🛡️</div>
           <div className="relative">
-            <div className="text-[11px] tracking-[0.3em] text-cyan-300 font-bold uppercase mb-1 font-cairo">
-              Compliance Shield
+            <div className="flex items-start justify-between gap-4 mb-3">
+              <div>
+                <div className="text-[11px] tracking-[0.3em] text-cyan-300 font-bold uppercase mb-1 font-cairo">
+                  Compliance Shield
+                </div>
+                <h1 className="text-2xl md:text-3xl font-black font-cairo">درع الامتثال الذكي</h1>
+              </div>
+              {/* Compliance index — the number owners track over time. */}
+              <div className="text-center shrink-0">
+                <div
+                  className={`text-4xl md:text-5xl font-black tabular-nums leading-none ${
+                    GRADE_TEXT[result.grade.tone]
+                  }`}
+                >
+                  {result.score}
+                  <span className="text-lg text-slate-400">/100</span>
+                </div>
+                <div className={`text-xs font-bold font-cairo mt-1 ${GRADE_TEXT[result.grade.tone]}`}>
+                  مؤشر الامتثال · {result.grade.label}
+                </div>
+              </div>
             </div>
-            <h1 className="text-2xl md:text-3xl font-black font-cairo mb-3">درع الامتثال الذكي</h1>
             {result.exposureEGP > 0 ? (
               <>
                 <div className="text-sm text-slate-300 font-cairo mb-1">تعرّضك التقديري للغرامات لو اتجاهلت التنبيهات:</div>
@@ -87,10 +112,16 @@ export default async function ComplianceShieldPage() {
                 ✓ مفيش تعرّض مالي مباشر للغرامات حالياً
               </div>
             )}
-            <div className="mt-4 flex flex-wrap gap-2 text-xs font-cairo">
+            <div className="mt-4 flex flex-wrap items-center gap-2 text-xs font-cairo">
               <span className="px-3 py-1 rounded-full bg-white/10">يراقب {result.monitoredCount} التزامات تلقائياً</span>
               {result.highCount > 0 && <span className="px-3 py-1 rounded-full bg-rose-500/30 text-rose-100">{result.highCount} خطر عالٍ</span>}
               {result.mediumCount > 0 && <span className="px-3 py-1 rounded-full bg-amber-500/30 text-amber-100">{result.mediumCount} تنبيه</span>}
+              <Link
+                href="/dashboard/compliance-shield/report"
+                className="px-3 py-1 rounded-full bg-cyan-500 text-slate-900 font-bold hover:bg-cyan-400 transition"
+              >
+                🖨️ تقرير قابل للطباعة
+              </Link>
             </div>
           </div>
         </div>
