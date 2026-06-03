@@ -695,14 +695,28 @@ export async function importAttendance(formData: FormData) {
     const endMin = expectedEnd ?? DEFAULT_SHIFT_END_MIN;
 
     // Tardiness / early-leave (only for "present" + "half_day").
+    //
+    // Overnight shifts (end_time < start_time, e.g. 22:00 → 06:00) cross
+    // midnight. A naive `checkIn > startMin` would mis-read an after-midnight
+    // punch as "not late", and an evening check-out as "not early". Map each
+    // punch onto a continuous shift timeline: times before the start (i.e.
+    // after midnight) get +24h, and the shift end gets +24h too.
     let tardinessMinutes = 0;
     let earlyLeaveMinutes = 0;
     if (status === "present" || status === "half_day") {
-      if (checkInMin !== null && checkInMin > startMin) {
-        tardinessMinutes = Math.min(720, checkInMin - startMin);
+      const isOvernight = endMin < startMin;
+      const onTimeline = (m: number) =>
+        isOvernight && m < startMin ? m + 1440 : m;
+      const shiftEndMin = isOvernight ? endMin + 1440 : endMin;
+      if (checkInMin !== null) {
+        const ci = onTimeline(checkInMin);
+        if (ci > startMin) tardinessMinutes = Math.min(720, ci - startMin);
       }
-      if (checkOutMin !== null && checkOutMin < endMin) {
-        earlyLeaveMinutes = Math.min(720, endMin - checkOutMin);
+      if (checkOutMin !== null) {
+        const co = onTimeline(checkOutMin);
+        if (co < shiftEndMin) {
+          earlyLeaveMinutes = Math.min(720, shiftEndMin - co);
+        }
       }
     }
 
