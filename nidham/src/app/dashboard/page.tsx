@@ -6,6 +6,11 @@ import { SmartInsights } from "@/components/smart-insights";
 import { PWAInstallButton } from "@/components/pwa-install-button";
 import { NidhamAIDashboard } from "@/components/nidham-ai-dashboard";
 import { loadNidhamAISignals } from "./nidham-ai-actions";
+import {
+  scanCompliance,
+  type ComplianceEmployee,
+  type LeaveBalanceRow,
+} from "@/lib/compliance-shield";
 
 type Profile = {
   full_name: string | null;
@@ -53,26 +58,56 @@ export default async function DashboardPage({
     .single<Profile & { company_id: string }>();
 
   const callerCompanyId = profile?.company_id ?? "";
+  const complianceYear = new Date().getFullYear();
 
-  const [employeesCount, customersCount, interactionsCount, aiSignals] = await Promise.all([
-    supabase
-      .from("employees")
-      .select("id", { count: "exact", head: true })
-      .eq("company_id", callerCompanyId),
-    supabase
-      .from("customers")
-      .select("id", { count: "exact", head: true })
-      .eq("company_id", callerCompanyId),
-    supabase
-      .from("interactions")
-      .select("id", { count: "exact", head: true })
-      .eq("company_id", callerCompanyId),
-    loadNidhamAISignals(),
-  ]);
+  const [employeesData, customersCount, interactionsCount, companyFlags, leaveBalances, aiSignals] =
+    await Promise.all([
+      // Full employee rows (compliance fields) — also gives us the headcount,
+      // so we drop the separate count query. RLS scopes to the caller's tenant.
+      supabase
+        .from("employees")
+        .select("id, full_name, status, hire_date, national_id, social_insurance_number, basic_salary")
+        .eq("company_id", callerCompanyId)
+        .returns<ComplianceEmployee[]>(),
+      supabase
+        .from("customers")
+        .select("id", { count: "exact", head: true })
+        .eq("company_id", callerCompanyId),
+      supabase
+        .from("interactions")
+        .select("id", { count: "exact", head: true })
+        .eq("company_id", callerCompanyId),
+      supabase
+        .from("companies")
+        .select("social_insurance_enabled, income_tax_enabled")
+        .eq("id", callerCompanyId)
+        .maybeSingle<{ social_insurance_enabled: boolean | null; income_tax_enabled: boolean | null }>(),
+      supabase
+        .from("leave_balances")
+        .select("employee_id, entitled_days, used_days")
+        .eq("company_id", callerCompanyId)
+        .eq("year", complianceYear)
+        .eq("leave_type", "annual")
+        .returns<LeaveBalanceRow[]>(),
+      loadNidhamAISignals(),
+    ]);
 
-  const empCount = employeesCount.count ?? 0;
+  const employees = employeesData.data ?? [];
+  const empCount = employees.length;
   const custCount = customersCount.count ?? 0;
   const intCount = interactionsCount.count ?? 0;
+
+  // Compliance Shield scan — surfaced as a top banner so the owner sees their
+  // fine exposure on every visit (the feature's retention hook).
+  const shield = scanCompliance({
+    employees,
+    company: {
+      social_insurance_enabled: companyFlags.data?.social_insurance_enabled ?? false,
+      income_tax_enabled: companyFlags.data?.income_tax_enabled ?? false,
+    },
+    annualBalances: leaveBalances.data ?? [],
+    today: new Date(),
+  });
 
   const { data: subscription } = profile?.company_id
     ? await supabase
@@ -207,6 +242,14 @@ export default async function DashboardPage({
           </div>
         </div>
 
+        {/* Compliance Shield banner — the retention hook: fine exposure in the
+            owner's face on every visit, one click from the full breakdown. */}
+        <ComplianceShieldBanner
+          riskCount={shield.risks.length}
+          highCount={shield.highCount}
+          exposureEGP={shield.exposureEGP}
+        />
+
         {/* KPI cards — at-a-glance company metrics. These counts were fetched
             on every load but never rendered; now surfaced as the dashboard's
             top row, each linking to its module. */}
@@ -235,6 +278,74 @@ export default async function DashboardPage({
         <RetentionBanner />
       </div>
     </main>
+  );
+}
+
+// Compliance Shield banner. Three states:
+//   • risks with an EGP exposure → red, leads with the money number
+//   • risks without a quantified fine → amber, leads with the count
+//   • clean → subtle green "compliant" reassurance
+// Always one click from the full /dashboard/compliance-shield breakdown.
+function ComplianceShieldBanner({
+  riskCount,
+  highCount,
+  exposureEGP,
+}: {
+  riskCount: number;
+  highCount: number;
+  exposureEGP: number;
+}) {
+  if (riskCount === 0) {
+    return (
+      <Link
+        href="/dashboard/compliance-shield"
+        className="flex items-center gap-3 mb-6 px-5 py-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 hover:border-emerald-400 transition group"
+      >
+        <span className="text-xl">🛡️</span>
+        <span className="flex-1 text-sm font-bold text-emerald-800 dark:text-emerald-300 font-cairo">
+          درع الامتثال: شركتك ملتزمة — مفيش مخاطر مرصودة ✓
+        </span>
+        <span className="text-emerald-600 dark:text-emerald-400 text-sm group-hover:-translate-x-0.5 transition">←</span>
+      </Link>
+    );
+  }
+
+  const hasMoney = exposureEGP > 0;
+  const tone = hasMoney || highCount > 0
+    ? {
+        wrap: "bg-rose-50 dark:bg-rose-900/20 border-rose-300 dark:border-rose-800 hover:border-rose-500",
+        title: "text-rose-900 dark:text-rose-200",
+        sub: "text-rose-700 dark:text-rose-300",
+        arrow: "text-rose-600 dark:text-rose-400",
+      }
+    : {
+        wrap: "bg-amber-50 dark:bg-amber-900/20 border-amber-300 dark:border-amber-800 hover:border-amber-500",
+        title: "text-amber-900 dark:text-amber-200",
+        sub: "text-amber-700 dark:text-amber-300",
+        arrow: "text-amber-600 dark:text-amber-400",
+      };
+
+  return (
+    <Link
+      href="/dashboard/compliance-shield"
+      className={`flex items-center gap-4 mb-6 px-5 py-4 rounded-2xl border-2 shadow-sm transition group ${tone.wrap}`}
+    >
+      <span className="text-3xl shrink-0">🛡️</span>
+      <div className="flex-1 min-w-0">
+        <div className={`font-black font-cairo ${tone.title}`}>
+          درع الامتثال رصد {riskCount.toLocaleString("ar-EG")}{" "}
+          {riskCount <= 10 ? "تنبيهات" : "تنبيه"} للمراجعة
+        </div>
+        <div className={`text-sm font-cairo ${tone.sub}`}>
+          {hasMoney
+            ? `تعرّض تقديري للغرامات ≈ ${exposureEGP.toLocaleString("ar-EG")} ج — اقفلها قبل ما تتحوّل لمخالفة.`
+            : "بنود لازم تراجعها لحماية شركتك من المخالفات."}
+        </div>
+      </div>
+      <span className={`shrink-0 text-sm font-bold font-cairo whitespace-nowrap ${tone.arrow}`}>
+        راجع الآن ←
+      </span>
+    </Link>
   );
 }
 
