@@ -232,6 +232,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly",
       priority: 0.7,
     },
+    {
+      url: `${SITE}/tools/compliance-checklist`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
 
     // ── Industry landing pages ──
     // Each industry page targets high-intent industry-specific keywords

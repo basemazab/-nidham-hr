@@ -82,6 +82,14 @@ const TOOLS: Tool[] = [
     icon: "🌴",
     badge: "جديد",
   },
+  {
+    href: "/tools/compliance-checklist",
+    title: "قائمة امتثال HR",
+    description:
+      "تشيك ليست تفاعلية لكل التزامات قانون العمل والتأمينات والضرائب — راجع شركتك بند بند، وتقدّمك بيتحفظ.",
+    icon: "📋",
+    badge: "جديد",
+  },
 ];
 
 export default function ToolsHubPage() {
