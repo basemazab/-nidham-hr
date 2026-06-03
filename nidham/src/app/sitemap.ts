@@ -186,6 +186,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.85,
     },
 
+    // ── Flagship feature landing — the positioning spearhead ──
+    {
+      url: `${SITE}/compliance-shield`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.9,
+    },
+
     // ── Free tools (link magnets) ──
     // Each calculator is a high-intent landing page. Hub at /tools links
     // to all of them. Priority 0.8 for the hub because it's a strong
