@@ -149,6 +149,12 @@ export default async function AdminPage() {
             🧪 تحليل التجريبيين
           </Link>
           <Link
+            href="/admin/referrals"
+            className="text-sm text-emerald-300 hover:text-white font-bold font-cairo px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 transition"
+          >
+            🎁 الإحالات
+          </Link>
+          <Link
             href="/dashboard"
             className="text-sm text-slate-300 hover:text-white font-cairo"
           >
