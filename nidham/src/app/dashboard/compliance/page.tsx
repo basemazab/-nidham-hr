@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getAuthorities, getUpcomingDeadlines, getPenaltiesSummary, computeComplianceScore } from "@/lib/compliance-engine";
+import { getAuthorities, getPenaltiesSummary } from "@/lib/compliance-engine";
 
 const AUTHORITY_COLORS: Record<string, { border: string; bg: string; chip: string; text: string }> = {
   labor_office: { border: "border-cyan-200 hover:border-cyan-400", bg: "bg-cyan-50", chip: "bg-cyan-50 text-cyan-700 border-cyan-200", text: "text-cyan-700" },
@@ -17,29 +17,11 @@ export default async function ComplianceHubPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("id, company_id, role")
-    .eq("id", user.id)
-    .single();
-
+  // Reference guide — no per-company tracking here (the Compliance Shield is
+  // the live, data-driven tracker). So no profile/company lookup needed.
   const authorities = getAuthorities();
   const penalties = getPenaltiesSummary(authorities);
-
-  // Load compliance tracking from DB
-  let completedIds = new Set<string>();
-  if (profile?.company_id) {
-    const { data: statuses } = await supabase
-      .from("compliance_status")
-      .select("item_id, completed")
-      .eq("company_id", profile.company_id);
-    if (statuses) {
-      completedIds = new Set(statuses.filter((s) => s.completed).map((s) => s.item_id));
-    }
-  }
-
-  const allItems = authorities.flatMap((a) => a.items);
-  const overallScore = computeComplianceScore(allItems, completedIds);
+  const totalItems = authorities.reduce((s, a) => s + a.items.length, 0);
 
   return (
     <main className="flex-1 px-4 md:px-6 py-6 bg-gradient-to-b from-slate-50 via-white to-amber-50/20 min-h-screen">
@@ -60,67 +42,35 @@ export default async function ComplianceHubPage() {
                 محرك الامتثال الذكي
               </h1>
               <p className="text-sm text-slate-500 font-cairo leading-relaxed max-w-2xl">
-                متابعة ذكية للامتثال القانوني — ٦ جهات تفتيش، {overallScore.totalCount} بند امتثال،
-                تتبع تلقائي للحالة والمواعيد النهائية.
+                دليل الامتثال القانوني — {authorities.length} جهات تفتيش و{totalItems} بند،
+                كل جهة بمتطلباتها والمخالفات والغرامات ونصائح التجهيز.
               </p>
             </div>
           </div>
         </header>
 
-        {/* Overall Compliance Score */}
-        <div className="mb-6 p-5 rounded-2xl bg-white border-2 border-slate-200">
-          <div className="flex items-center gap-6 flex-wrap">
-            <div className="relative w-24 h-24">
-              <svg className="w-24 h-24 -rotate-90" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="42" fill="none" stroke="#e2e8f0" strokeWidth="8" />
-                <circle
-                  cx="50" cy="50" r="42"
-                  fill="none"
-                  stroke={overallScore.score >= 80 ? "#10b981" : overallScore.score >= 50 ? "#f59e0b" : "#ef4444"}
-                  strokeWidth="8"
-                  strokeDasharray={`${(overallScore.score / 100) * 264} 264`}
-                  strokeLinecap="round"
-                />
-              </svg>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className={`text-2xl font-black font-cairo ${overallScore.score >= 80 ? "text-emerald-600" : overallScore.score >= 50 ? "text-amber-600" : "text-red-600"}`}>
-                  {overallScore.score}%
-                </span>
-              </div>
-            </div>
+        {/* For LIVE, automated tracking of the company's own data → the
+            Compliance Shield. This page is the reference guide. */}
+        <Link
+          href="/dashboard/compliance-shield"
+          className="block mb-6 p-5 rounded-2xl bg-gradient-to-br from-slate-900 to-brand-navy text-white border-2 border-slate-800 hover:border-cyan-500 transition group"
+        >
+          <div className="flex items-center gap-4">
+            <span className="text-3xl shrink-0">🛡️</span>
             <div className="flex-1 min-w-0">
-              <h3 className="text-lg font-black font-cairo text-slate-800 mb-1">مؤشر الامتثال العام</h3>
-              <p className="text-sm text-slate-500 font-cairo mb-2">
-                {overallScore.completedCount} من {overallScore.totalCount} بند مكتمل
+              <h3 className="font-black font-cairo">عايز متابعة آلية لشركتك؟ افتح درع الامتثال</h3>
+              <p className="text-sm text-slate-300 font-cairo">
+                الدرع بيفحص بيانات شركتك تلقائياً ويحسب مؤشر امتثالك الحقيقي وينبّهك قبل الغرامات — الصفحة دي دليل مرجعي للمتطلبات.
               </p>
-              <div className="w-full h-2 rounded-full bg-slate-200 overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all ${
-                    overallScore.score >= 80 ? "bg-emerald-500" : overallScore.score >= 50 ? "bg-amber-500" : "bg-red-500"
-                  }`}
-                  style={{ width: `${overallScore.score}%` }}
-                />
-              </div>
             </div>
-            <div className="text-center">
-              <div className={`px-4 py-2 rounded-xl font-bold text-sm font-cairo ${
-                overallScore.risk === "low" ? "bg-emerald-100 text-emerald-700" :
-                overallScore.risk === "medium" ? "bg-amber-100 text-amber-700" :
-                "bg-red-100 text-red-700"
-              }`}>
-                {overallScore.risk === "low" ? "🟢 امتثال جيد" :
-                 overallScore.risk === "medium" ? "🟡 يحتاج تحسين" :
-                 "🔴 خطر مرتفع"}
-              </div>
-            </div>
+            <span className="text-cyan-300 shrink-0 group-hover:-translate-x-1 transition">←</span>
           </div>
-        </div>
+        </Link>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
           <SummaryCard label="جهات التفتيش" value={String(authorities.length)} icon="🏛" color="cyan" />
-          <SummaryCard label="إجمالي البنود" value={String(overallScore.totalCount)} icon="📋" color="amber" />
-          <SummaryCard label="البند المكتملة" value={String(overallScore.completedCount)} icon="✅" color="emerald" />
+          <SummaryCard label="إجمالي البنود" value={String(totalItems)} icon="📋" color="amber" />
           <SummaryCard label="الحد الأدنى للغرامات" value={penalties.minPenalty} icon="⚖" color="violet" />
         </div>
 
@@ -131,7 +81,6 @@ export default async function ComplianceHubPage() {
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {authorities.map((a) => {
             const color = AUTHORITY_COLORS[a.id] || AUTHORITY_COLORS.labor_office;
-            const score = computeComplianceScore(a.items, completedIds);
             return (
               <Link
                 key={a.id}
@@ -142,18 +91,9 @@ export default async function ComplianceHubPage() {
                   <div className={`w-12 h-12 rounded-xl ${color.bg} ${color.chip.split(" ")[0]} border flex items-center justify-center text-2xl shrink-0`}>
                     {a.icon}
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full border font-bold font-cairo ${color.chip}`}>
-                      {a.items.length} بند
-                    </span>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold font-cairo ${
-                      score.risk === "low" ? "bg-emerald-100 text-emerald-700" :
-                      score.risk === "medium" ? "bg-amber-100 text-amber-700" :
-                      "bg-red-100 text-red-700"
-                    }`}>
-                      {score.score}%
-                    </span>
-                  </div>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full border font-bold font-cairo ${color.chip}`}>
+                    {a.items.length} بند
+                  </span>
                 </div>
                 <h3 className="text-base font-black font-cairo text-slate-800 mb-1 group-hover:text-amber-700 transition">
                   {a.name}
@@ -161,17 +101,11 @@ export default async function ComplianceHubPage() {
                 <p className="text-[11px] text-slate-500 font-cairo leading-relaxed line-clamp-2 mb-3">
                   {a.description}
                 </p>
-                <div className="w-full h-1.5 rounded-full bg-slate-200 overflow-hidden">
-                  <div
-                    className={`h-full rounded-full ${
-                      score.risk === "low" ? "bg-emerald-500" :
-                      score.risk === "medium" ? "bg-amber-500" : "bg-red-500"
-                    }`}
-                    style={{ width: `${score.score}%` }}
-                  />
-                </div>
-                <div className="mt-2 text-[11px] text-slate-500 font-cairo">
+                <div className="text-[11px] text-slate-500 font-cairo">
                   الموعد النهائي: {a.frequency === "monthly" ? "شهري" : a.frequency === "quarterly" ? "ربع سنوي" : a.frequency === "yearly" ? "سنوي" : "حسب الحدث"}
+                </div>
+                <div className={`mt-2 text-[11px] font-bold font-cairo ${color.text}`}>
+                  افتح الدليل ←
                 </div>
               </Link>
             );
