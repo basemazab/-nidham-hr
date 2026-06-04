@@ -134,7 +134,7 @@ export default function Post() {
           <tr>
             <td>HR System</td>
             <td>1,000 - 3,000 EGP</td>
-            <td rowSpan={3} className="text-center"><strong>749 EGP</strong><br /><span className="text-sm text-slate-500">لـ 25 موظف</span></td>
+            <td rowSpan={3} className="text-center"><strong>750 EGP</strong><br /><span className="text-sm text-slate-500">لـ 25 موظف</span></td>
           </tr>
           <tr>
             <td>CRM</td>

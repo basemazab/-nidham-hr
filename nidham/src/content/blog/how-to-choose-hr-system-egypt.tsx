@@ -53,7 +53,7 @@ export default function Post() {
       <p>
         أنظمة زي Bayzat و ZenHR أسعارها بالدولار وبتكلف 4-7 دولار/موظف/شهر.
         لشركة 50 موظف، ده 10,000+ ج/شهر. نِظام مصمم للسوق المصري بالجنيه:
-        Pro بـ 1,500 ج/شهر للـ 100 موظف — أوفر 85%.
+        Pro بـ 2,500 ج/شهر للـ 100 موظف — أوفر 85%.
       </p>
 
       <h3>5. دعم فني بالعربي</h3>
@@ -124,7 +124,7 @@ export default function Post() {
             </tr>
             <tr className="border-t border-slate-200 dark:border-slate-700">
               <td className="p-2">السعر/شهر (50 موظف)</td>
-              <td className="p-2 text-center text-emerald-700 dark:text-emerald-400 font-bold">1,500 ج</td>
+              <td className="p-2 text-center text-emerald-700 dark:text-emerald-400 font-bold">2,500 ج</td>
               <td className="p-2 text-center text-slate-500">4,500+ ج</td>
               <td className="p-2 text-center text-slate-500">10,000+ ج</td>
             </tr>

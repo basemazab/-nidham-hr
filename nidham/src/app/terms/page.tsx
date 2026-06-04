@@ -93,9 +93,9 @@ export default function TermsPage() {
             <h3 className="text-lg font-bold mt-4 mb-2">3.1 الباقات المتاحة</h3>
             <ul>
               <li><strong>Free:</strong> 0 ج/شهر، حتى 5 موظفين، بدون التزام زمني</li>
-              <li><strong>Starter:</strong> 500 ج/شهر، حتى 25 موظف</li>
-              <li><strong>Pro:</strong> 1,500 ج/شهر، حتى 100 موظف</li>
-              <li><strong>Business:</strong> 3,500 ج/شهر، حتى 500 موظف</li>
+              <li><strong>Starter:</strong> 750 ج/شهر، حتى 25 موظف</li>
+              <li><strong>Pro:</strong> 2,500 ج/شهر، حتى 100 موظف</li>
+              <li><strong>Business:</strong> 6,000 ج/شهر، حتى 500 موظف</li>
               <li><strong>Enterprise:</strong> تسعير مخصص، 500+ موظف</li>
               <li><strong>Beta:</strong> 3 شهور مجاناً + 50% خصم لسنة كاملة (أحكام منفصلة في <Link href="/beta-terms" className="text-brand-cyan-dark hover:underline">/beta-terms</Link>)</li>
             </ul>
@@ -105,7 +105,7 @@ export default function TermsPage() {
               <li>الاشتراك بيتجدّد تلقائياً كل شهر/سنة على نفس البطاقة</li>
               <li>الفاتورة بتصدر يوم تجديد الاشتراك</li>
               <li>الـ VAT 14% بيتضاف للأسعار المعروضة (للأفراد) — للشركات بـ TRN، بنطبّق reverse charge</li>
-              <li>اللي عنده اشتراك سنوي بياخد خصم 20%</li>
+              <li>اللي عنده اشتراك سنوي بياخد شهرين هدية (≈ 17% خصم)</li>
             </ul>
 
             <h3 className="text-lg font-bold mt-6 mb-2">3.3 تغيير الباقة</h3>

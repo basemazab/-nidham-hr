@@ -12,9 +12,9 @@ type SearchParams = Promise<{ error?: string; plan?: string; ref?: string }>;
 
 const PLAN_LABEL: Record<string, string> = {
   free: "مجاني (5 موظفين)",
-  starter: "Starter (25 موظف · 500 ج/شهر)",
-  pro: "Pro (100 موظف · 1,500 ج/شهر)",
-  business: "Business (500 موظف · 3,500 ج/شهر)",
+  starter: "Starter (25 موظف · 750 ج/شهر)",
+  pro: "Pro (100 موظف · 2,500 ج/شهر)",
+  business: "Business (500 موظف · 6,000 ج/شهر)",
   enterprise: "Enterprise (تواصل لتسعير خاص)",
   // CRM-only plans — for customers who want CRM/Sales pipeline only,
   // not HR. The signup action detects these and applies feature

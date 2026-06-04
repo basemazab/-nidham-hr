@@ -160,7 +160,7 @@ export function SettingsForm({ defaultValues }: { defaultValues: Defaults }) {
                 name="ai_business_context"
                 defaultValue={defaultValues.ai_business_context}
                 rows={6}
-                placeholder="مثال: نِظام HR — نظام HR مصري. الأسعار: 749 / 2,430 / 5,990 جنيه/شهر..."
+                placeholder="مثال: نِظام HR — نظام HR مصري. الأسعار: 750 / 2,500 / 6,000 جنيه/شهر..."
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:border-brand-cyan outline-none"
               />
               <p className="text-xs text-slate-500 mt-1">

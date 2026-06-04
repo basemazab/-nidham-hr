@@ -232,7 +232,7 @@ export default function Post() {
           HR) + 2,500 جنيه (مخاطر أخطاء) = 4,000 جنيه/شهر.
           <br />
           نفس الشركة على <Link href="/pricing">نِظام HR Starter</Link>:
-          749 جنيه/شهر.
+          750 جنيه/شهر.
           <br />
           <strong>توفير صافي = 3,251 جنيه/شهر = 39,000 جنيه/سنة.</strong>
         </p>
@@ -312,7 +312,7 @@ export default function Post() {
 
       <h3>إيه أرخص نظام HR في السوق المصري؟</h3>
       <p>
-        <Link href="/pricing">نِظام HR</Link> Starter بيبدأ من 749
+        <Link href="/pricing">نِظام HR</Link> Starter بيبدأ من 750
         جنيه/شهر لـ 25 موظف. ده أرخص 70% من Bayzat و ZenHR. شوف
         <Link href="/blog/bayzat-alternative-egypt-2026">مقارنة الأنظمة الكاملة</Link>.
       </p>

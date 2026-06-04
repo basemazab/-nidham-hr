@@ -103,7 +103,7 @@ export default function BrochurePage() {
             />
             <BenefitCard
               icon="💰"
-              title="1,500 ج/شهر — مش 10,000"
+              title="2,500 ج/شهر — مش 10,000"
               body="مقارنة بـ Bayzat بـ 10,000+، Nidham 5-10× أرخص بنفس القوة"
               color="amber"
             />
@@ -299,13 +299,13 @@ export default function BrochurePage() {
                 </tr>
                 <tr className="border-b border-emerald-100">
                   <td className="py-2 text-slate-700">وقت HR (30 ساعة)</td>
-                  <td className="text-center text-slate-700">1,500 ج/شهر</td>
+                  <td className="text-center text-slate-700">2,500 ج/شهر</td>
                   <td className="text-center text-emerald-700 font-bold">250 ج/شهر</td>
                 </tr>
                 <tr className="border-b border-emerald-100">
                   <td className="py-2 text-slate-700">اشتراك Nidham</td>
                   <td className="text-center text-slate-700">—</td>
-                  <td className="text-center text-emerald-700 font-bold">1,500 ج/شهر</td>
+                  <td className="text-center text-emerald-700 font-bold">2,500 ج/شهر</td>
                 </tr>
                 <tr className="bg-emerald-100">
                   <td className="py-3 text-emerald-900 font-black">الإجمالي شهرياً</td>

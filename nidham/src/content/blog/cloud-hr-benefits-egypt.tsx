@@ -98,7 +98,7 @@ export default function Post() {
           <tbody>
             <tr className="border-t border-slate-200 dark:border-slate-700">
               <td className="p-2">التكلفة الشهرية (50 موظف)</td>
-              <td className="p-2 text-center text-emerald-700 dark:text-emerald-400 font-bold">1,500 ج</td>
+              <td className="p-2 text-center text-emerald-700 dark:text-emerald-400 font-bold">2,500 ج</td>
               <td className="p-2 text-center text-slate-500">0 ج (بأخطاء بشرية)</td>
               <td className="p-2 text-center text-slate-500">5,000+ ج (سيرفر + IT)</td>
             </tr>

@@ -174,7 +174,7 @@ export default function FeaturesPage() {
         <div className="bg-gradient-to-br from-indigo-500 to-violet-600 rounded-3xl p-8 sm:p-12 shadow-xl">
           <h2 className="text-2xl font-black font-cairo text-white mb-3">ابدأ دلوقتي — مجاناً 14 يوم</h2>
           <p className="text-sm text-white/80 font-cairo mb-6 max-w-md mx-auto">
-            كل المميزات دي في نظام واحد. جرب بنفسك — مفيش بطاقة ائتمان. لو عجبك، كمل بـ 1,500 ج/شهر.
+            كل المميزات دي في نظام واحد. جرب بنفسك — مفيش بطاقة ائتمان. لو عجبك، كمل بـ 2,500 ج/شهر.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link

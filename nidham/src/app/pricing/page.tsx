@@ -10,12 +10,13 @@
 // FAQ section answers the 5 questions every prospect asks in demos.
 
 import Link from "next/link";
+import { PLAN_PRICE_EGP } from "@/lib/pricing";
 import { FAQPageSchema } from "@/components/json-ld";
 
 export const metadata = {
   title: { absolute: "أسعار نظام HR ومرتبات مصري — من 0 ج/شهر (مجاني) | نِظام HR" },
   description:
-    "أسعار نظام HR ومرتبات في مصر: مجاني للأبد (5 موظفين)، Starter 500 ج/شهر، Pro 1,500 ج/شهر (100 موظف)، Business 3,500 ج/شهر. 14 يوم تجربة مجانية — خصم 20% سنوي. أرخص 60-85% من Bayzat و ZenHR.",
+    "أسعار نظام HR ومرتبات في مصر: مجاني للأبد (5 موظفين)، Starter 750 ج/شهر، Pro 2,500 ج/شهر (100 موظف)، Business 6,000 ج/شهر. 14 يوم تجربة مجانية — شهرين هدية سنوياً. أرخص 60-85% من Bayzat و ZenHR.",
   alternates: { canonical: "/pricing" },
   openGraph: {
     images: [{ url: "/api/og?title=" + encodeURIComponent("أسعار نظام HR مصري — من 0 ج للباقة المجانية"), width: 1200, height: 630, alt: "أسعار نظام HR مصري — من 0 ج للباقة المجانية" }],
@@ -23,7 +24,7 @@ export const metadata = {
   twitter: {
     card: "summary_large_image",
     title: "أسعار نظام HR ومرتبات مصري — من 0 ج/شهر | نِظام",
-    description: "4 باقات: مجاني للأبد لحد 5 موظفين، 500 ج/شهر (25 موظف)، 1,500 ج/شهر (100 موظف). جرب 14 يوم مجاناً.",
+    description: "4 باقات: مجاني للأبد لحد 5 موظفين، 750 ج/شهر (25 موظف)، 2,500 ج/شهر (100 موظف). جرب 14 يوم مجاناً.",
   },
 };
 
@@ -33,7 +34,7 @@ const PRICING_FAQS = [
   {
     question: "كم سعر نظام HR ومرتبات لشركة 50 موظف في مصر؟",
     answer:
-      "باقة Pro من نِظام بـ 2,430 جنيه شهرياً (أو 1,944 ج/شهر مع الاشتراك السنوي بخصم 20%) تكفي لـ 100 موظف وتشمل كل الـ HR + Payroll + AI Assistant + WhatsApp Bot للموظفين. متوافقة مع قانون العمل المصري 12/2003 وقانون التأمينات 148/2019.",
+      "باقة Pro من نِظام بـ 2,500 جنيه شهرياً (أو ما يعادل 2,083 ج/شهر مع الاشتراك السنوي — شهرين هدية) تكفي لـ 100 موظف وتشمل كل الـ HR + Payroll + درع الامتثال + AI Assistant + WhatsApp Bot للموظفين. متوافقة مع قانون العمل المصري 12/2003 وقانون التأمينات 148/2019.",
   },
   {
     question: "هل في نسخة مجانية من نِظام؟",
@@ -105,7 +106,7 @@ const TIERS: Tier[] = [
   {
     name: "Starter",
     tagline: "للشركات الصاعدة اللي محتاجة الأساسيات بسرعة",
-    monthlyEgp: 500,
+    monthlyEgp: PLAN_PRICE_EGP.starter,
     capLabel: "حتى 25 موظف",
     features: [
       "كل مميزات المجانية",
@@ -124,7 +125,7 @@ const TIERS: Tier[] = [
   {
     name: "Pro",
     tagline: "الباقة الأكثر شعبية للـ SMBs المصرية",
-    monthlyEgp: 1500,
+    monthlyEgp: PLAN_PRICE_EGP.pro,
     capLabel: "حتى 100 موظف",
     features: [
       "كل مميزات Starter",
@@ -146,7 +147,7 @@ const TIERS: Tier[] = [
   {
     name: "Business",
     tagline: "للشركات المتوسطة اللي محتاجة customization",
-    monthlyEgp: 3500,
+    monthlyEgp: PLAN_PRICE_EGP.business,
     capLabel: "حتى 500 موظف",
     features: [
       "كل مميزات Pro",
@@ -186,7 +187,7 @@ const FAQ = [
   },
   {
     question: "ممكن أدفع سنوياً وأخصم؟",
-    answer: "أيوه — الدفع السنوي بيخصملك 20%. شركة 100 موظف على Pro: 1,500 ج/شهر ← 1,200 ج/شهر = 14,400 ج/سنة بدل 18,000 ج. بتوفّر 3,600 ج بدفعة واحدة.",
+    answer: "أيوه — الدفع السنوي = شهرين هدية (تدفع 10 شهور بدل 12). شركة 100 موظف على Pro: بدل 30,000 ج/سنة، تدفع 25,000 ج (≈ 2,083 ج/شهر). بتوفّر 5,000 ج بدفعة واحدة.",
   },
   {
     question: "هل عندي ضمان استرداد لو ما عجبنيش؟",
@@ -349,7 +350,7 @@ export default function PricingPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                <CompareRow label="سعر شركة 100 موظف/شهر" cells={["1,500 ج", "10,000+ ج", "8,000+ ج", "12,000+ ج"]} />
+                <CompareRow label="سعر شركة 100 موظف/شهر" cells={["2,500 ج", "10,000+ ج", "8,000+ ج", "12,000+ ج"]} />
                 <CompareRow label="عربي مصري Native" cells={["✅", "⚠️", "✅", "❌"]} />
                 <CompareRow label="نماذج التأمينات المصرية" cells={["✅", "❌", "❌", "❌"]} />
                 <CompareRow label="حسابات ضريبة 2026" cells={["✅", "⚠️", "⚠️", "N/A"]} />
