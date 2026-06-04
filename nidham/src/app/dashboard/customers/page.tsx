@@ -98,15 +98,15 @@ export default async function CustomersPage() {
   if (customerIds.length > 0) {
     const { data: interactions } = await supabase
       .from("interactions")
-      .select("customer_id, interaction_date")
+      .select("customer_id, date")
       .in("customer_id", customerIds)
-      .order("interaction_date", { ascending: false })
-      .returns<Array<{ customer_id: string; interaction_date: string }>>();
+      .order("date", { ascending: false })
+      .returns<Array<{ customer_id: string; date: string }>>();
 
     // Take the first (most recent) interaction per customer
     for (const i of interactions ?? []) {
       if (!lastContactByCustomer[i.customer_id]) {
-        lastContactByCustomer[i.customer_id] = i.interaction_date;
+        lastContactByCustomer[i.customer_id] = i.date;
       }
     }
   }

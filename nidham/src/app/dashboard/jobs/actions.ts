@@ -413,10 +413,14 @@ export async function deleteApplication(applicationId: string, jobId: string) {
  * a same-origin fetch. The route stays available for client-side calls.
  */
 export async function screenApplication(applicationId: string) {
-  return screenApplicationInline(applicationId);
+  // Gate + tenant-scope: this triggers a billed Gemini call, so an
+  // un-gated server action would let any authenticated user screen another
+  // tenant's application (compute abuse + an existence oracle).
+  const { profile } = await requireHR();
+  return screenApplicationInline(applicationId, profile.company_id);
 }
 
-async function screenApplicationInline(applicationId: string) {
+async function screenApplicationInline(applicationId: string, companyId: string) {
   const { createGoogleGenerativeAI } = await import("@ai-sdk/google");
   const { generateObject } = await import("ai");
   const { buildScreeningPrompt, screeningSchema } = await import(
@@ -438,6 +442,7 @@ async function screenApplicationInline(applicationId: string) {
        candidates(full_name, current_title, years_experience, location)`,
     )
     .eq("id", applicationId)
+    .eq("company_id", companyId)
     .single();
 
   if (!app || !app.jobs || !app.candidates || !app.cv_text) {
@@ -497,8 +502,9 @@ async function screenApplicationInline(applicationId: string) {
 }
 
 export async function rerunScreening(applicationId: string, jobId: string) {
+  const { profile } = await requireHR();
   try {
-    await screenApplicationInline(applicationId);
+    await screenApplicationInline(applicationId, profile.company_id);
   } catch {
     // ai_error already persisted
   }

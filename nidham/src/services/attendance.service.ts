@@ -102,7 +102,7 @@ export async function markAllPresent(
 
   const { error, count } = await supabase
     .from("attendance")
-    .upsert(rows, { onConflict: "company_id,employee_id,date", count: "exact" });
+    .upsert(rows, { onConflict: "employee_id,date", count: "exact" });
 
   if (error) return err(error.message);
   return ok({ count: count ?? rows.length });
@@ -146,7 +146,7 @@ export async function copyFromYesterday(
 
   const { error, count } = await supabase
     .from("attendance")
-    .upsert(rows, { onConflict: "company_id,employee_id,date", count: "exact" });
+    .upsert(rows, { onConflict: "employee_id,date", count: "exact" });
 
   if (error) return err(error.message);
   return ok({ count: count ?? rows.length });

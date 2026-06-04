@@ -122,23 +122,22 @@ export default async function EditEmployeePage({ params, searchParams }: PagePro
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  // We pull the main row from the `employees` TABLE (RLS on the table is
-  // proven to pass through PostgREST). Reading from employees_with_pii
-  // directly returned 404 in production — Supabase's PostgREST appears
-  // to drop the RLS context for SELECT-from-view in some configs (we
-  // verified the view works as the postgres role, but not as
-  // authenticated). Keeping the heavy SELECT on the table sidesteps
-  // that quirk entirely.
-  // J4: Single-step read from employees_with_pii. The previous two-step
-  // workaround was a band-aid for the pii_decrypt REVOKE issue (migration
-  // 050) which was properly fixed in migration 067. Reading from the view
-  // directly means the form is guaranteed to either get all decrypted PII
-  // columns OR notFound() if the row doesn't exist — never the half-empty
-  // state that confused HR into thinking saves didn't work.
+  // Resolve the caller's company FIRST so every read below is tenant-scoped.
+  // Super-admins have a cross-tenant SELECT bypass (mig 038), so reads MUST
+  // add an explicit company_id filter — otherwise opening any employee id
+  // would expose another tenant's DECRYPTED PII from employees_with_pii.
+  const { profile: currentProfile } = await getMyProfile();
+  const isAdmin = currentProfile?.role === "admin";
+  const callerCompanyId = currentProfile?.company_id ?? "";
+
+  // Main row (with decrypted PII) from employees_with_pii — scoped to the
+  // caller's company. The view exists per mig 050/067; reading the view
+  // directly avoids the half-empty PII state of the old two-step workaround.
   const { data: employeeRow } = await supabase
     .from("employees_with_pii")
     .select("*")
     .eq("id", id)
+    .eq("company_id", callerCompanyId)
     .single<Employee>();
 
   if (!employeeRow) notFound();
@@ -154,6 +153,7 @@ export default async function EditEmployeePage({ params, searchParams }: PagePro
     .from("employees")
     .select("contract_type, contract_start, contract_end")
     .eq("id", id)
+    .eq("company_id", callerCompanyId)
     .maybeSingle<{
       contract_type: string | null;
       contract_start: string | null;
@@ -165,11 +165,8 @@ export default async function EditEmployeePage({ params, searchParams }: PagePro
     contract_end: null,
   };
 
-  // The "إنهاء التوظيف" modal is admin-only because terminating an
-  // employee snapshots an EOS gratuity and locks them out of the system.
-  const { profile: currentProfile } = await getMyProfile();
-  const isAdmin = currentProfile?.role === "admin";
-  const callerCompanyId = currentProfile?.company_id ?? "";
+  // (caller profile + isAdmin + callerCompanyId resolved at the top so the
+  // PII/contract reads above are tenant-scoped.)
 
   // Active colleagues for the "direct manager" picker (can't report to self).
   const { data: managerOptions } = await supabase

@@ -274,7 +274,7 @@ async function RetentionRisks({ companyId }: { companyId: string }) {
             <li key={r.employeeId} className="py-2 flex items-center gap-3">
               <span className="w-6 h-6 rounded-full bg-rose-100 text-rose-700 text-xs font-bold flex items-center justify-center font-cairo">{i + 1}</span>
               <span className="flex-1 font-cairo text-slate-800 font-medium">{r.name}</span>
-              <span className="text-xs font-bold text-rose-700 font-cairo">خطر {Math.round(r.score * 100)}%</span>
+              <span className="text-xs font-bold text-rose-700 font-cairo">خطر {Math.round(r.score)}%</span>
             </li>
           ))}
         </ul>

@@ -247,7 +247,7 @@ export function RolesClient({ roles, permissions, permissionMap }: Props) {
             ) : (
               <div className="flex flex-wrap gap-1">
                 {permissions
-                  .filter((p) => (permissionMap[role.id] ?? []).includes(p.code))
+                  .filter((p) => (permissionMap[role.id] ?? []).includes(p.id))
                   .map((p) => (
                     <span
                       key={p.id}

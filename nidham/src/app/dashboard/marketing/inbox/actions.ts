@@ -46,8 +46,9 @@ export async function sendHumanReply(input: {
     };
   }
 
-  // 3) Store the message FIRST (so user sees it even if Meta API fails)
-  const { error: insertErr } = await supabase
+  // 3) Store the message FIRST (so user sees it even if Meta API fails).
+  //    Capture its id so a later delivery-error update targets THIS row only.
+  const { data: inserted, error: insertErr } = await supabase
     .from("marketing_inbox_messages")
     .insert({
       conversation_id: input.conversationId,
@@ -56,7 +57,9 @@ export async function sendHumanReply(input: {
       author_user_id: user?.id ?? undefined,
       body: input.text,
       delivery_error: null,
-    });
+    })
+    .select("id")
+    .single<{ id: string }>();
 
   if (insertErr) {
     return { ok: false, error: insertErr.message };
@@ -70,18 +73,17 @@ export async function sendHumanReply(input: {
     text: input.text,
   });
 
-  if (!send.ok) {
-    // Update the stored message with the delivery error
+  if (!send.ok && inserted?.id) {
+    // Stamp the delivery error on THIS message only (update-by-id). The old
+    // .order().limit() chain is ignored by PostgREST on UPDATE and would have
+    // touched every prior errorless outbound message in the conversation.
     await supabase
       .from("marketing_inbox_messages")
       .update({
         delivery_error: send.error,
         meta_message_id: null,
       })
-      .eq("conversation_id", input.conversationId)
-      .is("delivery_error", null)
-      .order("created_at", { ascending: false })
-      .limit(1);
+      .eq("id", inserted.id);
   }
 
   // 5) Update conversation status to "human_replied"

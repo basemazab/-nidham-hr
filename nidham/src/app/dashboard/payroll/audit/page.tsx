@@ -26,11 +26,15 @@ export default async function PayrollAuditPage() {
 
   const supabase = await createClient();
 
+  // Every query is explicitly scoped to the caller's company — super-admins
+  // have a cross-tenant SELECT bypass (migs 014/038) so relying on RLS alone
+  // would aggregate EVERY tenant's payroll into one audit.
+  const companyId = profile.company_id;
   const [empRes, entriesRes, periodsRes, attRes] = await Promise.all([
-    supabase.from("employees").select("id, full_name, basic_salary, housing_allowance, transport_allowance, other_allowances, incentive_allowance, pay_frequency, status, department, hire_date"),
-    supabase.from("payroll_entries").select("*").order("created_at", { ascending: false }).limit(500),
-    supabase.from("payroll_periods").select("*").order("end_date", { ascending: false }).limit(20),
-    supabase.from("attendance").select("employee_id, date, status, tardiness_minutes, early_leave_minutes").gte("date", new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]).limit(5000),
+    supabase.from("employees").select("id, full_name, basic_salary, housing_allowance, transport_allowance, other_allowances, incentive_allowance, pay_frequency, status, department, hire_date").eq("company_id", companyId),
+    supabase.from("payroll_entries").select("*").eq("company_id", companyId).order("created_at", { ascending: false }).limit(500),
+    supabase.from("payroll_periods").select("*").eq("company_id", companyId).order("end_date", { ascending: false }).limit(20),
+    supabase.from("attendance").select("employee_id, date, status, tardiness_minutes, early_leave_minutes").eq("company_id", companyId).gte("date", new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]).limit(5000),
   ]);
 
   const audit = auditPayroll({

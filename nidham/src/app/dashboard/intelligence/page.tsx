@@ -40,14 +40,18 @@ export default async function IntelligencePage() {
   const thirtyIso = thirtyAgo.toISOString().split("T")[0];
   const todayIso = today.toISOString().split("T")[0];
 
+  // Every query is explicitly company-scoped — super-admins have a cross-
+  // tenant SELECT bypass (mig 038), so without this the Health Score and all
+  // metrics below would blend EVERY tenant's data together.
+  const companyId = profile.company_id;
   const [empRes, attRes, leaveRes, advRes, payrollRes, salaryRes, profilesRes] = await Promise.all([
-    supabase.from("employees").select("id, full_name, status, department, hire_date, termination_date, basic_salary, employee_code, national_id, gender, pay_frequency"),
-    supabase.from("attendance").select("employee_id, date, status, tardiness_minutes").gte("date", thirtyIso).lte("date", todayIso),
-    supabase.from("leave_requests").select("id, status").eq("status", "pending"),
-    supabase.from("advance_requests").select("id, status").eq("status", "pending"),
-    supabase.from("payroll_periods").select("id, status"),
-    supabase.from("salary_history").select("employee_id, change_date").order("change_date", { ascending: false }),
-    supabase.from("profiles").select("id, company_id"),
+    supabase.from("employees").select("id, full_name, status, department, hire_date, termination_date, basic_salary, employee_code, national_id, gender, pay_frequency").eq("company_id", companyId),
+    supabase.from("attendance").select("employee_id, date, status, tardiness_minutes").eq("company_id", companyId).gte("date", thirtyIso).lte("date", todayIso),
+    supabase.from("leave_requests").select("id, status").eq("company_id", companyId).eq("status", "pending"),
+    supabase.from("advance_requests").select("id, status").eq("company_id", companyId).eq("status", "pending"),
+    supabase.from("payroll_periods").select("id, status").eq("company_id", companyId),
+    supabase.from("salary_history").select("employee_id, change_date").eq("company_id", companyId).order("change_date", { ascending: false }),
+    supabase.from("profiles").select("id, company_id").eq("company_id", companyId),
   ]);
 
   const employees = empRes.data ?? [];

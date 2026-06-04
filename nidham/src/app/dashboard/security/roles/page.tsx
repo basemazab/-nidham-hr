@@ -25,11 +25,14 @@ export default async function RolesPage() {
     .select("*, permission_defs!inner(code)")
     .eq("company_id", profile.company_id);
 
-  // Build a map of role_id -> permission code arrays
+  // Build a map of role_id -> permission_id arrays. The client keys both the
+  // edit checkboxes and the read-only chips off permission_defs.id, so this
+  // MUST carry ids (not codes) or editing a role shows nothing checked and
+  // saving wipes its permissions.
   const permMap: Record<string, string[]> = {};
   for (const rp of rolePermissions ?? []) {
     const arr = permMap[rp.role_id] ?? [];
-    arr.push((rp as any).permission_defs?.code ?? "");
+    arr.push((rp as any).permission_id ?? "");
     permMap[rp.role_id] = arr;
   }
 
