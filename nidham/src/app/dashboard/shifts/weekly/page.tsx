@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getMyProfile } from "@/lib/permissions";
+import { PrintButton } from "./print-button";
 
 // ============================================================================
 // Weekly shift schedule (جدول الورديات الأسبوعي)
@@ -155,14 +156,7 @@ export default async function WeeklyShiftPage({
               })}
             </p>
           </div>
-          <button
-            type="button"
-            className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm font-cairo transition print:hidden"
-             
-            data-print="1"
-          >
-            🖨 طباعة
-          </button>
+          <PrintButton />
         </header>
 
         {/* Filters */}
@@ -324,15 +318,6 @@ export default async function WeeklyShiftPage({
         </div>
       </div>
 
-      {/* Print-only client script: hook up the print button */}
-      <script
-         
-        dangerouslySetInnerHTML={{
-          __html: `
-            document.querySelector('[data-print="1"]')?.addEventListener('click', () => window.print());
-          `,
-        }}
-      />
     </main>
   );
 }

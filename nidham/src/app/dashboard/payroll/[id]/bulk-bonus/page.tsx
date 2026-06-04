@@ -10,6 +10,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { RecipientsSync } from "./recipients-sync";
 import { getMyProfile, requireHRPage } from "@/lib/permissions";
 import { applyBulkBonus } from "../../actions";
 import { formatEGP } from "@/lib/payroll";
@@ -231,43 +232,11 @@ export default async function BulkBonusPage({
               )}
             </div>
 
-            {/* Hidden "recipients" field — populated by the form's submit
-                handler is overkill; instead we have a client-side script
-                that converts "recipients_mode" radio to the comma-sep
-                "recipients" the server action expects. But since this is
-                an SSR-only flow, simpler: the server action accepts
-                "recipients_mode" semantically — let's stay with radio +
-                let the server action handle it inline. */}
-            <input
-              type="hidden"
-              name="recipients"
-              value="all"
-              id="recipients-hidden"
-            />
-            {/* Small inline script keeps the hidden field in sync with the
-                chosen radio. Inline = no client-component bundle bloat. */}
-            <script
-              dangerouslySetInnerHTML={{
-                __html: `
-                  document.querySelectorAll('input[name=recipients_mode]').forEach(r => {
-                    r.addEventListener('change', () => {
-                      const hidden = document.getElementById('recipients-hidden');
-                      if (!hidden) return;
-                      if (r.value === 'all') { hidden.value = 'all'; return; }
-                      if (r.value.startsWith('dept:')) {
-                        const dept = r.value.slice(5);
-                        const ids = Array.from(document.querySelectorAll('[data-employee-dept]'))
-                          .filter(el => el.getAttribute('data-employee-dept') === dept)
-                          .map(el => el.getAttribute('data-entry-id'))
-                          .filter(Boolean)
-                          .join(',');
-                        hidden.value = ids;
-                      }
-                    });
-                  });
-                `,
-              }}
-            />
+            {/* Hidden "recipients" field kept in sync with the chosen radio
+                by a client component (an inline <script> here didn't run on
+                client-side navigation, so dept selection was silently
+                ignored and the bonus always went to "all"). */}
+            <RecipientsSync />
           </section>
 
           {/* Preview table — also serves as the data source for the

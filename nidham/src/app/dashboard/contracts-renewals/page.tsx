@@ -23,7 +23,11 @@ function daysBetween(from: Date, to: Date): number {
 
 export const dynamic = "force-dynamic";
 
-export default async function ContractsRenewalsPage() {
+export default async function ContractsRenewalsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>;
+}) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -32,6 +36,10 @@ export default async function ContractsRenewalsPage() {
 
   const { profile } = await getMyProfile();
   const callerCompanyId = profile?.company_id ?? "";
+
+  const { tab: tabRaw } = await searchParams;
+  const tab: "expiring" | "expired" | "active" =
+    tabRaw === "expired" || tabRaw === "active" ? tabRaw : "expiring";
 
   const { data: contracts, error: fetchError } = await supabase
     .from("contracts")
@@ -71,6 +79,8 @@ export default async function ContractsRenewalsPage() {
   const aboutToExpire = enriched.filter((c) => c.renewalStatus === "expiring-soon");
   const expired = enriched.filter((c) => c.renewalStatus === "expired");
   const active = enriched.filter((c) => c.renewalStatus === "active" || c.renewalStatus === "open-ended");
+  // The rows shown follow the selected tab (was always `enriched` regardless).
+  const visible = tab === "expired" ? expired : tab === "active" ? active : aboutToExpire;
 
   return (
     <main className="flex-1 px-6 py-8 bg-gradient-to-b from-slate-50 via-white to-cyan-50/30 min-h-screen">
@@ -179,27 +189,36 @@ export default async function ContractsRenewalsPage() {
             <div className="bg-white rounded-2xl shadow-md border border-slate-100 overflow-hidden">
               <div className="border-b border-slate-200">
                 <div className="flex gap-1 p-1" role="tablist">
-                  <button
+                  <Link
+                    href="?tab=expiring"
                     role="tab"
-                    aria-selected="true"
-                    className="flex-1 py-2.5 px-4 rounded-lg text-sm font-bold bg-brand-cyan text-white font-cairo transition"
+                    aria-selected={tab === "expiring"}
+                    className={`flex-1 text-center py-2.5 px-4 rounded-lg text-sm font-bold font-cairo transition ${
+                      tab === "expiring" ? "bg-brand-cyan text-white" : "text-slate-500 hover:bg-slate-50"
+                    }`}
                   >
                     على وشك الانتهاء ({aboutToExpire.length})
-                  </button>
-                  <button
+                  </Link>
+                  <Link
+                    href="?tab=expired"
                     role="tab"
-                    aria-selected="false"
-                    className="flex-1 py-2.5 px-4 rounded-lg text-sm font-bold text-slate-500 hover:bg-slate-50 font-cairo transition"
+                    aria-selected={tab === "expired"}
+                    className={`flex-1 text-center py-2.5 px-4 rounded-lg text-sm font-bold font-cairo transition ${
+                      tab === "expired" ? "bg-brand-cyan text-white" : "text-slate-500 hover:bg-slate-50"
+                    }`}
                   >
                     منتهية ({expired.length})
-                  </button>
-                  <button
+                  </Link>
+                  <Link
+                    href="?tab=active"
                     role="tab"
-                    aria-selected="false"
-                    className="flex-1 py-2.5 px-4 rounded-lg text-sm font-bold text-slate-500 hover:bg-slate-50 font-cairo transition"
+                    aria-selected={tab === "active"}
+                    className={`flex-1 text-center py-2.5 px-4 rounded-lg text-sm font-bold font-cairo transition ${
+                      tab === "active" ? "bg-brand-cyan text-white" : "text-slate-500 hover:bg-slate-50"
+                    }`}
                   >
                     كل النشطة ({active.length})
-                  </button>
+                  </Link>
                 </div>
               </div>
 
@@ -218,7 +237,14 @@ export default async function ContractsRenewalsPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {enriched.map((c) => {
+                    {visible.length === 0 && (
+                      <tr>
+                        <td colSpan={8} className="px-4 py-10 text-center text-sm text-slate-400 font-cairo">
+                          مفيش عقود في التصنيف ده.
+                        </td>
+                      </tr>
+                    )}
+                    {visible.map((c) => {
                       const statusBadge = (() => {
                         if (c.renewalStatus === "expired")
                           return { text: "منتهي", classes: "bg-red-50 text-red-700 border-red-200" };
