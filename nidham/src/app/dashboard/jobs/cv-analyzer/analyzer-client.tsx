@@ -45,7 +45,7 @@ export function CvAnalyzerClient() {
   return (
     <div className="space-y-6">
       {/* Input card */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+      <div className="print:hidden bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
         <div className="grid md:grid-cols-2 gap-5">
           <div>
             <label className="block text-sm font-bold text-slate-800 dark:text-slate-100 mb-2 font-cairo">
@@ -93,7 +93,7 @@ export function CvAnalyzerClient() {
       </div>
 
       {loading && (
-        <div className="text-center py-10 text-slate-500 font-cairo">
+        <div className="print:hidden text-center py-10 text-slate-500 font-cairo">
           <div className="text-4xl mb-3 animate-pulse">🤖</div>
           الذكاء الاصطناعي بيقرا السيرة ويطابقها على وظائف شركتك…
         </div>
@@ -105,8 +105,24 @@ export function CvAnalyzerClient() {
 }
 
 function Results({ r }: { r: CvAnalysisResult }) {
+  const [printMode, setPrintMode] = useState<"all" | "test" | "hr">("all");
+  const doPrint = (mode: "all" | "test" | "hr") => {
+    setPrintMode(mode);
+    // Let the print-only layout render the chosen sections, then print.
+    setTimeout(() => window.print(), 80);
+  };
+
   return (
-    <div className="space-y-5">
+    <>
+      {/* Print toolbar (screen only) */}
+      <div className="print:hidden flex flex-wrap gap-2 mb-4">
+        <button type="button" onClick={() => doPrint("all")} className="px-4 py-2 rounded-lg bg-brand-cyan-dark hover:bg-brand-cyan text-white font-bold font-cairo text-xs transition">🖨️ اطبع التحليل كامل</button>
+        <button type="button" onClick={() => doPrint("test")} className="px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-200 font-bold font-cairo text-xs transition">📝 اطبع اختبار المرشّح (بمساحة إجابة)</button>
+        <button type="button" onClick={() => doPrint("hr")} className="px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-200 font-bold font-cairo text-xs transition">💬 اطبع أسئلة المقابلة</button>
+      </div>
+
+      {/* On-screen view (hidden when printing) */}
+      <div className="space-y-5 print:hidden">
       {/* Candidate summary */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
         <div className="flex items-start justify-between gap-3 flex-wrap">
@@ -207,6 +223,81 @@ function Results({ r }: { r: CvAnalysisResult }) {
         <div className="text-xs text-slate-500 dark:text-slate-400 font-cairo bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3 border border-slate-200 dark:border-slate-800">
           🏭 {r.industry_tailoring_note}
         </div>
+      )}
+      </div>
+
+      {/* Print-only document — clean A4 layout for the chosen sections */}
+      <CvPrintDoc r={r} mode={printMode} />
+    </>
+  );
+}
+
+function CvPrintDoc({ r, mode }: { r: CvAnalysisResult; mode: "all" | "test" | "hr" }) {
+  const showAnalysis = mode === "all";
+  const showTest = mode === "all" || mode === "test";
+  const showHr = mode === "all" || mode === "hr";
+  return (
+    <div className="hidden print:block text-black" dir="rtl">
+      {/* Header */}
+      <div className="flex items-start justify-between border-b-2 border-slate-400 pb-3 mb-5">
+        <div>
+          <div className="text-lg font-black">تحليل سيرة ذاتية — {r.candidate_name}</div>
+          <div className="text-sm">الوظيفة المرشَّح لها: {r.recommended_job.title}</div>
+        </div>
+        <div className="text-left">
+          <div className="text-lg font-black" style={{ color: "#0891b2" }}>نِظام</div>
+          <div className="text-[10px] tracking-widest" style={{ color: "#C9A84C" }}>NIDHAM HR</div>
+        </div>
+      </div>
+
+      {showAnalysis && (
+        <section className="mb-6">
+          <h2 className="text-base font-black mb-2">ملخّص التحليل</h2>
+          <p className="text-sm mb-2 leading-relaxed">{r.summary}</p>
+          <div className="text-sm space-y-1">
+            <div><strong>الخبرة:</strong> {r.years_experience} سنة · <strong>التعليم:</strong> {r.education}</div>
+            {r.key_skills.length > 0 && <div><strong>المهارات:</strong> {r.key_skills.join("، ")}</div>}
+            <div><strong>التطابق مع {r.recommended_job.title}:</strong> {r.recommended_job.match_score}%</div>
+            {r.recommended_job.fit_strengths.length > 0 && <div><strong>نقاط القوة:</strong> {r.recommended_job.fit_strengths.join("، ")}</div>}
+            {r.recommended_job.fit_gaps.length > 0 && <div><strong>الفجوات:</strong> {r.recommended_job.fit_gaps.join("، ")}</div>}
+          </div>
+        </section>
+      )}
+
+      {showTest && (
+        <section className="mb-6" style={{ breakInside: "avoid" }}>
+          <h2 className="text-base font-black mb-1">اختبار المرشّح</h2>
+          <div className="text-sm mb-3">الاسم: ............................　 التاريخ: ..................</div>
+          <ol className="space-y-4">
+            {r.candidate_test.map((q, i) => (
+              <li key={i}>
+                <div className="text-sm font-bold">{i + 1}. {q.question}</div>
+                <div className="text-[11px] text-slate-500 mb-1">({q.skill_area})</div>
+                {/* answer space */}
+                <div>
+                  {[0, 1, 2].map((n) => (
+                    <div key={n} className="border-b border-slate-400" style={{ height: "1.6rem" }} />
+                  ))}
+                </div>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
+
+      {showHr && (
+        <section style={{ breakInside: "avoid" }}>
+          <h2 className="text-base font-black mb-2">أسئلة المقابلة (للـ HR)</h2>
+          <ol className="space-y-3">
+            {r.hr_questions.map((q, i) => (
+              <li key={i}>
+                <div className="text-sm font-bold">{i + 1}. {q.question}</div>
+                <div className="text-[11px] text-slate-500">🎯 {q.purpose}</div>
+                <div className="border-b border-slate-300 mt-1" style={{ height: "1.4rem" }} />
+              </li>
+            ))}
+          </ol>
+        </section>
       )}
     </div>
   );
