@@ -55,8 +55,6 @@ const CATEGORIES: ChecklistCategory[] = [
   },
 ];
 
-const STORAGE_KEY = (employeeId: string) => `onboarding_${employeeId}`;
-
 export function OnboardingChecklistClient({
   employeeId,
 }: {
@@ -65,47 +63,35 @@ export function OnboardingChecklistClient({
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [loaded, setLoaded] = useState(false);
 
+  // Load from the SERVER — the DB is the single source of truth, shared
+  // across all HR users + devices (this used to read localStorage first, so
+  // progress never synced between people/machines).
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY(employeeId));
-    if (stored) {
-      try {
-        setChecked(JSON.parse(stored));
-        setLoaded(true);
-        return;
-      } catch {
-        // corrupt data
-      }
-    }
-    // Try loading from server
+    let active = true;
     getChecklistProgress(employeeId, "onboarding").then((res) => {
-      if (res.success && res.data.length > 0) {
+      if (!active) return;
+      if (res.success) {
         const map: Record<string, boolean> = {};
-        for (const item of res.data) {
-          map[item.item_key] = item.checked;
-        }
+        for (const item of res.data) map[item.item_key] = item.checked;
         setChecked(map);
       }
       setLoaded(true);
     });
+    return () => {
+      active = false;
+    };
   }, [employeeId]);
-
-  const persist = useCallback(
-    (updated: Record<string, boolean>) => {
-      localStorage.setItem(STORAGE_KEY(employeeId), JSON.stringify(updated));
-    },
-    [employeeId],
-  );
 
   const handleToggle = useCallback(
     async (itemKey: string) => {
       const next = !checked[itemKey];
-      const updated = { ...checked, [itemKey]: next };
-      setChecked(updated);
-      persist(updated);
-      // Try server sync (best-effort)
-      await toggleChecklistItem(employeeId, itemKey, next, "onboarding");
+      setChecked((prev) => ({ ...prev, [itemKey]: next })); // optimistic
+      const res = await toggleChecklistItem(employeeId, itemKey, next, "onboarding");
+      if (!res.success) {
+        setChecked((prev) => ({ ...prev, [itemKey]: !next })); // revert on failure
+      }
     },
-    [checked, employeeId, persist],
+    [checked, employeeId],
   );
 
   const allItems = CATEGORIES.flatMap((c) => c.items);
