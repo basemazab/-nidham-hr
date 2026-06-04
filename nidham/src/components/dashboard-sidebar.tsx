@@ -105,7 +105,9 @@ const NAV_ITEMS: readonly NavItem[] = [
   { href: "/dashboard/celebrations", label: "الاحتفالات",       icon: "🎉", section: "people", feature: "employees" },
   { href: "/dashboard/team",         label: "فريق الشركة",      icon: "🤝", section: "people", visibleTo: ["admin"] },
   { href: "/dashboard/onboarding",   label: "الاستقبال والتسكين", icon: "🤝", section: "people", feature: "employees" },
-  { href: "/dashboard/training",    label: "التدريب والتطوير",  icon: "🎓", section: "people", feature: "employees" },
+  // Hidden until backed by real tables — Training is currently a localStorage
+  // -only demo (system audit). Restore this line when the module persists to DB.
+  // { href: "/dashboard/training",    label: "التدريب والتطوير",  icon: "🎓", section: "people", feature: "employees" },
 
   // ── Time (الوقت والحضور) ──
   { href: "/dashboard/attendance",      label: "تسجيل الحضور",     icon: "⏰", section: "time", feature: "attendance" },
@@ -140,6 +142,7 @@ const NAV_ITEMS: readonly NavItem[] = [
   { href: "/dashboard/ai/audit",        label: "سجل نشاط AI",           icon: "📋", section: "ai", visibleTo: ["admin"] },
   { href: "/dashboard/whatsapp-test",   label: "اختبار بوت الواتساب",   icon: "💬", section: "ai", visibleTo: ["admin"] },
   { href: "/dashboard/jobs",       label: "التوظيف الذكي",        icon: "🎯", section: "ai", feature: "recruitment" },
+  { href: "/dashboard/jobs/cv-analyzer", label: "محلّل السيرة الذاتية", icon: "🔍", section: "ai", feature: "recruitment" },
   { href: "/dashboard/retention",  label: "احتفاظ بالموظفين",     icon: "🛡", section: "ai", feature: "retention_insights" },
   { href: "/dashboard/nidham-ai", label: "محرك نيدهام AI",        icon: "🧠", section: "ai", feature: "retention_insights" },
 
