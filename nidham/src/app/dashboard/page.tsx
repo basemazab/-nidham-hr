@@ -67,7 +67,7 @@ export default async function DashboardPage({
       // so we drop the separate count query. RLS scopes to the caller's tenant.
       supabase
         .from("employees")
-        .select("id, full_name, status, hire_date, national_id, social_insurance_number, basic_salary")
+        .select("id, full_name, status, hire_date, national_id, social_insurance_number, basic_salary, contract_type, contract_end")
         .eq("company_id", callerCompanyId)
         .returns<ComplianceEmployee[]>(),
       supabase

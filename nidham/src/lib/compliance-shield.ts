@@ -43,6 +43,8 @@ export type ComplianceEmployee = {
   national_id: string | null;
   social_insurance_number: string | null;
   basic_salary: number | null;
+  contract_type?: "fixed" | "indefinite" | null;
+  contract_end?: string | null;
 };
 
 export type ComplianceCompany = {
@@ -104,7 +106,7 @@ function gradeFor(score: number): ComplianceGrade {
   return { label: "خطر", tone: "rose" };
 }
 
-const MONITORED_OBLIGATIONS = 9;
+const MONITORED_OBLIGATIONS = 10;
 
 function daysBetween(a: Date, b: Date): number {
   return Math.floor((a.getTime() - b.getTime()) / (1000 * 60 * 60 * 24));
@@ -292,7 +294,51 @@ export function scanCompliance(input: ComplianceScanInput): ComplianceScanResult
     });
   }
 
-  // ── 7. Document / license expiry ────────────────────────────────────────
+  // ── 7. Fixed-term contract lifecycle ────────────────────────────────────
+  // A lapsed fixed-term contract + still-active employee converts to an
+  // indefinite contract by operation of law → any later termination is a
+  // costly dispute. Renew IN WRITING or settle before expiry.
+  const fixedActive = active.filter(
+    (e) => e.contract_type === "fixed" && e.contract_end,
+  );
+  const contractExpired = fixedActive.filter(
+    (e) => new Date(e.contract_end as string) < today,
+  );
+  const contractExpiring = fixedActive.filter((e) => {
+    const end = new Date(e.contract_end as string);
+    if (end < today) return false;
+    return daysBetween(end, today) <= 45;
+  });
+  if (contractExpired.length > 0) {
+    risks.push({
+      id: "contract-expired",
+      severity: "high",
+      title: `${contractExpired.length} عقد محدد المدة منتهي والموظف مستمر`,
+      detail: `${contractExpired.slice(0, 3).map((e) => e.full_name || "موظف").join("، ")}${
+        contractExpired.length > 3 ? "…" : ""
+      }. العقد بيتحوّل لغير محدد المدة بقوة القانون — أي إنهاء بعد كده بيبقى نزاع مكلف. جدّد كتابةً أو سوِّ الوضع فوراً.`,
+      legalRef: "قانون العمل 12/2003 — العقود محددة المدة",
+      estFine: null,
+      actionLabel: "راجع الموظفين",
+      actionHref: "/dashboard/employees",
+    });
+  }
+  if (contractExpiring.length > 0) {
+    risks.push({
+      id: "contract-expiring",
+      severity: "medium",
+      title: `${contractExpiring.length} عقد محدد المدة قرب ينتهي`,
+      detail: `${contractExpiring.slice(0, 3).map((e) => e.full_name || "موظف").join("، ")}${
+        contractExpiring.length > 3 ? "…" : ""
+      }. قرّر التجديد كتابةً أو الإنهاء قبل تاريخ الانتهاء.`,
+      legalRef: "قانون العمل 12/2003",
+      estFine: null,
+      actionLabel: "راجع الموظفين",
+      actionHref: "/dashboard/employees",
+    });
+  }
+
+  // ── 8. Document / license expiry ────────────────────────────────────────
   const documents = input.documents ?? [];
   const expired = documents.filter((d) => new Date(d.expiry_date) < today);
   const expiringSoon = documents.filter((d) => {

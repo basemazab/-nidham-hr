@@ -145,6 +145,26 @@ export default async function EditEmployeePage({ params, searchParams }: PagePro
 
   const employee: Employee = employeeRow;
 
+  // Contract lifecycle fields live as plain columns on `employees`. We read
+  // them straight from the table (NOT the employees_with_pii view, whose
+  // `select e.*` froze its column set at creation and won't expose new
+  // columns without a fragile DROP/CREATE). Keeps the form prefilling
+  // correctly with zero risk to the PII view.
+  const { data: contractRow } = await supabase
+    .from("employees")
+    .select("contract_type, contract_start, contract_end")
+    .eq("id", id)
+    .maybeSingle<{
+      contract_type: string | null;
+      contract_start: string | null;
+      contract_end: string | null;
+    }>();
+  const contract = contractRow ?? {
+    contract_type: "indefinite",
+    contract_start: null,
+    contract_end: null,
+  };
+
   // The "إنهاء التوظيف" modal is admin-only because terminating an
   // employee snapshots an EOS gratuity and locks them out of the system.
   const { profile: currentProfile } = await getMyProfile();
@@ -536,6 +556,36 @@ export default async function EditEmployeePage({ params, searchParams }: PagePro
                   defaultValue={employee.date_of_birth ?? ""}
                   className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:border-brand-cyan focus:ring-2 focus:ring-brand-cyan/20 outline-none transition text-slate-900"
                 />
+              </div>
+            </div>
+
+            {/* Contract lifecycle — feeds the Compliance Shield. */}
+            <div className="border-t border-slate-100 pt-5">
+              <h3 className="text-sm font-bold text-slate-800 mb-1 font-cairo">📜 العقد</h3>
+              <p className="text-xs text-slate-500 mb-3 font-cairo">
+                العقد محدد المدة بينبّهك درع الامتثال قبل انتهائه — تجدّده كتابةً أو تقرّر قبل ما يتحوّل لعقد دائم.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label htmlFor="contract_type" className="block text-sm font-medium text-slate-700 mb-2 font-cairo">نوع العقد</label>
+                  <select
+                    id="contract_type"
+                    name="contract_type"
+                    defaultValue={contract.contract_type ?? "indefinite"}
+                    className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:border-brand-cyan focus:ring-2 focus:ring-brand-cyan/20 outline-none transition text-slate-900 bg-white"
+                  >
+                    <option value="indefinite">غير محدد المدة</option>
+                    <option value="fixed">محدد المدة</option>
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="contract_start" className="block text-sm font-medium text-slate-700 mb-2 font-cairo">بداية العقد</label>
+                  <input id="contract_start" name="contract_start" type="date" defaultValue={contract.contract_start ?? ""} className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:border-brand-cyan focus:ring-2 focus:ring-brand-cyan/20 outline-none transition text-slate-900" />
+                </div>
+                <div>
+                  <label htmlFor="contract_end" className="block text-sm font-medium text-slate-700 mb-2 font-cairo">نهاية العقد <span className="text-xs text-slate-400 font-normal">(للمحدد)</span></label>
+                  <input id="contract_end" name="contract_end" type="date" defaultValue={contract.contract_end ?? ""} className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:border-brand-cyan focus:ring-2 focus:ring-brand-cyan/20 outline-none transition text-slate-900" />
+                </div>
               </div>
             </div>
 

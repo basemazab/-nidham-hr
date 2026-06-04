@@ -45,7 +45,7 @@ export default async function ComplianceReportPage() {
       .maybeSingle<{ social_insurance_enabled: boolean | null; income_tax_enabled: boolean | null }>(),
     supabase
       .from("employees")
-      .select("id, full_name, status, hire_date, national_id, social_insurance_number, basic_salary")
+      .select("id, full_name, status, hire_date, national_id, social_insurance_number, basic_salary, contract_type, contract_end")
       .eq("company_id", companyId)
       .returns<ComplianceEmployee[]>(),
     supabase
@@ -183,6 +183,7 @@ export default async function ComplianceReportPage() {
           <div>• لائحة الجزاءات والسلامة المهنية</div>
           <div>• تواريخ انتهاء المستندات والتراخيص</div>
           <div>• انتهاء فترات الاختبار (المادة 33)</div>
+          <div>• العقود محددة المدة وتجديدها</div>
         </div>
 
         {/* Footer */}

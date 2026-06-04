@@ -48,7 +48,7 @@ export default async function ComplianceShieldPage() {
       .maybeSingle<{ social_insurance_enabled: boolean | null; income_tax_enabled: boolean | null }>(),
     supabase
       .from("employees")
-      .select("id, full_name, status, hire_date, national_id, social_insurance_number, basic_salary")
+      .select("id, full_name, status, hire_date, national_id, social_insurance_number, basic_salary, contract_type, contract_end")
       .eq("company_id", companyId)
       .returns<ComplianceEmployee[]>(),
     supabase
@@ -200,6 +200,7 @@ export default async function ComplianceShieldPage() {
             <div>🛡️ لائحة الجزاءات والسلامة المهنية</div>
             <div>🛡️ تواريخ انتهاء المستندات والتراخيص</div>
             <div>🛡️ انتهاء فترات الاختبار</div>
+            <div>🛡️ العقود محددة المدة وتجديدها</div>
           </div>
           <p className="text-xs text-slate-400 dark:text-slate-500 font-cairo mt-4">
             الأرقام تقديرية للتنبيه والوقاية، ولا تُغني عن المراجعة القانونية. الدرع

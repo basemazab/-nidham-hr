@@ -40,6 +40,9 @@ export type CreateEmployeeParams = {
   email: string | null;
   hire_date: string | null;
   date_of_birth: string | null;
+  contract_type: string;
+  contract_start: string | null;
+  contract_end: string | null;
   basic_salary: number | null;
   housing_allowance: number | null;
   transport_allowance: number | null;
@@ -68,6 +71,9 @@ export async function createEmployee(
     email: params.email,
     hire_date: params.hire_date,
     date_of_birth: params.date_of_birth,
+    contract_type: params.contract_type,
+    contract_start: params.contract_start,
+    contract_end: params.contract_end,
     basic_salary: params.basic_salary,
     housing_allowance: params.housing_allowance,
     transport_allowance: params.transport_allowance,
@@ -112,6 +118,9 @@ export async function updateEmployee(
       phone: params.phone,
       email: params.email,
       hire_date: params.hire_date,
+      contract_type: params.contract_type,
+      contract_start: params.contract_start,
+      contract_end: params.contract_end,
       basic_salary: params.basic_salary,
       housing_allowance: params.housing_allowance,
       transport_allowance: params.transport_allowance,

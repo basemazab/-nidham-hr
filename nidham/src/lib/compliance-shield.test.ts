@@ -130,6 +130,30 @@ describe("scanCompliance", () => {
     expect(res.risks.find((r) => r.id === "probation-ending")).toBeUndefined();
   });
 
+  it("flags a lapsed fixed-term contract (high) and a soon-to-expire one (medium)", () => {
+    const res = scanCompliance({
+      employees: [
+        emp({ contract_type: "fixed", contract_end: "2025-01-01" }), // expired
+        emp({ contract_type: "fixed", contract_end: "2026-06-20" }), // ~17 days
+      ],
+      company: { social_insurance_enabled: false, income_tax_enabled: false },
+      annualBalances: [],
+      today: TODAY,
+    });
+    expect(res.risks.find((r) => r.id === "contract-expired")?.severity).toBe("high");
+    expect(res.risks.find((r) => r.id === "contract-expiring")?.severity).toBe("medium");
+  });
+
+  it("does not raise a contract risk for indefinite contracts", () => {
+    const res = scanCompliance({
+      employees: [emp({ contract_type: "indefinite", contract_end: null })],
+      company: { social_insurance_enabled: false, income_tax_enabled: false },
+      annualBalances: [],
+      today: TODAY,
+    });
+    expect(res.risks.find((r) => r.id?.startsWith("contract-"))).toBeUndefined();
+  });
+
   it("flags expired and soon-to-expire documents", () => {
     const res = scanCompliance({
       employees: [emp({})],

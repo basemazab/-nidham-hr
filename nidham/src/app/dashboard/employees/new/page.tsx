@@ -186,6 +186,38 @@ export default async function NewEmployeePage({
               </div>
             </div>
 
+            {/* Contract lifecycle — feeds the Compliance Shield (fixed-term
+                contracts expiring → renew-or-decide alert before they auto-
+                convert to indefinite). */}
+            <div className="border-t border-slate-100 pt-5">
+              <h3 className="text-sm font-bold text-slate-800 mb-1 font-cairo">📜 العقد</h3>
+              <p className="text-xs text-slate-500 mb-3 font-cairo">
+                العقد محدد المدة بينبّهك درع الامتثال قبل انتهائه — عشان تجدّده كتابةً أو تقرّر قبل ما يتحوّل لعقد دائم.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label htmlFor="contract_type" className="block text-sm font-medium text-slate-700 mb-2 font-cairo">نوع العقد</label>
+                  <select
+                    id="contract_type"
+                    name="contract_type"
+                    defaultValue="indefinite"
+                    className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:border-brand-cyan focus:ring-2 focus:ring-brand-cyan/20 outline-none transition text-slate-900 bg-white"
+                  >
+                    <option value="indefinite">غير محدد المدة</option>
+                    <option value="fixed">محدد المدة</option>
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="contract_start" className="block text-sm font-medium text-slate-700 mb-2 font-cairo">بداية العقد</label>
+                  <input id="contract_start" name="contract_start" type="date" className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:border-brand-cyan focus:ring-2 focus:ring-brand-cyan/20 outline-none transition text-slate-900" />
+                </div>
+                <div>
+                  <label htmlFor="contract_end" className="block text-sm font-medium text-slate-700 mb-2 font-cairo">نهاية العقد <span className="text-xs text-slate-400 font-normal">(للمحدد)</span></label>
+                  <input id="contract_end" name="contract_end" type="date" className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:border-brand-cyan focus:ring-2 focus:ring-brand-cyan/20 outline-none transition text-slate-900" />
+                </div>
+              </div>
+            </div>
+
             {/* Salary structure — feeds the payroll module */}
             <div className="border-t border-slate-100 pt-5">
               <h3 className="text-sm font-bold text-slate-800 mb-1 font-cairo">💰 هيكل الراتب</h3>
