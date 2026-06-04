@@ -118,9 +118,8 @@ export async function createRotation(formData: FormData) {
 }
 
 export async function deleteRotation(rotationId: string) {
-  await requireAdmin();
-  const supabase = (await import("@/lib/supabase/server")).createClient();
-  const result = await svcDeleteRotation(await supabase, rotationId);
+  const { supabase, profile } = await requireAdmin();
+  const result = await svcDeleteRotation(supabase, profile.company_id, rotationId);
   if (!result.success) {
     redirect("/dashboard/shifts?error=" + encodeURIComponent(result.error));
   }

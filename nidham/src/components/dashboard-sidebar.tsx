@@ -147,8 +147,12 @@ const NAV_ITEMS: readonly NavItem[] = [
   { href: "/dashboard/nidham-ai", label: "محرك نيدهام AI",        icon: "🧠", section: "ai", feature: "retention_insights" },
 
   // ── Automation — workflow engine ──
-  { href: "/dashboard/automation",     label: "أتمتة سير العمل",  icon: "⚡", section: "automation", visibleTo: ["admin", "manager"] },
-  { href: "/dashboard/automation/logs", label: "سجل التشغيل",      icon: "📋", section: "automation", visibleTo: ["admin"] },
+  // Hidden until wired: the workflow engine (lib/workflow/engine.ts) is never
+  // executed (no triggers/cron) and half its actions are no-op stubs (system
+  // audit). Showing a "build automations" UI that never runs is misleading.
+  // Restore these two lines once runWorkflow is fired by a real event/cron.
+  // { href: "/dashboard/automation",     label: "أتمتة سير العمل",  icon: "⚡", section: "automation", visibleTo: ["admin", "manager"] },
+  // { href: "/dashboard/automation/logs", label: "سجل التشغيل",      icon: "📋", section: "automation", visibleTo: ["admin"] },
 
   // ── Marketing ──
   { href: "/dashboard/marketing",                label: "Marketing Studio",  icon: "✦",  section: "marketing", feature: "marketing_studio" },

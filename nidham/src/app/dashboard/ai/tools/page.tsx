@@ -10,25 +10,48 @@ export default async function AiToolsPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  // Tenant scope — super-admins have a cross-tenant SELECT bypass, so these
+  // usage counters must filter company_id explicitly or they'd show totals
+  // across every tenant.
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("company_id")
+    .eq("id", user.id)
+    .single<{ company_id: string }>();
+  const companyId = profile?.company_id ?? "";
+
   // 1) AI provider status
   const providerStatus = getProviderStatus();
 
-  // 2) Count AI usage from marketing inbox
-  const { count: aiRepliesCount } = await supabase
-    .from("marketing_inbox_messages")
-    .select("id", { count: "exact", head: true })
-    .eq("sender", "ai");
+  // 2) Count AI usage from marketing inbox. Messages have no direct
+  //    company_id (RLS scopes them via the conversation), so we resolve this
+  //    company's conversation ids first, then count its AI messages.
+  const { data: convRows } = await supabase
+    .from("marketing_inbox_conversations")
+    .select("id")
+    .eq("company_id", companyId)
+    .returns<{ id: string }[]>();
+  const convIds = (convRows ?? []).map((c) => c.id);
+  const { count: aiRepliesCount } = convIds.length
+    ? await supabase
+        .from("marketing_inbox_messages")
+        .select("id", { count: "exact", head: true })
+        .eq("sender", "ai")
+        .in("conversation_id", convIds)
+    : { count: 0 };
 
   // 3) Count screening results
   const { count: screenedCount } = await supabase
     .from("applications")
     .select("id", { count: "exact", head: true })
+    .eq("company_id", companyId)
     .not("ai_score", "is", null);
 
   // 4) Count AI retention runs
   const { count: retentionCount } = await supabase
     .from("employee_retention_insights")
-    .select("id", { count: "exact", head: true });
+    .select("id", { count: "exact", head: true })
+    .eq("company_id", companyId);
 
   const aiTools = [
     {

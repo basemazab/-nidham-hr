@@ -100,9 +100,16 @@ export async function createRotation(
 
 export async function deleteRotation(
   supabase: SupabaseClient,
+  companyId: string,
   rotationId: string,
 ): Promise<ActionResult> {
-  await supabase.from("shift_rotations").delete().eq("id", rotationId);
+  // company_id clamp (defense-in-depth, matches deleteShift) so a forged
+  // rotationId can never delete another tenant's rotation.
+  await supabase
+    .from("shift_rotations")
+    .delete()
+    .eq("id", rotationId)
+    .eq("company_id", companyId);
   return ok(undefined);
 }
 
