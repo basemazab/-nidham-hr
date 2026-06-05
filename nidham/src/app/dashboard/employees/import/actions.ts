@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireHR } from "@/lib/permissions";
 import { arabicizeDbError } from "@/lib/i18n";
 import { bustDashboardCache } from "@/lib/cache";
+import { asTextSafe } from "@/lib/form-helpers";
 
 export type EmployeeImportRow = {
   full_name: string;
@@ -306,13 +307,8 @@ type ParsedRow = {
   nationalId: string | null;
 };
 
-function asText(v: unknown): string | null {
-  if (v === null || v === undefined) return null;
-  const s = String(v).trim();
-  return s.length === 0 ? null : s;
-}
 function asNumber(v: unknown): number | null {
-  const t = asText(v);
+  const t = asTextSafe(v);
   if (t === null) return null;
   const cleaned = t.replace(/,/g, "");
   const n = Number(cleaned);
@@ -469,16 +465,16 @@ export async function importEmployees(formData: FormData) {
     };
     return {
       rowIndex: i + 2, // header is row 1
-      fullName:     asText(get("full_name")),
-      employeeCode: asText(get("employee_code")),
-      jobTitle:     asText(get("job_title")),
-      department:   asText(get("department")),
-      phone:        asText(get("phone")),
-      email:        asText(get("email")),
+      fullName:     asTextSafe(get("full_name")),
+      employeeCode: asTextSafe(get("employee_code")),
+      jobTitle:     asTextSafe(get("job_title")),
+      department:   asTextSafe(get("department")),
+      phone:        asTextSafe(get("phone")),
+      email:        asTextSafe(get("email")),
       hireDate:     normalizeDate(get("hire_date")),
       basicSalary:  asNumber(get("basic_salary")),
       incentiveAllowance: asNumber(get("incentive_allowance")),
-      nationalId:   asText(get("national_id")),
+      nationalId:   asTextSafe(get("national_id")),
     };
   });
 

@@ -60,3 +60,13 @@ export function asUUID(value: FormDataEntryValue | null): string | null {
   if (text === null) return null;
   return /^[0-9a-f-]{36}$/i.test(text) ? text : null;
 }
+
+/**
+ * Like asText but accepts `unknown` (for CSV/import data, not FormData).
+ * Returns null for null/undefined, trims the string, returns null if empty.
+ */
+export function asTextSafe(v: unknown): string | null {
+  if (v === null || v === undefined) return null;
+  const s = String(v).trim();
+  return s.length === 0 ? null : s;
+}
