@@ -92,16 +92,19 @@ db/
 | 7 | Video renderer (canvas + MediaRecorder + AudioEngine) | ✅ 60fps, crossfade, particles |
 | 8 | Workflow automation engine | ✅ 7 event types, 8 action types |
 | 9 | Temporary admin endpoints removed | ✅ fix-workflows + generate-embeddings deleted |
-| 10 | GROQ_API_KEY for AI redundancy | ⚠️ Suggested — see [ORPHANS_AND_PENDING] |
+| 10 | GROQ_API_KEY for AI redundancy | ✅ Set in Vercel (production + development) |
+| 11 | VAPID push keys (NEXT_PUBLIC_VAPID_PUBLIC_KEY + VAPID_PRIVATE_KEY + VAPID_SUBJECT) | ✅ Generated via web-push, set in Vercel |
+| 12 | META encryption + webhook verify tokens (META_ENCRYPTION_KEY, META_WEBHOOK_VERIFY_TOKEN, WHATSAPP_VERIFY_TOKEN) + CRON_SECRET | ✅ Generated as random base64url, set in Vercel |
+| 13 | Public-repo Gemini key leak (`.envGEMINI_API_KEY=AIza...` file committed since first commit) | ✅ File removed (3056b97), `hr-mostashar/.gitignore` widened to `.env*` |
 
 ## [ORPHANS_AND_PENDING]
 
 | Item | Type | Notes |
 |------|------|-------|
-| GROQ_API_KEY in Vercel env | ⚠️ Missing | ضروري لو Gemini ضرب quota. سجّل مجاني من https://console.groq.com/keys |
+| `META_APP_ID`, `META_APP_SECRET`, `NEXT_PUBLIC_META_PIXEL_ID` | ⚠️ Missing | Meta ads / Facebook Leads integration. Get from Meta Developer Console (app settings + Events Manager). |
+| `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID` | ⚠️ Missing | WhatsApp Business send/receive. Needs Meta WhatsApp Business API onboarding (phone number + permanent access token). |
+| Revoke leaked Gemini key on Google side | ⚠️ User action | The leaked `AIzaSy...JPY...` is removed from current repo state but remains in git history. Revoke at https://aistudio.google.com/apikey for full hygiene. |
 | SSO / OAuth providers | 🔲 Future | حالياً email-only. Google/Apple OAuth ممكن |
 | Multi-language UI | 🔲 Future | Arabic only حالياً. English i18n scaffolding في `lib/i18n.ts` |
 | E2E tests in CI | 🔲 Future | Playwright tests موجودة بس مش شغالة في CI |
 | k6 load tests | 🔲 Future | Scripts موجودة في `tests/load/` لكن محتاجة CI pipeline |
-| VAPID push keys in Vercel | ⚠️ Missing | Push notifications مش هتشتغل في الإنتاج غير لما تضبط |
-| META/WEBHOOK keys in Vercel | ⚠️ Missing | Meta ads + WhatsApp مش هتشتغل غير لما تضبط |
