@@ -112,6 +112,7 @@ const NAV_ITEMS: readonly NavItem[] = [
   // ── Time (الوقت والحضور) ──
   { href: "/dashboard/attendance",      label: "تسجيل الحضور",     icon: "⏰", section: "time", feature: "attendance" },
   { href: "/dashboard/attendance/review", label: "مراجعة واعتماد الحضور", icon: "✅", section: "time", feature: "attendance" },
+  { href: "/dashboard/attendance/absences", label: "متابعة وتصحيح الغياب", icon: "🚫", section: "time", feature: "attendance" },
   { href: "/dashboard/settings/devices", label: "أجهزة البصمة", icon: "🔌", section: "time", visibleTo: ["admin"] },
   { href: "/dashboard/shifts",          label: "الورديات",          icon: "🕒", section: "time", feature: "shifts_rotations" },
   { href: "/dashboard/team-calendar",   label: "تقويم الإجازات",   icon: "📅", section: "time", feature: "requests" },
