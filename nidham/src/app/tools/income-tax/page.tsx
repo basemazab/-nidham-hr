@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { IncomeTaxCalculator } from "./calculator";
+import { ToolLeadCapture } from "@/components/tool-lead-capture";
 import { BlogNav, BlogFooter } from "@/components/blog-chrome";
 import { BreadcrumbSchema, HowToSchema } from "@/components/json-ld";
 
@@ -78,6 +79,7 @@ export default function IncomeTaxCalculatorPage() {
 
       <main className="px-6 pb-12 max-w-3xl mx-auto w-full flex-1">
         <IncomeTaxCalculator />
+        <ToolLeadCapture source="income-tax" />
 
         <section className="mt-12 prose-ar">
           <h2>شرائح ضريبة كسب العمل في مصر 2026</h2>

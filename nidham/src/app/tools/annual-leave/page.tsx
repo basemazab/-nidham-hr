@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { AnnualLeaveCalculator } from "./calculator";
+import { ToolLeadCapture } from "@/components/tool-lead-capture";
 import { BlogNav, BlogFooter } from "@/components/blog-chrome";
 import { BreadcrumbSchema, HowToSchema } from "@/components/json-ld";
 
@@ -77,6 +78,7 @@ export default function AnnualLeaveCalculatorPage() {
 
       <main className="px-6 pb-12 max-w-3xl mx-auto w-full flex-1">
         <AnnualLeaveCalculator />
+        <ToolLeadCapture source="annual-leave" />
 
         <section className="mt-12 prose-ar">
           <h2>قواعد الإجازة السنوية في قانون العمل المصري</h2>

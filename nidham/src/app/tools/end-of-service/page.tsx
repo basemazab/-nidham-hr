@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { EosCalculator } from "./calculator";
+import { ToolLeadCapture } from "@/components/tool-lead-capture";
 import { BlogNav, BlogFooter } from "@/components/blog-chrome";
 import { BreadcrumbSchema, HowToSchema } from "@/components/json-ld";
 import { EmbedSnippet } from "@/components/embed-snippet";
@@ -81,6 +82,7 @@ export default function EosCalculatorPage() {
 
       <main className="px-6 pb-12 max-w-3xl mx-auto w-full flex-1">
         <EosCalculator />
+        <ToolLeadCapture source="end-of-service" />
 
         <section className="mt-12 prose-ar">
           <h2>القاعدة في القانون</h2>

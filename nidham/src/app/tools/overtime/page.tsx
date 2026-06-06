@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { OvertimeCalculator } from "./calculator";
+import { ToolLeadCapture } from "@/components/tool-lead-capture";
 import { BlogNav, BlogFooter } from "@/components/blog-chrome";
 import { BreadcrumbSchema, HowToSchema } from "@/components/json-ld";
 
@@ -79,6 +80,7 @@ export default function OvertimeCalculatorPage() {
 
       <main className="px-6 pb-12 max-w-3xl mx-auto w-full flex-1">
         <OvertimeCalculator />
+        <ToolLeadCapture source="overtime" />
 
         <section className="mt-12 prose-ar">
           <h2>إزاي بيتحسب الأوفر تايم في مصر؟</h2>
