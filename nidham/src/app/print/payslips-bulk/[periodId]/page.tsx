@@ -20,6 +20,7 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { formatEGP } from "@/lib/payroll";
+import { toHiddenSet, type PayslipItemKey } from "@/lib/payslip-display";
 import { AutoPrint } from "@/components/auto-print";
 import { PrintAgainButton } from "@/components/print-again-button";
 
@@ -128,9 +129,9 @@ export default async function BulkPayslipsPrintPage({ params }: PageProps) {
       if (!profile?.company_id) return { data: null };
       return supabase
         .from("companies")
-        .select("name")
+        .select("name, payslip_hidden_items")
         .eq("id", profile.company_id)
-        .single<{ name: string }>();
+        .single<{ name: string; payslip_hidden_items: string[] | null }>();
     })(),
   ]);
 
@@ -138,6 +139,7 @@ export default async function BulkPayslipsPrintPage({ params }: PageProps) {
   const period = periodRes.data;
   const entries = entriesRes.data ?? [];
   const companyName = companyRes.data?.name ?? "—";
+  const hidden = toHiddenSet(companyRes.data?.payslip_hidden_items);
 
   // Batch-fetch decrypted PII for every employee in this period.
   // employees_with_pii is a view onto the same underlying RLS — no
@@ -238,6 +240,7 @@ export default async function BulkPayslipsPrintPage({ params }: PageProps) {
               paidAt={period.paid_at}
               total={entries.length}
               index={idx + 1}
+              hidden={hidden}
             />
           ))
         )}
@@ -257,6 +260,7 @@ function PayslipPage({
   paidAt,
   index,
   total,
+  hidden,
 }: {
   entry: Entry;
   periodLabel: string;
@@ -266,9 +270,11 @@ function PayslipPage({
   paidAt: string | null;
   index: number;
   total: number;
+  hidden: Set<PayslipItemKey>;
 }) {
   const emp = entry.employees;
   const grossWithEos = entry.gross_salary + (entry.eos_gratuity ?? 0);
+  const show = (key: PayslipItemKey) => !hidden.has(key);
 
   return (
     <article
@@ -353,20 +359,32 @@ function PayslipPage({
           </h2>
           <div className="space-y-1.5 text-sm font-cairo">
             <LineItem label="الراتب الأساسي" value={entry.basic_salary} />
-            <LineItem label="بدل سكن" value={entry.housing_allowance} />
-            <LineItem label="بدل انتقال" value={entry.transport_allowance} />
-            <LineItem label="بدلات أخرى" value={entry.other_allowances} />
-            <LineItem label="حافز" value={entry.incentive_allowance} />
-            <LineItem
-              label={
-                entry.bonus_reason
-                  ? `مكافأة (${entry.bonus_reason})`
-                  : "مكافأة"
-              }
-              value={entry.bonuses}
-            />
-            <LineItem label="أوفر تايم" value={entry.overtime} />
-            {entry.eos_gratuity > 0 && (
+            {show("housing_allowance") && (
+              <LineItem label="بدل سكن" value={entry.housing_allowance} />
+            )}
+            {show("transport_allowance") && (
+              <LineItem label="بدل انتقال" value={entry.transport_allowance} />
+            )}
+            {show("other_allowances") && (
+              <LineItem label="بدلات أخرى" value={entry.other_allowances} />
+            )}
+            {show("incentive_allowance") && (
+              <LineItem label="حافز" value={entry.incentive_allowance} />
+            )}
+            {show("bonuses") && (
+              <LineItem
+                label={
+                  entry.bonus_reason
+                    ? `مكافأة (${entry.bonus_reason})`
+                    : "مكافأة"
+                }
+                value={entry.bonuses}
+              />
+            )}
+            {show("overtime") && (
+              <LineItem label="أوفر تايم" value={entry.overtime} />
+            )}
+            {show("eos_gratuity") && entry.eos_gratuity > 0 && (
               <LineItem
                 label="🚪 مكافأة نهاية الخدمة"
                 value={entry.eos_gratuity}
@@ -385,21 +403,30 @@ function PayslipPage({
             💸 الاستقطاعات
           </h2>
           <div className="space-y-1.5 text-sm font-cairo">
-            <LineItem label="خصم الغياب" value={entry.absence_deduction} />
-            <LineItem
-              label="خصم تأخير / انصراف مبكر"
-              value={entry.tardiness_deduction}
-            />
-            <LineItem
-              label="التأمينات الاجتماعية"
-              value={entry.social_insurance}
-            />
-            <LineItem label="ضريبة الدخل" value={entry.income_tax} />
-            <LineItem label="قسط قرض / سلفة" value={entry.loan_deduction} />
-            <LineItem
-              label="خصومات أخرى"
-              value={entry.other_deductions}
-            />
+            {show("absence_deduction") && (
+              <LineItem label="خصم الغياب" value={entry.absence_deduction} />
+            )}
+            {show("tardiness_deduction") && (
+              <LineItem
+                label="خصم تأخير / انصراف مبكر"
+                value={entry.tardiness_deduction}
+              />
+            )}
+            {show("social_insurance") && (
+              <LineItem
+                label="التأمينات الاجتماعية"
+                value={entry.social_insurance}
+              />
+            )}
+            {show("income_tax") && (
+              <LineItem label="ضريبة الدخل" value={entry.income_tax} />
+            )}
+            {show("loan_deduction") && (
+              <LineItem label="قسط قرض / سلفة" value={entry.loan_deduction} />
+            )}
+            {show("other_deductions") && (
+              <LineItem label="خصومات أخرى" value={entry.other_deductions} />
+            )}
             <div className="pt-2 mt-2 border-t border-slate-200 flex justify-between font-bold text-red-700">
               <span>إجمالي الاستقطاعات</span>
               <span>{formatEGP(entry.total_deductions)}</span>

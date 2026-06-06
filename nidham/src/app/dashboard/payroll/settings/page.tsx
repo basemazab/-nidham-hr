@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/permissions";
 import { updatePayrollSettings } from "./actions";
+import { PAYSLIP_ITEMS, toHiddenSet } from "@/lib/payslip-display";
 
 // Admin-only settings page for the two opt-in payroll deductions.
 // Both default to OFF (most Egyptian SMBs don't formally file), and
@@ -19,6 +20,7 @@ type CompanyRow = {
   income_tax_enabled: boolean | null;
   monthly_cycle_start_day: number | null;
   weekly_cycle_start_dow: number | null;
+  payslip_hidden_items: string[] | null;
 };
 
 const DAY_NAMES = [
@@ -44,7 +46,7 @@ export default async function PayrollSettingsPage({
   const { data: company } = await supabase
     .from("companies")
     .select(
-      "social_insurance_enabled, income_tax_enabled, monthly_cycle_start_day, weekly_cycle_start_dow",
+      "social_insurance_enabled, income_tax_enabled, monthly_cycle_start_day, weekly_cycle_start_dow, payslip_hidden_items",
     )
     .eq("id", profile.company_id)
     .single<CompanyRow>();
@@ -53,6 +55,9 @@ export default async function PayrollSettingsPage({
   const taxOn = company?.income_tax_enabled === true;
   const monthlyStartDay = company?.monthly_cycle_start_day ?? 1;
   const weeklyStartDow = company?.weekly_cycle_start_dow ?? 6;
+  const hidden = toHiddenSet(company?.payslip_hidden_items);
+  const earningItems = PAYSLIP_ITEMS.filter((i) => i.group === "earning");
+  const deductionItems = PAYSLIP_ITEMS.filter((i) => i.group === "deduction");
 
   return (
     <main className="flex-1 px-6 py-8 bg-gradient-to-b from-slate-50 via-white to-cyan-50/30 min-h-screen">
@@ -185,6 +190,60 @@ export default async function PayrollSettingsPage({
             ]}
           />
 
+          {/* Payslip line-item visibility — what shows on the payslip + the
+              on-screen period report. Checked = hidden. */}
+          <div className="rounded-2xl border-2 border-slate-200 bg-white p-5">
+            <div className="mb-4">
+              <h3 className="font-bold text-slate-800 font-cairo text-base mb-1">
+                🧾 البنود اللي تظهر في القسيمة والتقرير
+              </h3>
+              <p className="text-xs text-slate-500 font-cairo leading-relaxed">
+                علّم على أي بند عشان <b>تخفيه</b> من قسيمة الراتب ومن تقرير
+                الدورة على الشاشة (مثلاً لو مش بتخصم تأمينات أو ضريبة، تقدر
+                تخفيها عشان متلخبطش الموظف). الإجماليات بتفضل صح دايمًا، وملف
+                المحاسب (Excel) بيفضل كامل من غير إخفاء.
+              </p>
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-x-6 gap-y-2">
+              <div>
+                <div className="text-[11px] font-bold text-emerald-700 font-cairo uppercase tracking-wider mb-2">
+                  💵 الإيرادات
+                </div>
+                <div className="space-y-1.5">
+                  {earningItems.map((it) => (
+                    <HideCheckbox
+                      key={it.key}
+                      itemKey={it.key}
+                      label={it.label}
+                      hint={it.hint}
+                      defaultHidden={hidden.has(it.key)}
+                    />
+                  ))}
+                </div>
+              </div>
+              <div>
+                <div className="text-[11px] font-bold text-red-600 font-cairo uppercase tracking-wider mb-2">
+                  💸 الاستقطاعات
+                </div>
+                <div className="space-y-1.5">
+                  {deductionItems.map((it) => (
+                    <HideCheckbox
+                      key={it.key}
+                      itemKey={it.key}
+                      label={it.label}
+                      hint={it.hint}
+                      defaultHidden={hidden.has(it.key)}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+            <p className="text-[11px] text-slate-400 font-cairo mt-3">
+              💡 الراتب الأساسي والصافي بيظهروا دايمًا — مش بيتخفوا.
+            </p>
+          </div>
+
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
             <div className="text-sm text-amber-900 font-cairo leading-relaxed">
               <b>ملاحظة قانونية:</b> النظام بيوفّر لك أداة لحساب الرواتب
@@ -203,6 +262,35 @@ export default async function PayrollSettingsPage({
         </form>
       </div>
     </main>
+  );
+}
+
+function HideCheckbox({
+  itemKey,
+  label,
+  hint,
+  defaultHidden,
+}: {
+  itemKey: string;
+  label: string;
+  hint: string;
+  defaultHidden: boolean;
+}) {
+  return (
+    <label className="flex items-start gap-2.5 p-2 rounded-lg hover:bg-slate-50 cursor-pointer transition">
+      <input
+        type="checkbox"
+        name={`hide_${itemKey}`}
+        defaultChecked={defaultHidden}
+        className="w-4 h-4 mt-0.5 accent-red-500 cursor-pointer shrink-0"
+      />
+      <span className="flex-1 min-w-0">
+        <span className="text-sm text-slate-800 font-cairo block">{label}</span>
+        <span className="text-[10px] text-slate-400 font-cairo block">
+          {hint}
+        </span>
+      </span>
+    </label>
   );
 }
 

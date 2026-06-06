@@ -57,6 +57,8 @@ type RawEntry = {
   social_insurance: number;
   income_tax: number;
   bonuses: number;
+  bonus_reason: string | null;
+  overtime: number;
   total_deductions: number;
   net_salary: number;
   eos_gratuity: number | null;
@@ -98,7 +100,7 @@ export default async function PayrollPeriodPage({
   const { profile } = await getMyProfile();
   const callerCompanyId = profile?.company_id ?? "";
 
-  const [periodRes, entriesRes] = await Promise.all([
+  const [periodRes, entriesRes, companyRes] = await Promise.all([
     supabase
       .from("payroll_periods")
       .select("*")
@@ -107,17 +109,23 @@ export default async function PayrollPeriodPage({
     supabase
       .from("payroll_entries")
       .select(
-        "id, employee_id, attended_days, half_day_days, absent_days, leave_days, gross_salary, social_insurance, income_tax, bonuses, total_deductions, net_salary, eos_gratuity, employees(employee_code, full_name, job_title, department)",
+        "id, employee_id, attended_days, half_day_days, absent_days, leave_days, gross_salary, social_insurance, income_tax, bonuses, bonus_reason, overtime, total_deductions, net_salary, eos_gratuity, employees(employee_code, full_name, job_title, department)",
       )
       .eq("company_id", callerCompanyId)
       .eq("period_id", id)
       .order("employee_id")
       .returns<RawEntry[]>(),
+    supabase
+      .from("companies")
+      .select("payslip_hidden_items")
+      .eq("id", callerCompanyId)
+      .maybeSingle<{ payslip_hidden_items: string[] | null }>(),
   ]);
 
   if (!periodRes.data) notFound();
   const period = periodRes.data;
   const rawEntries = entriesRes.data ?? [];
+  const hiddenItems = companyRes.data?.payslip_hidden_items ?? [];
 
   // Diagnostic counts — only computed when the period is empty, so HR can
   // see WHY no entries were created (wrong frequency? no active employees?
@@ -176,6 +184,8 @@ export default async function PayrollPeriodPage({
     social_insurance: Number(e.social_insurance),
     income_tax: Number(e.income_tax),
     bonuses: Number(e.bonuses),
+    bonus_reason: e.bonus_reason ?? null,
+    overtime: Number(e.overtime ?? 0),
     total_deductions: Number(e.total_deductions),
     net_salary: Number(e.net_salary),
     eos_gratuity: Number(e.eos_gratuity ?? 0),
@@ -383,7 +393,11 @@ export default async function PayrollPeriodPage({
               isDraft={period.status === "draft"}
             />
           ) : (
-            <PeriodEntriesExplorer entries={entries} periodId={id} />
+            <PeriodEntriesExplorer
+              entries={entries}
+              periodId={id}
+              hiddenItems={hiddenItems}
+            />
           )}
         </div>
 

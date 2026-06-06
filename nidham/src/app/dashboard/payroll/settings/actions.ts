@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/permissions";
 import { bustDashboardCache } from "@/lib/cache";
+import { PAYSLIP_ITEMS, sanitizeHiddenKeys } from "@/lib/payslip-display";
 
 // Toggle the two statutory deductions (social insurance, income tax)
 // AND the payroll cycle windows. Migration 023 defaults the deductions
@@ -23,6 +24,15 @@ export async function updatePayrollSettings(formData: FormData) {
   const monthlyStartDay = clamp(parseIntSafe(rawMonthly, 1), 1, 28);
   const weeklyStartDow = clamp(parseIntSafe(rawWeekly, 6), 0, 6);
 
+  // Payslip line-item visibility. Each hideable item has a checkbox named
+  // `hide_<key>`; a checked box means "hide this line". We sanitize against
+  // the known registry so a tampered form can't inject arbitrary strings.
+  const hiddenItems = sanitizeHiddenKeys(
+    PAYSLIP_ITEMS.filter((it) => formData.get(`hide_${it.key}`) === "on").map(
+      (it) => it.key,
+    ),
+  );
+
   const { error } = await supabase
     .from("companies")
     .update({
@@ -30,6 +40,7 @@ export async function updatePayrollSettings(formData: FormData) {
       income_tax_enabled: incomeTaxEnabled,
       monthly_cycle_start_day: monthlyStartDay,
       weekly_cycle_start_dow: weeklyStartDow,
+      payslip_hidden_items: hiddenItems,
     })
     .eq("id", profile.company_id);
 

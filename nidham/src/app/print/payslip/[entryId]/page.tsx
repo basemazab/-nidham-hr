@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { formatEGP } from "@/lib/payroll";
+import { toHiddenSet, type PayslipItemKey } from "@/lib/payslip-display";
 import { AutoPrint } from "@/components/auto-print";
 import { ClientDate } from "@/components/client-date";
 import { PrintAgainButton } from "@/components/print-again-button";
@@ -126,14 +127,19 @@ export default async function PrintPayslipPage({ params }: PageProps) {
     .single();
 
   let companyName = "—";
+  let hiddenItems = new Set<PayslipItemKey>();
   if (profile?.company_id) {
     const { data: company } = await supabase
       .from("companies")
-      .select("name")
+      .select("name, payslip_hidden_items")
       .eq("id", profile.company_id)
-      .single<{ name: string }>();
-    if (company) companyName = company.name;
+      .single<{ name: string; payslip_hidden_items: string[] | null }>();
+    if (company) {
+      companyName = company.name;
+      hiddenItems = toHiddenSet(company.payslip_hidden_items);
+    }
   }
+  const show = (key: PayslipItemKey) => !hiddenItems.has(key);
 
   const period = entry.payroll_periods;
   const emp = entry.employees;
@@ -230,14 +236,24 @@ export default async function PrintPayslipPage({ params }: PageProps) {
             </h2>
             <div className="space-y-2 text-sm font-cairo">
               <LineItem label="الراتب الأساسي" value={entry.basic_salary} />
-              <LineItem label="بدل سكن" value={entry.housing_allowance} />
-              <LineItem label="بدل انتقال" value={entry.transport_allowance} />
-              <LineItem label="بدلات أخرى" value={entry.other_allowances} />
-              {entry.incentive_allowance > 0 && (
+              {show("housing_allowance") && (
+                <LineItem label="بدل سكن" value={entry.housing_allowance} />
+              )}
+              {show("transport_allowance") && (
+                <LineItem label="بدل انتقال" value={entry.transport_allowance} />
+              )}
+              {show("other_allowances") && (
+                <LineItem label="بدلات أخرى" value={entry.other_allowances} />
+              )}
+              {show("incentive_allowance") && entry.incentive_allowance > 0 && (
                 <LineItem label="حافز شهري" value={entry.incentive_allowance} />
               )}
-              {entry.bonuses > 0 && <LineItem label="مكافأة" value={entry.bonuses} />}
-              {entry.overtime > 0 && <LineItem label="أوفر تايم" value={entry.overtime} />}
+              {show("bonuses") && entry.bonuses > 0 && (
+                <LineItem label="مكافأة" value={entry.bonuses} />
+              )}
+              {show("overtime") && entry.overtime > 0 && (
+                <LineItem label="أوفر تايم" value={entry.overtime} />
+              )}
               <div className="pt-2 mt-2 border-t border-slate-200 flex justify-between font-bold text-emerald-700">
                 <span>الإجمالي</span>
                 <span>{formatEGP(entry.gross_salary)}</span>
@@ -249,25 +265,25 @@ export default async function PrintPayslipPage({ params }: PageProps) {
               💸 الاستقطاعات
             </h2>
             <div className="space-y-2 text-sm font-cairo">
-              {entry.absence_deduction > 0 && (
+              {show("absence_deduction") && entry.absence_deduction > 0 && (
                 <LineItem label="خصم الغياب" value={entry.absence_deduction} />
               )}
-              {entry.tardiness_deduction > 0 && (
+              {show("tardiness_deduction") && entry.tardiness_deduction > 0 && (
                 <LineItem
                   label="خصم تأخير / انصراف مبكر"
                   value={entry.tardiness_deduction}
                 />
               )}
-              {entry.social_insurance > 0 && (
+              {show("social_insurance") && entry.social_insurance > 0 && (
                 <LineItem label="التأمينات (14%)" value={entry.social_insurance} />
               )}
-              {entry.income_tax > 0 && (
+              {show("income_tax") && entry.income_tax > 0 && (
                 <LineItem label="ضريبة الدخل" value={entry.income_tax} />
               )}
-              {entry.loan_deduction > 0 && (
+              {show("loan_deduction") && entry.loan_deduction > 0 && (
                 <LineItem label="قسط قرض" value={entry.loan_deduction} />
               )}
-              {entry.other_deductions > 0 && (
+              {show("other_deductions") && entry.other_deductions > 0 && (
                 <LineItem label="خصومات أخرى" value={entry.other_deductions} />
               )}
               {entry.total_deductions === 0 && (

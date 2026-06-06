@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { formatEGP } from "@/lib/payroll";
+import { toHiddenSet, type PayslipItemKey } from "@/lib/payslip-display";
 import { PrintButton } from "./print-button";
 import { DownloadPdfButton } from "@/components/download-pdf-button";
 
@@ -88,6 +89,7 @@ type AttendanceDay = {
 
 type Company = {
   name: string;
+  payslip_hidden_items: string[] | null;
 };
 
 const ARABIC_MONTHS = [
@@ -201,14 +203,22 @@ export default async function PayslipPage({ params }: PageProps) {
     .single();
 
   let companyName = "—";
+  let hiddenItems = new Set<PayslipItemKey>();
   if (profile?.company_id) {
     const { data: company } = await supabase
       .from("companies")
-      .select("name")
+      .select("name, payslip_hidden_items")
       .eq("id", profile.company_id)
       .single<Company>();
-    if (company) companyName = company.name;
+    if (company) {
+      companyName = company.name;
+      hiddenItems = toHiddenSet(company.payslip_hidden_items);
+    }
   }
+  // Display-only filter. Stored totals (gross/total_deductions/net) are NOT
+  // recomputed — hiding a line just removes its row; the "إجمالي" rows below
+  // stay the real, full figures so the math always reconciles.
+  const show = (key: PayslipItemKey) => !hiddenItems.has(key);
 
   const period = entry.payroll_periods;
   // (emp pulled separately above from employees_with_pii — see lines ~95)
@@ -378,52 +388,66 @@ export default async function PayslipPage({ params }: PageProps) {
                 hint="الأجر الأساسي قبل أي بدلات"
                 value={entry.basic_salary}
               />
-              <LineItem
-                emoji="🏠"
-                label="بدل سكن"
-                hint="حسب عقد العمل"
-                value={entry.housing_allowance}
-              />
-              <LineItem
-                emoji="🚗"
-                label="بدل انتقال"
-                hint="مواصلات يومية"
-                value={entry.transport_allowance}
-              />
-              <LineItem
-                emoji="📦"
-                label="بدلات أخرى"
-                hint="موبايل، أدوات، إلخ"
-                value={entry.other_allowances}
-              />
-              <LineItem
-                emoji="🎁"
-                label="حافز"
-                hint="حافز إنتاج / حافز أداء شهري"
-                value={entry.incentive_allowance}
-              />
-              <LineItem
-                emoji="🎉"
-                label={
-                  entry.bonus_reason
-                    ? `مكافأة (${entry.bonus_reason})`
-                    : "مكافأة"
-                }
-                hint="مكافأة استثنائية لشهر معين"
-                value={entry.bonuses}
-              />
-              <LineItem
-                emoji="⏱"
-                label="أوفر تايم"
-                hint="ساعات إضافية × المعدل القانوني"
-                value={entry.overtime}
-              />
-              <LineItem
-                emoji="🚪"
-                label="مكافأة نهاية الخدمة"
-                hint="حسب مادة 122 — تظهر فقط عند الإنهاء"
-                value={entry.eos_gratuity}
-              />
+              {show("housing_allowance") && (
+                <LineItem
+                  emoji="🏠"
+                  label="بدل سكن"
+                  hint="حسب عقد العمل"
+                  value={entry.housing_allowance}
+                />
+              )}
+              {show("transport_allowance") && (
+                <LineItem
+                  emoji="🚗"
+                  label="بدل انتقال"
+                  hint="مواصلات يومية"
+                  value={entry.transport_allowance}
+                />
+              )}
+              {show("other_allowances") && (
+                <LineItem
+                  emoji="📦"
+                  label="بدلات أخرى"
+                  hint="موبايل، أدوات، إلخ"
+                  value={entry.other_allowances}
+                />
+              )}
+              {show("incentive_allowance") && (
+                <LineItem
+                  emoji="🎁"
+                  label="حافز"
+                  hint="حافز إنتاج / حافز أداء شهري"
+                  value={entry.incentive_allowance}
+                />
+              )}
+              {show("bonuses") && (
+                <LineItem
+                  emoji="🎉"
+                  label={
+                    entry.bonus_reason
+                      ? `مكافأة (${entry.bonus_reason})`
+                      : "مكافأة"
+                  }
+                  hint="مكافأة استثنائية لشهر معين"
+                  value={entry.bonuses}
+                />
+              )}
+              {show("overtime") && (
+                <LineItem
+                  emoji="⏱"
+                  label="أوفر تايم"
+                  hint="ساعات إضافية × المعدل القانوني"
+                  value={entry.overtime}
+                />
+              )}
+              {show("eos_gratuity") && (
+                <LineItem
+                  emoji="🚪"
+                  label="مكافأة نهاية الخدمة"
+                  hint="حسب مادة 122 — تظهر فقط عند الإنهاء"
+                  value={entry.eos_gratuity}
+                />
+              )}
               <div className="pt-2 mt-2 border-t border-slate-200 flex justify-between font-bold text-emerald-700">
                 <span>إجمالي الإيرادات</span>
                 <span>
@@ -448,68 +472,80 @@ export default async function PayslipPage({ params }: PageProps) {
               💸 الاستقطاعات
             </h2>
             <div className="space-y-2 text-sm font-cairo">
-              <LineItem
-                emoji="❌"
-                label={`خصم الغياب${
-                  entry.absent_days > 0 ? ` (${entry.absent_days} يوم)` : ""
-                }`}
-                hint={
-                  entry.absent_days > 0
-                    ? "غياب بدون إذن — يخصم يوم كامل لكل يوم"
-                    : "خصم على الغياب بدون إذن"
-                }
-                value={entry.absence_deduction}
-              />
-              <LineItem
-                emoji="⏰"
-                label={`خصم التأخير${
-                  totalTardinessMinutes > 0
-                    ? ` (${totalTardinessMinutes} دقيقة)`
-                    : ""
-                } والانصراف المبكر${
-                  totalEarlyLeaveMinutes > 0
-                    ? ` (${totalEarlyLeaveMinutes} دقيقة)`
-                    : ""
-                }`}
-                hint={
-                  totalTardinessMinutes > 0 || totalEarlyLeaveMinutes > 0
-                    ? `إجمالي ${totalTardinessMinutes + totalEarlyLeaveMinutes} دقيقة في الشهر`
-                    : "تأخير عن مواعيد العمل / انصراف قبل ميعاد الانصراف"
-                }
-                value={entry.tardiness_deduction}
-              />
-              <LineItem
-                emoji="🏥"
-                label="التأمينات الاجتماعية (14%)"
-                hint="حصة الموظف — قانون 148/2019"
-                value={entry.social_insurance}
-              />
-              <LineItem
-                emoji="📊"
-                label="ضريبة الدخل"
-                hint="حسب شرائح 2026 الضريبية"
-                value={entry.income_tax}
-              />
-              <LineItem
-                emoji="💵"
-                label={`قسط السلفة هذا الشهر${
-                  activeLoans.length > 1
-                    ? ` (${activeLoans.length} سلف نشطة)`
-                    : ""
-                }`}
-                hint={
-                  activeLoans.length > 0
-                    ? `موزّع على ${activeLoans.length} سلفة — التفاصيل تحت`
-                    : "مفيش سلف نشطة"
-                }
-                value={entry.loan_deduction}
-              />
-              <LineItem
-                emoji="⚠"
-                label="جزاءات وخصومات أخرى"
-                hint="إنذارات / مخالفات / تلف عهدة / غيرها"
-                value={entry.other_deductions}
-              />
+              {show("absence_deduction") && (
+                <LineItem
+                  emoji="❌"
+                  label={`خصم الغياب${
+                    entry.absent_days > 0 ? ` (${entry.absent_days} يوم)` : ""
+                  }`}
+                  hint={
+                    entry.absent_days > 0
+                      ? "غياب بدون إذن — يخصم يوم كامل لكل يوم"
+                      : "خصم على الغياب بدون إذن"
+                  }
+                  value={entry.absence_deduction}
+                />
+              )}
+              {show("tardiness_deduction") && (
+                <LineItem
+                  emoji="⏰"
+                  label={`خصم التأخير${
+                    totalTardinessMinutes > 0
+                      ? ` (${totalTardinessMinutes} دقيقة)`
+                      : ""
+                  } والانصراف المبكر${
+                    totalEarlyLeaveMinutes > 0
+                      ? ` (${totalEarlyLeaveMinutes} دقيقة)`
+                      : ""
+                  }`}
+                  hint={
+                    totalTardinessMinutes > 0 || totalEarlyLeaveMinutes > 0
+                      ? `إجمالي ${totalTardinessMinutes + totalEarlyLeaveMinutes} دقيقة في الشهر`
+                      : "تأخير عن مواعيد العمل / انصراف قبل ميعاد الانصراف"
+                  }
+                  value={entry.tardiness_deduction}
+                />
+              )}
+              {show("social_insurance") && (
+                <LineItem
+                  emoji="🏥"
+                  label="التأمينات الاجتماعية (14%)"
+                  hint="حصة الموظف — قانون 148/2019"
+                  value={entry.social_insurance}
+                />
+              )}
+              {show("income_tax") && (
+                <LineItem
+                  emoji="📊"
+                  label="ضريبة الدخل"
+                  hint="حسب شرائح 2026 الضريبية"
+                  value={entry.income_tax}
+                />
+              )}
+              {show("loan_deduction") && (
+                <LineItem
+                  emoji="💵"
+                  label={`قسط السلفة هذا الشهر${
+                    activeLoans.length > 1
+                      ? ` (${activeLoans.length} سلف نشطة)`
+                      : ""
+                  }`}
+                  hint={
+                    activeLoans.length > 0
+                      ? `موزّع على ${activeLoans.length} سلفة — التفاصيل تحت`
+                      : "مفيش سلف نشطة"
+                  }
+                  value={entry.loan_deduction}
+                />
+              )}
+              {show("other_deductions") && (
+                <LineItem
+                  emoji="⚠"
+                  label="جزاءات وخصومات أخرى"
+                  hint="إنذارات / مخالفات / تلف عهدة / غيرها"
+                  value={entry.other_deductions}
+                />
+              )}
               <div className="pt-2 mt-2 border-t border-slate-200 flex justify-between font-bold text-red-700">
                 <span>إجمالي الاستقطاعات</span>
                 <span>{formatEGP(entry.total_deductions)}</span>

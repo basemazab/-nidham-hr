@@ -29,6 +29,8 @@ export type PeriodEntry = {
   social_insurance: number;
   income_tax: number;
   bonuses: number;
+  bonus_reason: string | null;
+  overtime: number;
   total_deductions: number;
   net_salary: number;
   eos_gratuity: number;
@@ -40,12 +42,26 @@ export type PeriodEntry = {
 export function PeriodEntriesExplorer({
   entries,
   periodId,
+  hiddenItems = [],
 }: {
   entries: PeriodEntry[];
   periodId: string;
+  // Line-item keys HR chose to hide (payroll settings). Applied to the
+  // optional columns below so the on-screen report matches the payslip.
+  hiddenItems?: string[];
 }) {
   const [query, setQuery] = useState("");
   const [deptFilter, setDeptFilter] = useState<string>("all");
+
+  const hidden = useMemo(() => new Set(hiddenItems), [hiddenItems]);
+  const show = (k: string) => !hidden.has(k);
+  // Only render the overtime column when at least one employee has overtime
+  // (keeps the table tight for companies that never use it).
+  const anyOvertime = useMemo(
+    () => entries.some((e) => Number(e.overtime) > 0),
+    [entries],
+  );
+  const showOvertimeCol = show("overtime") && anyOvertime;
 
   // Build dept list once
   const departments = useMemo(() => {
@@ -131,9 +147,10 @@ export function PeriodEntriesExplorer({
                 <Th>حضور</Th>
                 <Th>غياب</Th>
                 <Th>الإجمالي</Th>
-                <Th>مكافأة</Th>
-                <Th>تأمينات</Th>
-                <Th>ضريبة</Th>
+                {showOvertimeCol && <Th>الإضافي</Th>}
+                {show("bonuses") && <Th>مكافأة</Th>}
+                {show("social_insurance") && <Th>تأمينات</Th>}
+                {show("income_tax") && <Th>ضريبة</Th>}
                 <Th className="text-emerald-700">الصافي</Th>
                 <th className="px-4 py-3 pdf-hide"></th>
               </tr>
@@ -169,15 +186,37 @@ export function PeriodEntriesExplorer({
                   <td className="px-4 py-3 font-bold text-slate-700 font-cairo">
                     {formatEGP(e.gross_salary)}
                   </td>
-                  <td className="px-4 py-3 text-amber-700 font-cairo">
-                    {e.bonuses > 0 ? formatEGP(e.bonuses) : "—"}
-                  </td>
-                  <td className="px-4 py-3 text-amber-700 font-cairo">
-                    {formatEGP(e.social_insurance)}
-                  </td>
-                  <td className="px-4 py-3 text-red-600 font-cairo">
-                    {formatEGP(e.income_tax)}
-                  </td>
+                  {showOvertimeCol && (
+                    <td className="px-4 py-3 text-cyan-700 font-cairo">
+                      {e.overtime > 0 ? formatEGP(e.overtime) : "—"}
+                    </td>
+                  )}
+                  {show("bonuses") && (
+                    <td className="px-4 py-3 text-amber-700 font-cairo">
+                      {e.bonuses > 0 ? (
+                        <span title={e.bonus_reason ?? undefined}>
+                          {formatEGP(e.bonuses)}
+                          {e.bonus_reason && (
+                            <span className="block text-[10px] text-slate-400 font-cairo truncate max-w-[120px]">
+                              {e.bonus_reason}
+                            </span>
+                          )}
+                        </span>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+                  )}
+                  {show("social_insurance") && (
+                    <td className="px-4 py-3 text-amber-700 font-cairo">
+                      {formatEGP(e.social_insurance)}
+                    </td>
+                  )}
+                  {show("income_tax") && (
+                    <td className="px-4 py-3 text-red-600 font-cairo">
+                      {formatEGP(e.income_tax)}
+                    </td>
+                  )}
                   <td className="px-4 py-3 font-black text-emerald-700 font-cairo">
                     {formatEGP(e.net_salary)}
                     {e.eos_gratuity > 0 && (
