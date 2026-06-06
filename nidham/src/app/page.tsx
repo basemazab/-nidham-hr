@@ -2,6 +2,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { SectionHeader } from "./sections/section-helpers";
 import { DeferredJsonLd } from "@/components/deferred-json-ld";
+import { HeroSection } from "./sections/hero";
 
 const DynamicLiveScreenshots = dynamic(() => import("./sections/live-screenshots").then((m) => ({ default: m.LiveScreenshotsSection })), { loading: () => <div className="h-64 animate-pulse bg-slate-100 rounded-2xl" /> });
 const DynamicBridgeAnalytics = dynamic(() => import("./sections/bridge-analytics").then((m) => ({ default: m.BridgeAnalyticsSection })), { loading: () => <div className="h-64 animate-pulse bg-slate-800 rounded-2xl" /> });
@@ -83,54 +84,6 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
       <DynamicFooter />
       <DeferredJsonLd schema={faqSchema} />
     </main>
-  );
-}
-
-function HeroSection() {
-  return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-slate-50 via-white to-cyan-50/40 px-6 py-16 md:py-24">
-      <div aria-hidden className="absolute inset-0 -z-10 opacity-50"
-        style={{ backgroundImage: "radial-gradient(circle at 20% 20%, rgba(34,211,238,0.15), transparent 50%), radial-gradient(circle at 80% 80%, rgba(201,168,76,0.10), transparent 50%)" }}
-      />
-      <div className="max-w-5xl mx-auto text-center">
-        <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-brand-cyan to-brand-navy mb-6 shadow-xl shadow-cyan-500/20">
-          <span className="text-4xl font-black text-white font-display">ن</span>
-        </div>
-        <h1 className="text-6xl md:text-7xl font-black mb-2 tracking-tight font-display">
-          <span className="bg-gradient-to-r from-brand-cyan-dark via-brand-cyan to-brand-navy bg-clip-text text-transparent">نِظام</span>
-        </h1>
-        <p className="text-sm tracking-[0.4em] text-brand-gold font-semibold mb-8">NIDHAM · BUILT FOR EGYPT</p>
-        <h2 className="text-3xl md:text-5xl font-black text-slate-800 mb-5 font-cairo leading-tight">
-          نظام واحد بدل خمس أنظمة منفصلة.<br />
-          <span className="text-brand-cyan-dark">HR + CRM + استوديو تسويق</span> — كله بالعربي + AI.
-        </h2>
-        <p className="text-lg md:text-xl text-slate-600 mb-10 leading-relaxed max-w-3xl mx-auto font-cairo">
-          من الحضور بالـ GPS لحد قسائم الرواتب، ومن الـ CRM لحد فحص الـ CVs بالـ AI. كمان <strong className="text-amber-700">استوديو تسويق ذكي</strong> بيصمم حملاتك، landing pages، ويجيب leads — متوافق مع قانون العمل المصري 12/2003 وقانون التأمينات 148/2019.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-3 justify-center items-stretch sm:items-center">
-          <Link href="/signup" className="w-full sm:w-auto px-8 py-4 rounded-xl bg-gradient-to-r from-brand-cyan to-brand-cyan-dark text-white font-bold text-lg shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 hover:-translate-y-0.5 transition-all font-cairo">
-            جرّب مجانًا 14 يوم
-          </Link>
-          <Link href="/login" className="w-full sm:w-auto px-8 py-4 rounded-xl border-2 border-slate-200 text-slate-700 font-bold text-lg hover:border-slate-400 hover:bg-white transition-all font-cairo">
-            تسجيل الدخول
-          </Link>
-        </div>
-        <p className="text-xs text-slate-500 mt-4 font-cairo">ما تحتاجش بطاقة ائتمان · تشغيل في دقيقتين · إلغاء أي وقت</p>
-        <div className="mt-6 flex items-center justify-center gap-4 text-xs font-cairo">
-          <Link href="/features" className="text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition underline underline-offset-2">
-            ⚡ كل المميزات
-          </Link>
-          <span className="text-slate-300 dark:text-slate-600">·</span>
-          <Link href="/compare" className="text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition underline underline-offset-2">
-            📊 مقارنة مع Bayzat و ZenHR
-          </Link>
-          <span className="text-slate-300 dark:text-slate-600">·</span>
-          <Link href="/why-nidham" className="text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition underline underline-offset-2">
-            💡 10 أسباب تختار نِظام
-          </Link>
-        </div>
-      </div>
-    </section>
   );
 }
 

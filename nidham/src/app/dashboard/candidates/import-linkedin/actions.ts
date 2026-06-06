@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireHR } from "@/lib/permissions";
 import { arabicizeDbError } from "@/lib/i18n";
 import { bustDashboardCache } from "@/lib/cache";
+import { asTextSafe } from "@/lib/form-helpers";
 
 // LinkedIn Recruiter / Sales Navigator export -> Nidham `candidates`.
 //
@@ -97,14 +98,8 @@ type ParsedCandidate = {
   rowIndex: number; // 1-based, matches the source file
 };
 
-function asText(v: unknown): string | null {
-  if (v === null || v === undefined) return null;
-  const s = String(v).trim();
-  return s.length === 0 ? null : s;
-}
-
 function asNumber(v: unknown): number | null {
-  const t = asText(v);
+  const t = asTextSafe(v);
   if (t === null) return null;
   // LinkedIn sometimes ships "5 years" / "10+" / "~3" -- pull the leading int.
   const match = t.match(/-?\d+/);
@@ -223,10 +218,10 @@ export async function importLinkedInCandidates(formData: FormData) {
     };
 
     // Compose full name from first+last if needed
-    let fullName = asText(get("full_name"));
+    let fullName = asTextSafe(get("full_name"));
     if (!fullName) {
-      const first = asText(get("first_name"));
-      const last = asText(get("last_name"));
+      const first = asTextSafe(get("first_name"));
+      const last = asTextSafe(get("last_name"));
       if (first || last) {
         fullName = [first, last].filter(Boolean).join(" ");
       }
@@ -235,15 +230,15 @@ export async function importLinkedInCandidates(formData: FormData) {
     return {
       rowIndex: i + 2, // header is row 1
       full_name: fullName ?? "",
-      current_title: asText(get("current_title")),
-      current_company: asText(get("current_company")),
-      location: asText(get("location")),
-      linkedin_url: normalizeLinkedInUrl(asText(get("linkedin_url"))),
-      email: asText(get("email")),
-      phone: normalizePhoneNumber(asText(get("phone"))),
+      current_title: asTextSafe(get("current_title")),
+      current_company: asTextSafe(get("current_company")),
+      location: asTextSafe(get("location")),
+      linkedin_url: normalizeLinkedInUrl(asTextSafe(get("linkedin_url"))),
+      email: asTextSafe(get("email")),
+      phone: normalizePhoneNumber(asTextSafe(get("phone"))),
       years_experience: asNumber(get("years_experience")),
-      skills: asText(get("skills")),
-      summary: asText(get("summary")),
+      skills: asTextSafe(get("skills")),
+      summary: asTextSafe(get("summary")),
     };
   });
 
