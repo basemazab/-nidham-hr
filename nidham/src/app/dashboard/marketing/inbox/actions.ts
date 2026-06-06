@@ -282,6 +282,96 @@ export async function subscribePageToWebhooks(): Promise<
   }
 }
 
+// Turn a SHORT-LIVED Page/User token (e.g. from Graph API Explorer, which
+// expires in ~2h) into a PERMANENT page token, server-side. Recipe:
+//   1) exchange the short-lived token for a long-lived USER token
+//      (fb_exchange_token, needs app id + the stored app secret)
+//   2) GET /me/accounts with it → the matching page's access_token is then
+//      PERMANENT (page tokens derived from a long-lived user token don't expire)
+//   3) save it as meta_page_token.
+// The user pastes the short-lived token INTO the system (never into chat).
+export async function makePagePermanentToken(input: {
+  appId: string;
+  shortToken: string;
+}): Promise<{ ok: true; message: string } | { ok: false; error: string }> {
+  const { supabase, profile } = await requireHR();
+  const appId = input.appId.trim();
+  const shortToken = input.shortToken.trim();
+  if (!appId || !shortToken) {
+    return { ok: false, error: "اكتب App ID + التوكن المؤقت" };
+  }
+
+  const { data: settings } = await supabase
+    .from("marketing_inbox_settings")
+    .select("meta_app_secret, meta_page_id")
+    .eq("company_id", profile.company_id)
+    .single();
+  if (!settings?.meta_app_secret) {
+    return { ok: false, error: "اكتب App Secret في الإعدادات واحفظ الأول" };
+  }
+  if (!settings?.meta_page_id) {
+    return { ok: false, error: "اكتب Page ID في الإعدادات الأول" };
+  }
+
+  try {
+    // 1) short-lived → long-lived USER token
+    const exRes = await fetch(
+      `https://graph.facebook.com/v21.0/oauth/access_token?grant_type=fb_exchange_token` +
+        `&client_id=${encodeURIComponent(appId)}` +
+        `&client_secret=${encodeURIComponent(settings.meta_app_secret)}` +
+        `&fb_exchange_token=${encodeURIComponent(shortToken)}`,
+    );
+    const exData = (await exRes.json()) as {
+      access_token?: string;
+      error?: { message?: string };
+    };
+    if (!exRes.ok || exData.error || !exData.access_token) {
+      return {
+        ok: false,
+        error: `فشل تمديد التوكن: ${exData.error?.message || "تأكد من App ID و App Secret والتوكن"}`,
+      };
+    }
+
+    // 2) long-lived user token → PERMANENT page token
+    const accRes = await fetch(
+      `https://graph.facebook.com/v21.0/me/accounts?fields=id,name,access_token` +
+        `&access_token=${encodeURIComponent(exData.access_token)}`,
+    );
+    const accData = (await accRes.json()) as {
+      data?: Array<{ id: string; name: string; access_token: string }>;
+      error?: { message?: string };
+    };
+    if (!accRes.ok || accData.error) {
+      return { ok: false, error: `فشل جلب الصفحات: ${accData.error?.message || "خطأ"}` };
+    }
+    const page = (accData.data || []).find((p) => p.id === settings.meta_page_id);
+    if (!page?.access_token) {
+      return {
+        ok: false,
+        error: "الصفحة (Page ID) مش موجودة في حسابك بالتوكن ده — تأكد إنك أدمن عليها",
+      };
+    }
+
+    // 3) save the permanent page token
+    const { error: upErr } = await supabase
+      .from("marketing_inbox_settings")
+      .update({ meta_page_token: page.access_token })
+      .eq("company_id", profile.company_id);
+    if (upErr) return { ok: false, error: upErr.message };
+
+    revalidatePath("/dashboard/marketing/inbox/settings");
+    return {
+      ok: true,
+      message: `تم! اتحفظ توكن دائم للصفحة «${page.name}» — مش هيقع تاني. اضغط «اشترك الصفحة» تحت.`,
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: `خطأ اتصال بـ Meta: ${err instanceof Error ? err.message : String(err)}`,
+    };
+  }
+}
+
 // Preview AI reply — generates a reply WITHOUT sending to Meta
 export async function previewAiReply(input: {
   conversationId: string;

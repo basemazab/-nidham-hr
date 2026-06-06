@@ -1,7 +1,12 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { saveSettings, testWebhookConnection, subscribePageToWebhooks } from "../actions";
+import {
+  saveSettings,
+  testWebhookConnection,
+  subscribePageToWebhooks,
+  makePagePermanentToken,
+} from "../actions";
 
 type Defaults = {
   channel_messenger: boolean;
@@ -272,12 +277,80 @@ export function SettingsForm({ defaultValues }: { defaultValues: Defaults }) {
         )}
       </div>
 
+      {/* Convert a short-lived token into a permanent one */}
+      <PermanentTokenBox />
+
       {/* Subscribe page to webhook fields (messages + feed/comments) */}
       <SubscribePage />
 
       {/* Test connection */}
       <ConnectionTest />
     </form>
+  );
+}
+
+function PermanentTokenBox() {
+  const [appId, setAppId] = useState("");
+  const [shortToken, setShortToken] = useState("");
+  const [state, setState] = useState<
+    { status: "idle" } | { status: "loading" } | { status: "done"; ok: boolean; msg: string }
+  >({ status: "idle" });
+
+  function run() {
+    if (!appId.trim() || !shortToken.trim()) {
+      setState({ status: "done", ok: false, msg: "اكتب App ID والتوكن المؤقت" });
+      return;
+    }
+    setState({ status: "loading" });
+    makePagePermanentToken({ appId, shortToken }).then((res) => {
+      setState({ status: "done", ok: res.ok, msg: res.ok ? res.message : res.error });
+      if (res.ok) setShortToken("");
+    });
+  }
+
+  return (
+    <section className="p-5 rounded-xl bg-white border-2 border-amber-200">
+      <h2 className="font-black text-lg text-slate-900 mb-1">
+        ♾️ حوّل التوكن لدائم (يحل مشكلة «Session has expired»)
+      </h2>
+      <p className="text-xs text-slate-600 mb-4 leading-relaxed">
+        توكن Graph API Explorer بيقع كل ساعتين. الصق هنا التوكن المؤقت + App ID،
+        والنظام هيحوّله لـ <b>توكن صفحة دائم</b> ويحفظه تلقائيًا (مش هيقع تاني).
+        لازم App Secret يكون متحفوظ فوق الأول.
+      </p>
+      <div className="grid sm:grid-cols-2 gap-2 mb-2">
+        <input
+          value={appId}
+          onChange={(e) => setAppId(e.target.value)}
+          placeholder="App ID (أرقام، من Meta App Dashboard)"
+          dir="ltr"
+          className="px-3 py-2 border border-slate-300 rounded-lg text-sm font-mono outline-none focus:border-brand-cyan"
+        />
+        <input
+          value={shortToken}
+          onChange={(e) => setShortToken(e.target.value)}
+          placeholder="التوكن المؤقت (EAA...)"
+          dir="ltr"
+          className="px-3 py-2 border border-slate-300 rounded-lg text-sm font-mono outline-none focus:border-brand-cyan"
+        />
+      </div>
+      <button
+        type="button"
+        onClick={run}
+        disabled={state.status === "loading"}
+        className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm disabled:opacity-50 transition"
+      >
+        {state.status === "loading" ? "بحوّل..." : "♾️ حوّله لدائم واحفظه"}
+      </button>
+      {state.status === "done" && (
+        <div
+          className={`mt-3 text-sm rounded-lg px-4 py-3 ${state.ok ? "text-emerald-700 bg-emerald-50 border border-emerald-200" : "text-rose-700 bg-rose-50 border border-rose-200"}`}
+        >
+          {state.ok ? "✅ " : "❌ "}
+          {state.msg}
+        </div>
+      )}
+    </section>
   );
 }
 
