@@ -16,6 +16,7 @@ type EmployeeRow = {
   transport_allowance: number | null;
   other_allowances: number | null;
   incentive_allowance: number | null;
+  daily_wage: number | null;
   pay_frequency: "monthly" | "weekly";
   hire_date: string | null;
   termination_date: string | null;
@@ -141,7 +142,7 @@ async function computeAndInsertEntries(
     frequency === "monthly"
       ? supabase
           .from("employees")
-          .select("id, full_name, basic_salary, housing_allowance, transport_allowance, other_allowances, incentive_allowance, pay_frequency, hire_date, termination_date")
+          .select("id, full_name, basic_salary, housing_allowance, transport_allowance, other_allowances, incentive_allowance, daily_wage, pay_frequency, hire_date, termination_date")
           .eq("company_id", companyId)
           // Include staff terminated INSIDE this cycle so their final
           // pro-rated paycheck + EOS is generated (the EOS block below only
@@ -151,7 +152,7 @@ async function computeAndInsertEntries(
           .or("pay_frequency.eq.monthly,pay_frequency.is.null")
       : supabase
           .from("employees")
-          .select("id, full_name, basic_salary, housing_allowance, transport_allowance, other_allowances, incentive_allowance, pay_frequency, hire_date, termination_date")
+          .select("id, full_name, basic_salary, housing_allowance, transport_allowance, other_allowances, incentive_allowance, daily_wage, pay_frequency, hire_date, termination_date")
           .eq("company_id", companyId)
           // Same terminated-in-cycle inclusion as the monthly branch.
           .or(`status.eq.active,and(status.eq.terminated,termination_date.gte.${startDate},termination_date.lte.${endDate})`)
@@ -233,6 +234,7 @@ async function computeAndInsertEntries(
         otherAllowances: emp.other_allowances ?? 0,
         incentiveAllowance: emp.incentive_allowance ?? 0,
         loanDeduction,
+        dailyWage: emp.daily_wage ?? null,
       },
       breakdown,
       workingDays,
@@ -368,6 +370,7 @@ export async function updatePayrollEntry(
       otherAllowances: other, incentiveAllowance: incentive, bonuses, overtime,
       overtimeHoursDay: otHoursDay, overtimeHoursNight: otHoursNight, overtimeHoursRest: otHoursRest,
       loanDeduction: loan, otherDeductions: otherDed,
+      dailyWage: asNum("daily_wage") || null,
     },
     { attended, halfDay, leave, absent },
     period.working_days ?? 26,
@@ -571,7 +574,7 @@ export async function applyBulkBonus(
 
   let entriesQuery = supabase
     .from("payroll_entries")
-    .select("id, employee_id, attended_days, half_day_days, leave_days, absent_days, basic_salary, housing_allowance, transport_allowance, other_allowances, incentive_allowance, bonuses, overtime, loan_deduction, other_deductions")
+    .select("id, employee_id, attended_days, half_day_days, leave_days, absent_days, basic_salary, housing_allowance, transport_allowance, other_allowances, incentive_allowance, bonuses, overtime, loan_deduction, other_deductions, employees(daily_wage)")
     .eq("period_id", periodId);
   if (filterIds && filterIds.length > 0) entriesQuery = entriesQuery.in("id", filterIds);
 
@@ -601,6 +604,7 @@ export async function applyBulkBonus(
           incentiveAllowance: Number(e.incentive_allowance ?? 0), bonuses: newBonuses,
           overtime: Number(e.overtime ?? 0), loanDeduction: Number(e.loan_deduction ?? 0),
           otherDeductions: Number(e.other_deductions ?? 0),
+          dailyWage: (e as { employees?: { daily_wage?: number | null } | null }).employees?.daily_wage ?? null,
         },
         {
           attended: Number(e.attended_days ?? 0), halfDay: Number(e.half_day_days ?? 0),

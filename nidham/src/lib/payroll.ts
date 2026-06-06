@@ -462,6 +462,13 @@ export type SalaryStructure = {
   overtimeHoursRest?: number;
   loanDeduction?: number;      // قسط قرض
   otherDeductions?: number;    // خصومات إضافية
+  /**
+   * Explicit daily wage (قيمة اليوم) for this employee, in EGP. When set
+   * (> 0), absence + tardiness deductions are computed from THIS value
+   * instead of deriving it from the monthly/weekly salary ÷ working days.
+   * Lets HR pin an exact per-day value and avoids any divisor ambiguity.
+   */
+  dailyWage?: number | null;
 };
 
 // Per-company toggles for the two auto-applied statutory deductions.
@@ -556,8 +563,16 @@ export function calculatePayroll(
   const monthlyBase =
     Math.round(fullMonthlyBase * proRationFactor * 100) / 100;
 
-  // 3. Daily rate
-  const dailyRate = monthlyBase / workingDays;
+  // 3. Daily rate (قيمة اليوم). Prefer the explicit per-employee daily_wage
+  //    when HR has set one — this is the value used for absence + tardiness
+  //    deductions and sidesteps any salary÷working-days divisor ambiguity.
+  //    Otherwise derive it: (attendance-adjusted) salary ÷ working days of
+  //    the cycle (26 for a typical monthly cycle, or the weekly cycle's days
+  //    for weekly-paid staff — the caller passes the right divisor).
+  const dailyRate =
+    salary.dailyWage && salary.dailyWage > 0
+      ? salary.dailyWage
+      : monthlyBase / workingDays;
 
   // 4a. Absence deduction. Two buckets contribute:
   //       absent       — unexcused no-show

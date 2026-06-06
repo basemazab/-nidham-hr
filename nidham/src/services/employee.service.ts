@@ -43,6 +43,7 @@ export type CreateEmployeeParams = {
   contract_type: string;
   contract_start: string | null;
   contract_end: string | null;
+  daily_wage: number | null;
   basic_salary: number | null;
   housing_allowance: number | null;
   transport_allowance: number | null;
@@ -74,6 +75,7 @@ export async function createEmployee(
     contract_type: params.contract_type,
     contract_start: params.contract_start,
     contract_end: params.contract_end,
+    daily_wage: params.daily_wage,
     basic_salary: params.basic_salary,
     housing_allowance: params.housing_allowance,
     transport_allowance: params.transport_allowance,
@@ -121,6 +123,7 @@ export async function updateEmployee(
       contract_type: params.contract_type,
       contract_start: params.contract_start,
       contract_end: params.contract_end,
+      daily_wage: params.daily_wage,
       basic_salary: params.basic_salary,
       housing_allowance: params.housing_allowance,
       transport_allowance: params.transport_allowance,

@@ -151,18 +151,20 @@ export default async function EditEmployeePage({ params, searchParams }: PagePro
   // correctly with zero risk to the PII view.
   const { data: contractRow } = await supabase
     .from("employees")
-    .select("contract_type, contract_start, contract_end")
+    .select("contract_type, contract_start, contract_end, daily_wage")
     .eq("id", id)
     .eq("company_id", callerCompanyId)
     .maybeSingle<{
       contract_type: string | null;
       contract_start: string | null;
       contract_end: string | null;
+      daily_wage: number | null;
     }>();
   const contract = contractRow ?? {
     contract_type: "indefinite",
     contract_start: null,
     contract_end: null,
+    daily_wage: null,
   };
 
   // (caller profile + isAdmin + callerCompanyId resolved at the top so the
@@ -621,6 +623,19 @@ export default async function EditEmployeePage({ params, searchParams }: PagePro
                     step="0.01"
                     min="0"
                     defaultValue={employee.basic_salary ?? ""}
+                    className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:border-brand-cyan focus:ring-2 focus:ring-brand-cyan/20 outline-none transition text-slate-900"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="daily_wage" className="block text-sm font-medium text-slate-700 mb-2 font-cairo">قيمة اليوم <span className="text-xs text-slate-400 font-normal">(اختياري — للغياب)</span></label>
+                  <input
+                    id="daily_wage"
+                    name="daily_wage"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    defaultValue={contract.daily_wage ?? ""}
+                    placeholder="تلقائي (الراتب ÷ أيام العمل)"
                     className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:border-brand-cyan focus:ring-2 focus:ring-brand-cyan/20 outline-none transition text-slate-900"
                   />
                 </div>

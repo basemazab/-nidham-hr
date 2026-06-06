@@ -262,6 +262,20 @@ export default async function NewEmployeePage({
                   />
                 </div>
                 <div>
+                  <label htmlFor="daily_wage" className="block text-sm font-medium text-slate-700 mb-2 font-cairo">
+                    قيمة اليوم <span className="text-xs text-slate-400 font-normal">(اختياري — للغياب. فاضي = الراتب ÷ أيام العمل)</span>
+                  </label>
+                  <input
+                    id="daily_wage"
+                    name="daily_wage"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    placeholder="تلقائي"
+                    className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:border-brand-cyan focus:ring-2 focus:ring-brand-cyan/20 outline-none transition text-slate-900"
+                  />
+                </div>
+                <div>
                   <label htmlFor="housing_allowance" className="block text-sm font-medium text-slate-700 mb-2 font-cairo">
                     بدل سكن
                   </label>

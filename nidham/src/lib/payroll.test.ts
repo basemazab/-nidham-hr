@@ -219,6 +219,33 @@ describe("calculatePayroll — Egyptian ÷26 default", () => {
     expect(result.netSalary).toBe(4_800);
   });
 
+  it("uses the explicit daily_wage for absence when set (overrides the divisor)", () => {
+    // Salary 6,000 over 30 days would derive 200/day, but HR pinned the
+    // daily wage at 250. 2 absent days must deduct 2 × 250 = 500, not 400.
+    const result = calculatePayroll(
+      {
+        basicSalary: 6_000,
+        housingAllowance: 0,
+        transportAllowance: 0,
+        otherAllowances: 0,
+        dailyWage: 250,
+      },
+      { attended: 28, halfDay: 0, leave: 0, absent: 2 },
+      30,
+    );
+    expect(result.absenceDeduction).toBe(500);
+  });
+
+  it("falls back to salary ÷ working-days when no daily_wage is set", () => {
+    // 7,500 ÷ 25 = 300/day; 1 absent day → 300 deducted.
+    const result = calculatePayroll(
+      { basicSalary: 7_500, housingAllowance: 0, transportAllowance: 0, otherAllowances: 0 },
+      { attended: 24, halfDay: 0, leave: 0, absent: 1 },
+      25,
+    );
+    expect(result.absenceDeduction).toBe(300);
+  });
+
   it("matches the worked example from the Egyptian HR reference docs", () => {
     // The reference: 5,200 EGP/mo, dailyRate = 200, 2 days absent → 4,800 net
     // This test pins that exact example so a future regression flags
