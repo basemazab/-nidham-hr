@@ -38,6 +38,28 @@ export const AiReplyResultSchema = z.object({
 
 export type AiReplyResult = z.infer<typeof AiReplyResultSchema>;
 
+// Lenient mirror used ONLY to parse the model's raw output. Every field has a
+// .catch() fallback, so a missing or odd field can never throw — the inbox
+// degrades to a graceful human-handoff instead of surfacing an "ai_error".
+const LenientReplySchema = z.object({
+  reply: z.string().catch(""),
+  intent: z
+    .enum([
+      "pricing_inquiry",
+      "demo_request",
+      "feature_question",
+      "support_request",
+      "complaint",
+      "spam",
+      "greeting",
+      "other",
+    ])
+    .catch("other"),
+  leadQuality: z.enum(["hot", "warm", "cold", "spam"]).catch("warm"),
+  shouldHandoff: z.boolean().catch(false),
+  handoffReason: z.string().catch(""),
+});
+
 const DEFAULT_BUSINESS_CONTEXT = `
 الشركة: نِظام HR — أول نظام HR + Payroll + CRM مصري متكامل بالذكاء الاصطناعي.
 متوافق مع قانون العمل 12/2003 وقانون التأمينات 148/2019.
@@ -146,16 +168,49 @@ ${conversationContext ? `المحادثة قبل كده:\n${conversationContext}
     }),
   );
 
+  // Parse defensively. The model is told to return JSON, but it sometimes
+  // wraps it in ```json fences or drops a field. Strip fences, extract the
+  // object, and validate through the lenient schema (every field has a safe
+  // fallback). If we still can't get a usable reply, degrade to a polite
+  // acknowledgement + human handoff — NEVER throw, so the conversation is
+  // never flagged "ai_error" in the inbox.
   const text = result.text.trim();
-  const jsonStart = text.indexOf("{");
-  const jsonEnd = text.lastIndexOf("}");
-  if (jsonStart === -1 || jsonEnd === -1) {
-    throw new Error("AI response did not contain valid JSON");
+  const cleaned = text.replace(/```json/gi, "").replace(/```/g, "");
+  const jsonStart = cleaned.indexOf("{");
+  const jsonEnd = cleaned.lastIndexOf("}");
+
+  let raw: unknown = {};
+  if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+    try {
+      raw = JSON.parse(cleaned.slice(jsonStart, jsonEnd + 1));
+    } catch {
+      raw = {};
+    }
   }
-  const jsonStr = text.slice(jsonStart, jsonEnd + 1);
-  const parsed = JSON.parse(jsonStr);
-  const validated = AiReplyResultSchema.parse(parsed);
-  return validated;
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) raw = {};
+
+  const data = LenientReplySchema.parse(raw);
+  let reply = data.reply.trim();
+  let shouldHandoff = data.shouldHandoff;
+  let handoffReason = data.handoffReason.trim();
+
+  if (!reply) {
+    // Model gave nothing usable — hand off to a human instead of erroring.
+    reply =
+      "وصلتني رسالتك ✅ فريقنا هيتواصل معاك حالًا. وللاطلاع على النظام: https://www.nidhamhr.com";
+    shouldHandoff = true;
+    if (!handoffReason) {
+      handoffReason = "تعذّر توليد رد آلي منظّم — يحتاج متابعة بشرية";
+    }
+  }
+
+  return {
+    reply: reply.slice(0, 400),
+    intent: data.intent,
+    leadQuality: data.leadQuality,
+    shouldHandoff,
+    handoffReason: handoffReason.slice(0, 120),
+  };
 }
 
 export function tryTemplateMatch(input: {
