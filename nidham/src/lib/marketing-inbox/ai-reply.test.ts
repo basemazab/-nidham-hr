@@ -1,5 +1,39 @@
 import { describe, it, expect } from "vitest";
-import { tryTemplateMatch } from "./ai-reply";
+import { tryTemplateMatch, sanitizeReplyLinks } from "./ai-reply";
+
+describe("sanitizeReplyLinks", () => {
+  it("collapses an invented path to the homepage", () => {
+    expect(
+      sanitizeReplyLinks("حمّل الكتيب: https://www.nidhamhr.com/kiteb 📄"),
+    ).toBe("حمّل الكتيب: https://www.nidhamhr.com 📄");
+  });
+
+  it("keeps a real path untouched", () => {
+    const ok = "الأسعار هنا: https://www.nidhamhr.com/pricing";
+    expect(sanitizeReplyLinks(ok)).toBe(ok);
+  });
+
+  it("keeps a real nested path (tools/...)", () => {
+    const ok = "احسب: https://www.nidhamhr.com/tools/salary-calculator";
+    expect(sanitizeReplyLinks(ok)).toBe(ok);
+  });
+
+  it("keeps the bare homepage", () => {
+    const ok = "زورنا: https://www.nidhamhr.com";
+    expect(sanitizeReplyLinks(ok)).toBe(ok);
+  });
+
+  it("fixes an invented path even without www", () => {
+    expect(sanitizeReplyLinks("شوف http://nidhamhr.com/download-now")).toBe(
+      "شوف https://www.nidhamhr.com",
+    );
+  });
+
+  it("leaves non-nidham links alone", () => {
+    const ok = "تابعنا على https://facebook.com/nidham";
+    expect(sanitizeReplyLinks(ok)).toBe(ok);
+  });
+});
 
 describe("tryTemplateMatch", () => {
   const templates = [

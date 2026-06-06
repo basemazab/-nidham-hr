@@ -88,8 +88,39 @@ const DEFAULT_BUSINESS_CONTEXT = `
   ✍️ توقيع إلكتروني للعقود.
   🔒 الأمان: تشفير AES-256، صلاحيات RLS متعددة المستويات، تحقق بخطوتين (2FA)، Audit Log، توافق PDPL 151/2020.
 
-الموقع: https://www.nidhamhr.com
+الروابط الرسمية (استخدمها بالحرف زي ما هي — وممنوع تخترع أي رابط تاني):
+  - الموقع الرئيسي: https://www.nidhamhr.com
+  - تجربة مجانية / تسجيل: https://www.nidhamhr.com/signup
+  - الأسعار: https://www.nidhamhr.com/pricing
+  - كتيب / بروشور النظام: https://www.nidhamhr.com/brochure
+  - المميزات الكاملة: https://www.nidhamhr.com/features
+  - مقارنة بالمنافسين: https://www.nidhamhr.com/compare
+  - تحميل تطبيق سطح المكتب: https://www.nidhamhr.com/download
+  - نسخة Enterprise (سيرفر داخلي): https://www.nidhamhr.com/enterprise
+  - تواصل معنا: https://www.nidhamhr.com/contact
 `;
+
+// Real public sections on nidhamhr.com. If the model emits a nidhamhr.com link
+// whose first path segment isn't here, it's a hallucinated URL (e.g. the
+// invented /kiteb) — we collapse it to the homepage so a customer never gets a
+// broken/404 link. Hard guarantee, independent of the prompt (and survives a
+// per-tenant prompt/context override).
+const VALID_SITE_PATHS = new Set<string>([
+  "", "signup", "login", "pricing", "features", "compare", "why-nidham",
+  "brochure", "sales-brochure", "download", "enterprise", "contact", "faq",
+  "about", "blog", "tools", "compliance-shield", "product", "industries",
+  "ai", "crm", "security", "integrations", "help", "developers", "api-docs",
+]);
+
+export function sanitizeReplyLinks(text: string): string {
+  return text.replace(
+    /https?:\/\/(?:www\.)?nidhamhr\.com(\/[^\s)]*)?/gi,
+    (full: string, path?: string) => {
+      const seg = (path ?? "").replace(/^\//, "").split(/[/?#]/)[0].toLowerCase();
+      return VALID_SITE_PATHS.has(seg) ? full : "https://www.nidhamhr.com";
+    },
+  );
+}
 
 export type ConversationTurn = {
   role: "user" | "assistant";
@@ -117,6 +148,7 @@ export async function generateMarketingReply(input: {
 3. كل رد ينتهي بـ CTA واحد: لينك أو سؤال.
 4. ممنوع الكذب. لو مش متأكد من حاجة، قول "هخلي فريق المبيعات يتواصل معاك".
 5. ممنوع تستخدم أكتر من 2 emoji.
+6. الروابط: استخدم **الروابط الرسمية المذكورة تحت بالحرف فقط**. ممنوع منعًا باتًا تخترع أي رابط أو مسار من دماغك (زي /kiteb أو /brochure-pdf). لو مفيش رابط مناسب للي العميل طلبه، قول "هخلي الفريق يبعتهولك" واطلب رقمه، أو وجّهه للموقع الرئيسي — متخترعش لينك أبدًا.
 
 ● تصنيف النية (intent):
   • pricing_inquiry: بيسأل عن السعر أو المقارنة بين الباقات — دايماً hot.
@@ -207,6 +239,10 @@ ${conversationContext ? `المحادثة قبل كده:\n${conversationContext}
       handoffReason = "تعذّر توليد رد آلي منظّم — يحتاج متابعة بشرية";
     }
   }
+
+  // Final guard: never let a hallucinated/broken nidhamhr.com link reach a
+  // customer — unknown paths collapse to the homepage.
+  reply = sanitizeReplyLinks(reply);
 
   return {
     reply: reply.slice(0, 400),
