@@ -35,7 +35,7 @@
 //   • Signature verification protects against forged messages.
 //   • Tenant scoping via meta_page_id ensures Pages can't cross-leak.
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import {
   verifyMetaSignature,
@@ -50,6 +50,9 @@ import {
 // Force Node runtime (we need `crypto` for HMAC and our service-role
 // Supabase client). Edge runtime would block the HMAC.
 export const runtime = "nodejs";
+// Give the post-response AI work (generate reply + send via Graph API +
+// optional fallback model) room to finish inside after().
+export const maxDuration = 60;
 
 // ── 1) GET — Meta webhook verification handshake ──
 export async function GET(req: NextRequest) {
@@ -98,10 +101,18 @@ export async function POST(req: NextRequest) {
     return new NextResponse("Bad payload", { status: 400 });
   }
 
-  // Acknowledge fast — Meta times out after 20s. We process async after
-  // responding 200. (If processing throws, we'll log but not retry.)
-  processEventAsync(payload, rawBody, signatureHeader).catch((err) => {
-    console.error("[meta-webhook] async processing failed:", err);
+  // Acknowledge fast — Meta times out after 20s. The reply work (find tenant,
+  // store message, generate AI reply, send via Graph API) runs in after() so
+  // it executes IMMEDIATELY and RELIABLY once the 200 is sent. A bare
+  // fire-and-forget promise gets frozen/deprioritized when the serverless
+  // function returns, which delayed (or dropped) replies — after() keeps the
+  // function alive until the work completes.
+  after(async () => {
+    try {
+      await processEventAsync(payload, rawBody, signatureHeader);
+    } catch (err) {
+      console.error("[meta-webhook] async processing failed:", err);
+    }
   });
 
   return NextResponse.json({ ok: true });
