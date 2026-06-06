@@ -20,11 +20,17 @@ export async function POST(req: Request) {
     return new Response(JSON.stringify({ error: "مخصص للمدير فقط" }), { status: 403 });
   }
 
-  let body: { docId?: string };
+  // The "تضمين" button POSTs with NO body (embed every un-embedded doc),
+  // while a targeted call sends { docId }. An empty body is therefore valid
+  // and must NOT be treated as "Invalid JSON" — that was the bug users hit.
+  let body: { docId?: string } = {};
   try {
-    body = await req.json();
+    const raw = await req.text();
+    if (raw.trim()) body = JSON.parse(raw) as { docId?: string };
   } catch {
-    return new Response(JSON.stringify({ error: "Invalid JSON" }), { status: 400 });
+    return new Response(JSON.stringify({ error: "صيغة الطلب غير صحيحة" }), {
+      status: 400,
+    });
   }
 
   let query = supabase

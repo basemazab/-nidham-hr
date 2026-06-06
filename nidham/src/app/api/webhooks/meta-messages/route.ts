@@ -408,6 +408,21 @@ async function runAiReply(args: {
     sent_at: send.ok ? new Date().toISOString() : null,
     delivery_error: send.ok ? null : send.error,
   });
+
+  // If the send FAILED (most commonly the 24h window), don't leave the
+  // conversation looking "ai_replied" — the customer never got the message.
+  // Flip it back to "open" so a human notices, and record why.
+  if (!send.ok) {
+    await args.supabase
+      .from("marketing_inbox_conversations")
+      .update({
+        status: "open",
+        ai_intent: send.outsideWindow
+          ? "send_failed_24h_window"
+          : "send_failed",
+      })
+      .eq("id", args.conversationId);
+  }
 }
 
 // ── Push qualifying leads into the existing CRM (customers table) ──

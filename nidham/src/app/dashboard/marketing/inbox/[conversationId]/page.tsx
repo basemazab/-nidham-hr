@@ -48,6 +48,16 @@ export default async function ConversationPage({
     .eq("conversation_id", conversationId)
     .order("created_at", { ascending: true });
 
+  // Most-recent INBOUND message timestamp — drives the 24h-window hint in the
+  // composer (Meta only allows free-form replies within 24h of it).
+  const lastInboundAt =
+    (messages || [])
+      .filter((m) => m.direction === "inbound")
+      .reduce<string | null>((latest, m) => {
+        if (!latest || m.created_at > latest) return m.created_at;
+        return latest;
+      }, null) ?? null;
+
   return (
     <div className="flex flex-col h-screen max-h-screen p-4 md:p-6 max-w-4xl mx-auto">
       {/* Header */}
@@ -146,7 +156,10 @@ export default async function ConversationPage({
 
       {/* Reply composer */}
       <div className="border-t border-slate-200 pt-4">
-        <ReplyComposer conversationId={conversationId} />
+        <ReplyComposer
+          conversationId={conversationId}
+          lastInboundAt={lastInboundAt}
+        />
       </div>
     </div>
   );

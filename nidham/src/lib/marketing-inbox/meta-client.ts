@@ -26,7 +26,10 @@ export async function sendMetaMessage(input: {
   pageToken: string;       // Page Access Token (from settings)
   recipientId: string;     // PSID (Messenger) or IGSID (Instagram)
   text: string;
-}): Promise<{ ok: true; messageId: string } | { ok: false; error: string }> {
+}): Promise<
+  | { ok: true; messageId: string }
+  | { ok: false; error: string; outsideWindow?: boolean }
+> {
   // Messenger uses /me/messages, IG also uses /me/messages but with the
   // same Page token (since IG accounts are linked to a Page). The
   // recipient_id format differs but the call shape is identical.
@@ -47,13 +50,15 @@ export async function sendMetaMessage(input: {
 
     const data = (await res.json()) as {
       message_id?: string;
-      error?: { message?: string; code?: number };
+      error?: { message?: string; code?: number; error_subcode?: number };
     };
 
     if (!res.ok || data.error) {
+      const friendly = friendlyMetaError(data.error, res.status);
       return {
         ok: false,
-        error: data.error?.message || `HTTP ${res.status}`,
+        error: friendly.message,
+        outsideWindow: friendly.outsideWindow,
       };
     }
 
@@ -64,6 +69,57 @@ export async function sendMetaMessage(input: {
       error: err instanceof Error ? err.message : String(err),
     };
   }
+}
+
+// Translate Meta's terse English error codes into clear Arabic guidance HR
+// can act on. The most common one by far is the 24-hour messaging window:
+// Meta only lets a business send a FREE-FORM reply within 24h of the user's
+// last message (code 10 / subcode 2018278). After that you need a pre-approved
+// message template — which the company must create in Meta Business Manager.
+function friendlyMetaError(
+  error: { message?: string; code?: number; error_subcode?: number } | undefined,
+  httpStatus: number,
+): { message: string; outsideWindow: boolean } {
+  const code = error?.code;
+  const sub = error?.error_subcode;
+  const raw = (error?.message || "").toLowerCase();
+
+  const isWindow =
+    sub === 2018278 ||
+    (code === 10 && raw.includes("24")) ||
+    raw.includes("outside") ||
+    raw.includes("window") ||
+    raw.includes("message tag") ||
+    raw.includes("24 hours") ||
+    raw.includes("standard messaging");
+  if (isWindow) {
+    return {
+      outsideWindow: true,
+      message:
+        "العميل آخر رسالة ليه بقالها أكتر من 24 ساعة — سياسة Meta بتمنع الرد المجاني بعد المدة دي. " +
+        "الرد هيشتغل تلقائي لو العميل بعت رسالة جديدة. للتواصل بعد 24 ساعة لازم رسالة قالب (Template) معتمدة من Meta.",
+    };
+  }
+
+  if (code === 190) {
+    return {
+      outsideWindow: false,
+      message:
+        "توكن صفحة Meta منتهي أو غير صالح — جدّد Page Access Token من إعدادات الصندوق.",
+    };
+  }
+  if (code === 200 || code === 10 || code === 803) {
+    return {
+      outsideWindow: false,
+      message:
+        "صلاحيات Meta ناقصة لإرسال الرسائل — تأكد إن الصفحة مربوطة وإن للتطبيق صلاحية pages_messaging.",
+    };
+  }
+
+  return {
+    outsideWindow: false,
+    message: error?.message || `فشل الإرسال (HTTP ${httpStatus})`,
+  };
 }
 
 // ── Verify webhook signature ──

@@ -4,11 +4,28 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { sendHumanReply } from "../actions";
 
-export function ReplyComposer({ conversationId }: { conversationId: string }) {
+export function ReplyComposer({
+  conversationId,
+  lastInboundAt,
+}: {
+  conversationId: string;
+  lastInboundAt?: string | null;
+}) {
   const router = useRouter();
   const [text, setText] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+
+  // 24h messaging-window state (Meta policy). Free-form replies only land
+  // within 24h of the customer's last message.
+  const hoursSinceInbound = lastInboundAt
+    ? (Date.now() - new Date(lastInboundAt).getTime()) / 3_600_000
+    : null;
+  const windowClosed = hoursSinceInbound !== null && hoursSinceInbound >= 24;
+  const hoursLeft =
+    hoursSinceInbound !== null
+      ? Math.max(0, Math.floor(24 - hoursSinceInbound))
+      : null;
 
   function handleSend() {
     if (!text.trim() || pending) return;
@@ -26,6 +43,13 @@ export function ReplyComposer({ conversationId }: { conversationId: string }) {
 
   return (
     <div>
+      {windowClosed && (
+        <div className="mb-2 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 leading-relaxed">
+          🕒 <b>نافذة الـ 24 ساعة قافلة</b> — العميل آخر رسالة ليه بقالها أكتر من
+          يوم، وسياسة Meta بتمنع الرد المجاني. ردك دلوقتي غالبًا مش هيتبعت. استنى
+          العميل يبعت رسالة جديدة، أو ابعتله رسالة قالب (Template) معتمدة من Meta.
+        </div>
+      )}
       {error && (
         <div className="mb-2 flex items-center gap-2 text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2">
           <span>⚠️ {error}</span>
@@ -62,7 +86,11 @@ export function ReplyComposer({ conversationId }: { conversationId: string }) {
         </button>
       </div>
       <p className="text-xs text-slate-500 mt-1">
-        ⚠️ تنبيه Meta: ينفع ترد فقط خلال 24 ساعة من آخر رسالة من العميل.
+        {!windowClosed && hoursLeft !== null ? (
+          <>✅ النافذة مفتوحة — باقي حوالي {hoursLeft} ساعة على الرد المجاني.</>
+        ) : (
+          <>⚠️ تنبيه Meta: ينفع ترد فقط خلال 24 ساعة من آخر رسالة من العميل.</>
+        )}
       </p>
     </div>
   );
