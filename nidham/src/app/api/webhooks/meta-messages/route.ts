@@ -365,6 +365,12 @@ async function runCommentReply(args: {
     }
 
     const send = await sendPrivateReply({ pageToken, commentId, message: reply });
+    if (!send.ok) {
+      console.error(
+        "[meta-webhook] comment PRIVATE reply failed:",
+        send.error,
+      );
+    }
 
     // Track the commenter as a lead in the inbox (best-effort).
     if (args.commenterId) {
@@ -624,8 +630,10 @@ async function pushToCRM(args: {
   const { data: customer, error } = await args.supabase
     .from("customers")
     .insert({
+      // The column is `full_name` (NOT NULL) — inserting `name` silently
+      // failed every CRM push (DMs + comments). This is the fix.
       company_id: args.companyId,
-      name: customerName,
+      full_name: customerName,
       status: "lead",
       source: args.channel === "instagram" ? "instagram_dm" : "messenger_dm",
       notes,
