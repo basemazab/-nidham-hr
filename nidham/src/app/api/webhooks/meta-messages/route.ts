@@ -41,6 +41,8 @@ import {
   verifyMetaSignature,
   sendMetaMessage,
   fetchUserProfile,
+  replyToComment,
+  sendPrivateReply,
 } from "@/lib/marketing-inbox/meta-client";
 import {
   generateMarketingReply,
@@ -135,6 +137,22 @@ type MetaWebhookPayload = {
         attachments?: Array<{ type: string; payload?: { url?: string } }>;
       };
     }>;
+    // Page "feed" (FB comments) + IG "comments" events arrive here.
+    changes?: Array<{
+      field: string; // "feed" (FB) | "comments" (IG)
+      value: {
+        item?: string; // "comment"
+        verb?: string; // "add" | "edited" | "remove"
+        comment_id?: string; // FB
+        id?: string; // IG comment id
+        post_id?: string;
+        parent_id?: string;
+        message?: string; // FB comment text
+        text?: string; // IG comment text
+        from?: { id?: string; name?: string; username?: string };
+        media?: { id?: string };
+      };
+    }>;
   }>;
 };
 
@@ -154,7 +172,7 @@ async function processEventAsync(
     const { data: settings } = await supabase
       .from("marketing_inbox_settings")
       .select(
-        "company_id, meta_page_token, meta_app_secret, ai_enabled, ai_system_prompt, ai_business_context, ai_handoff_keywords, auto_push_to_crm, channel_messenger, channel_instagram",
+        "company_id, meta_page_token, meta_app_secret, ai_enabled, ai_system_prompt, ai_business_context, ai_handoff_keywords, auto_push_to_crm, channel_messenger, channel_instagram, auto_reply_comments, comment_public_reply, comment_private_reply, comment_public_text",
       )
       .eq("meta_page_id", pageId)
       .maybeSingle();
@@ -252,6 +270,142 @@ async function processEventAsync(
           .from("marketing_inbox_conversations")
           .update({ ai_intent: "channel_disabled" })
           .eq("id", conversationId);
+      }
+    }
+
+    // ── Comments on page posts / ads (FB "feed") + IG "comments" ──
+    if (settings.auto_reply_comments) {
+      for (const change of entry.changes || []) {
+        if (change.field !== "feed" && change.field !== "comments") continue;
+        const v = change.value || {};
+        if (v.item && v.item !== "comment") continue; // ignore likes/posts/shares
+        if (v.verb && v.verb !== "add") continue; // only brand-new comments
+        const commentId = v.comment_id || v.id;
+        const text = (v.message ?? v.text ?? "").trim();
+        const fromId = v.from?.id ?? null;
+        if (!commentId || !text) continue;
+        // Loop guard: never reply to the page's OWN comments (our public reply
+        // is itself a comment → Meta re-fires the webhook for it).
+        if (fromId && fromId === pageId) continue;
+        await runCommentReply({
+          supabase,
+          settings,
+          channel,
+          pageId,
+          commentId,
+          commenterId: fromId,
+          text,
+        });
+      }
+    }
+  }
+}
+
+// ── Auto-reply to a single comment: public ack + private AI DM (lead) ──
+type InboxSettings = {
+  company_id: string;
+  meta_page_token: string | null;
+  ai_business_context: string | null;
+  ai_system_prompt: string | null;
+  auto_push_to_crm: boolean | null;
+  comment_public_reply: boolean | null;
+  comment_private_reply: boolean | null;
+  comment_public_text: string | null;
+};
+
+async function runCommentReply(args: {
+  supabase: ReturnType<typeof createServiceClient>;
+  settings: InboxSettings;
+  channel: "messenger" | "instagram";
+  pageId: string;
+  commentId: string;
+  commenterId: string | null;
+  text: string;
+}): Promise<void> {
+  const { supabase, settings, commentId } = args;
+  const pageToken = settings.meta_page_token;
+  if (!pageToken) return;
+
+  // Dedup: insert the comment_id (unique). On conflict we've already handled
+  // it → bail so a resent webhook never double-replies.
+  const { error: dupErr } = await supabase
+    .from("marketing_processed_comments")
+    .insert({ company_id: settings.company_id, comment_id: commentId });
+  if (dupErr) return;
+
+  // 1) Public acknowledgement (fixed, safe text — we don't let the AI speak
+  //    publicly; it answers in the private DM instead).
+  if (settings.comment_public_reply) {
+    const publicText =
+      settings.comment_public_text?.trim() ||
+      "شكراً لاهتمامك! 🌟 بعتنالك رسالة خاصة فيها كل التفاصيل 📩";
+    await replyToComment({ pageToken, commentId, message: publicText });
+  }
+
+  // 2) Private DM with the real (AI) answer → tracked as a lead in the inbox.
+  if (settings.comment_private_reply) {
+    let reply =
+      "أهلاً 👋 شكراً لتعليقك! ابعتلنا استفسارك وهنفيدك حالاً. للتفاصيل: https://www.nidhamhr.com";
+    let leadQuality: "hot" | "warm" | "cold" | "spam" = "warm";
+    let intent = "comment";
+    try {
+      const ai = await generateMarketingReply({
+        userMessage: args.text,
+        businessContext: settings.ai_business_context || undefined,
+        systemPromptOverride: settings.ai_system_prompt || undefined,
+      });
+      reply = ai.reply;
+      leadQuality = ai.leadQuality;
+      intent = ai.intent;
+    } catch (err) {
+      console.error(
+        "[meta-webhook] comment AI failed:",
+        err instanceof Error ? err.message : err,
+      );
+    }
+
+    const send = await sendPrivateReply({ pageToken, commentId, message: reply });
+
+    // Track the commenter as a lead in the inbox (best-effort).
+    if (args.commenterId) {
+      const conversationId = await upsertConversation({
+        supabase,
+        companyId: settings.company_id,
+        channel: args.channel,
+        externalUserId: args.commenterId,
+        pageToken,
+      });
+      if (conversationId) {
+        await supabase.from("marketing_inbox_messages").insert({
+          conversation_id: conversationId,
+          direction: "outbound",
+          sender: "ai",
+          body: `[رد تلقائي على كومنت] ${reply}`,
+          sent_at: send.ok ? new Date().toISOString() : null,
+          delivery_error: send.ok ? null : send.error,
+        });
+        await supabase
+          .from("marketing_inbox_conversations")
+          .update({
+            ai_intent: `comment:${intent}`,
+            ai_lead_quality: leadQuality,
+            ai_last_run_at: new Date().toISOString(),
+          })
+          .eq("id", conversationId);
+        if (
+          settings.auto_push_to_crm &&
+          (leadQuality === "hot" || leadQuality === "warm")
+        ) {
+          await pushToCRM({
+            supabase,
+            conversationId,
+            companyId: settings.company_id,
+            channel: args.channel,
+            externalUserId: args.commenterId,
+            intent: `comment:${intent}`,
+            leadQuality,
+          });
+        }
       }
     }
   }

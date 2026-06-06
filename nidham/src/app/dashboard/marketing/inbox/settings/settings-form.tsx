@@ -15,6 +15,10 @@ type Defaults = {
   ai_system_prompt: string;
   ai_business_context: string;
   auto_push_to_crm: boolean;
+  auto_reply_comments: boolean;
+  comment_public_reply: boolean;
+  comment_private_reply: boolean;
+  comment_public_text: string;
 };
 
 function generateVerifyToken(): string {
@@ -29,6 +33,9 @@ function generateVerifyToken(): string {
 export function SettingsForm({ defaultValues }: { defaultValues: Defaults }) {
   const [verifyToken, setVerifyToken] = useState(defaultValues.meta_verify_token);
   const [aiEnabled, setAiEnabled] = useState(defaultValues.ai_enabled);
+  const [commentsEnabled, setCommentsEnabled] = useState(
+    defaultValues.auto_reply_comments,
+  );
   const [result, setResult] = useState<
     { ok: true } | { ok: false; error: string } | null
   >(null);
@@ -182,6 +189,52 @@ export function SettingsForm({ defaultValues }: { defaultValues: Defaults }) {
               />
             </div>
           </>
+        )}
+      </section>
+
+      {/* Comment auto-reply */}
+      <section className="p-5 rounded-xl bg-white border border-slate-200">
+        <h2 className="font-black text-lg text-slate-900 mb-4">
+          💬 الرد التلقائي على الكومنتات
+        </h2>
+        <Checkbox
+          name="auto_reply_comments"
+          defaultChecked={defaultValues.auto_reply_comments}
+          label="فعّل الرد على كومنتات البوستات والإعلانات"
+          description="لما حد يعلّق على بوست أو إعلان، النظام يرد عليه — عام تحت الكومنت و/أو رسالة خاصة فيها التفاصيل."
+          onChange={(v) => setCommentsEnabled(v)}
+        />
+        {commentsEnabled && (
+          <div className="mt-4 space-y-3">
+            <Checkbox
+              name="comment_public_reply"
+              defaultChecked={defaultValues.comment_public_reply}
+              label="رد عام تحت الكومنت"
+              description="رد قصير مهذّب ظاهر للكل (مثلاً: شكراً لاهتمامك، بعتنالك رسالة خاصة 📩)."
+            />
+            <Checkbox
+              name="comment_private_reply"
+              defaultChecked={defaultValues.comment_private_reply}
+              label="رسالة خاصة (DM) بالتفاصيل"
+              description="الـ AI يبعت للمعلّق رسالة خاصة فيها الإجابة، ويتسجّل تلقائياً كـ Lead في الصندوق والـ CRM."
+            />
+            <div>
+              <label className="block text-sm font-bold text-slate-900 mb-1">
+                نص الرد العام (اختياري)
+              </label>
+              <input
+                name="comment_public_text"
+                defaultValue={defaultValues.comment_public_text}
+                placeholder="سيبه فاضي للنص الافتراضي"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:border-brand-cyan outline-none"
+              />
+            </div>
+            <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 leading-relaxed">
+              ⚠️ لازم تشترك صفحتك في حقل <b>feed</b> (فيسبوك) و <b>comments</b>{" "}
+              (إنستجرام) في Meta Webhooks — زي ما عملت مع <b>messages</b> — وإلا
+              الكومنتات مش هتوصل للنظام.
+            </p>
+          </div>
         )}
       </section>
 

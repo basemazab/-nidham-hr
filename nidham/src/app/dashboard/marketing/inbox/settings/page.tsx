@@ -10,7 +10,7 @@ export default async function MarketingInboxSettingsPage() {
   const { data: settings } = await supabase
     .from("marketing_inbox_settings")
     .select(
-      "channel_messenger, channel_instagram, meta_page_id, meta_page_token, meta_app_secret, meta_verify_token, meta_instagram_id, ai_enabled, ai_system_prompt, ai_business_context, auto_push_to_crm",
+      "channel_messenger, channel_instagram, meta_page_id, meta_page_token, meta_app_secret, meta_verify_token, meta_instagram_id, ai_enabled, ai_system_prompt, ai_business_context, auto_push_to_crm, auto_reply_comments, comment_public_reply, comment_private_reply, comment_public_text",
     )
     .eq("company_id", profile.company_id)
     .maybeSingle();
@@ -73,6 +73,9 @@ export default async function MarketingInboxSettingsPage() {
             اشترك في events:{" "}
             <code className="bg-white px-1 rounded">messages</code>،{" "}
             <code className="bg-white px-1 rounded">messaging_postbacks</code>
+            {" "}— وللرد على الكومنتات ضيف كمان{" "}
+            <code className="bg-white px-1 rounded">feed</code> (فيسبوك) و{" "}
+            <code className="bg-white px-1 rounded">comments</code> (إنستجرام).
           </li>
           <li>
             ارجع لـ Settings → Basic → انسخ <strong>App Secret</strong> هنا.
@@ -105,6 +108,10 @@ export default async function MarketingInboxSettingsPage() {
           ai_system_prompt: settings?.ai_system_prompt || "",
           ai_business_context: settings?.ai_business_context || "",
           auto_push_to_crm: settings?.auto_push_to_crm ?? true,
+          auto_reply_comments: settings?.auto_reply_comments ?? false,
+          comment_public_reply: settings?.comment_public_reply ?? true,
+          comment_private_reply: settings?.comment_private_reply ?? true,
+          comment_public_text: settings?.comment_public_text || "",
         }}
       />
     </div>

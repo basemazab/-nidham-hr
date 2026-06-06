@@ -141,6 +141,10 @@ export async function saveSettings(form: FormData): Promise<
     ai_system_prompt: textOrNull(form.get("ai_system_prompt")),
     ai_business_context: textOrNull(form.get("ai_business_context")),
     auto_push_to_crm: form.get("auto_push_to_crm") === "on",
+    auto_reply_comments: form.get("auto_reply_comments") === "on",
+    comment_public_reply: form.get("comment_public_reply") === "on",
+    comment_private_reply: form.get("comment_private_reply") === "on",
+    comment_public_text: textOrNull(form.get("comment_public_text")),
   };
 
   const { error } = await supabase

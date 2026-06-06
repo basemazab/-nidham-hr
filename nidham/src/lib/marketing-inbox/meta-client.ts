@@ -122,6 +122,62 @@ function friendlyMetaError(
   };
 }
 
+// ── Public reply under a comment ──
+// POST /{comment-id}/comments → posts a visible reply beneath the comment.
+export async function replyToComment(input: {
+  pageToken: string;
+  commentId: string;
+  message: string;
+}): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
+  const url = `${GRAPH_BASE}/${encodeURIComponent(input.commentId)}/comments?access_token=${encodeURIComponent(input.pageToken)}`;
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: input.message }),
+    });
+    const data = (await res.json()) as {
+      id?: string;
+      error?: { message?: string; code?: number; error_subcode?: number };
+    };
+    if (!res.ok || data.error) {
+      return { ok: false, error: friendlyMetaError(data.error, res.status).message };
+    }
+    return { ok: true, id: data.id || "" };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+// ── Private (DM) reply to a comment ──
+// POST /{comment-id}/private_replies → Meta lets a business send ONE private
+// message to whoever wrote a comment. Perfect for moving a public comment into
+// a tracked DM lead. (Fails if the window/permission isn't there — caller logs.)
+export async function sendPrivateReply(input: {
+  pageToken: string;
+  commentId: string;
+  message: string;
+}): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
+  const url = `${GRAPH_BASE}/${encodeURIComponent(input.commentId)}/private_replies?access_token=${encodeURIComponent(input.pageToken)}`;
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: input.message }),
+    });
+    const data = (await res.json()) as {
+      id?: string;
+      error?: { message?: string; code?: number; error_subcode?: number };
+    };
+    if (!res.ok || data.error) {
+      return { ok: false, error: friendlyMetaError(data.error, res.status).message };
+    }
+    return { ok: true, id: data.id || "" };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
 // ── Verify webhook signature ──
 //
 // Meta signs every webhook with HMAC-SHA256 of the body using the
