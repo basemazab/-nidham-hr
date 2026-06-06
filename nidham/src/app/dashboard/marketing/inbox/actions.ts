@@ -224,6 +224,64 @@ export async function testWebhookConnection(): Promise<
   };
 }
 
+// Subscribe the Facebook Page to the app's webhook for the fields we need
+// (messages + feed/comments). Toggling the field in Meta's UI only subscribes
+// the APP; the PAGE itself must be subscribed too — this calls
+// POST /{page-id}/subscribed_apps with the stored page token to do exactly
+// that, so comments + DMs actually get delivered. One click, no Meta-UI hunting.
+export async function subscribePageToWebhooks(): Promise<
+  | { ok: true; message: string }
+  | { ok: false; error: string }
+> {
+  const { supabase, profile } = await requireHR();
+
+  const { data: settings } = await supabase
+    .from("marketing_inbox_settings")
+    .select("meta_page_id, meta_page_token")
+    .eq("company_id", profile.company_id)
+    .single();
+
+  if (!settings?.meta_page_id || !settings?.meta_page_token) {
+    return { ok: false, error: "اكمل Page ID و Page Access Token واحفظ الإعدادات الأول" };
+  }
+
+  const fields =
+    "messages,messaging_postbacks,message_reads,messaging_optins,feed";
+
+  try {
+    const res = await fetch(
+      `https://graph.facebook.com/v21.0/${encodeURIComponent(settings.meta_page_id)}/subscribed_apps`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          subscribed_fields: fields,
+          access_token: settings.meta_page_token,
+        }),
+      },
+    );
+    const data = (await res.json()) as {
+      success?: boolean;
+      error?: { message?: string };
+    };
+    if (!res.ok || data.error || data.success === false) {
+      return {
+        ok: false,
+        error: `Meta: ${data.error?.message || `HTTP ${res.status}`}`,
+      };
+    }
+    return {
+      ok: true,
+      message: "تم اشتراك الصفحة في الرسائل والكومنتات (feed). جرّب تعليق جديد.",
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: `فشل الاتصال بـ Meta: ${err instanceof Error ? err.message : String(err)}`,
+    };
+  }
+}
+
 // Preview AI reply — generates a reply WITHOUT sending to Meta
 export async function previewAiReply(input: {
   conversationId: string;

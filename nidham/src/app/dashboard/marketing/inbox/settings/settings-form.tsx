@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { saveSettings, testWebhookConnection } from "../actions";
+import { saveSettings, testWebhookConnection, subscribePageToWebhooks } from "../actions";
 
 type Defaults = {
   channel_messenger: boolean;
@@ -272,9 +272,60 @@ export function SettingsForm({ defaultValues }: { defaultValues: Defaults }) {
         )}
       </div>
 
+      {/* Subscribe page to webhook fields (messages + feed/comments) */}
+      <SubscribePage />
+
       {/* Test connection */}
       <ConnectionTest />
     </form>
+  );
+}
+
+function SubscribePage() {
+  const [state, setState] = useState<
+    | { status: "idle" }
+    | { status: "loading" }
+    | { status: "done"; ok: boolean; msg: string }
+  >({ status: "idle" });
+
+  function run() {
+    setState({ status: "loading" });
+    subscribePageToWebhooks().then((res) => {
+      setState({
+        status: "done",
+        ok: res.ok,
+        msg: res.ok ? res.message : res.error,
+      });
+    });
+  }
+
+  return (
+    <section className="p-5 rounded-xl bg-white border border-slate-200">
+      <h2 className="font-black text-lg text-slate-900 mb-1">
+        🔔 تفعيل استقبال الرسائل والكومنتات
+      </h2>
+      <p className="text-xs text-slate-600 mb-4 leading-relaxed">
+        يربط صفحتك بالنظام ويشتركها في <b>messages</b> + <b>feed</b> (الكومنتات)
+        مباشرةً — من غير ما تظبّط حاجة يدوي في Meta. اضغطه بعد ما تحفظ الـ Page
+        Token. (يحتاج صلاحية pages_manage_metadata في التوكن.)
+      </p>
+      <button
+        type="button"
+        onClick={run}
+        disabled={state.status === "loading"}
+        className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-brand-cyan to-brand-cyan-dark text-white font-bold text-sm hover:shadow-lg disabled:opacity-50 transition"
+      >
+        {state.status === "loading" ? "..." : "🔔 اشترك الصفحة (رسائل + كومنتات)"}
+      </button>
+      {state.status === "done" && (
+        <div
+          className={`mt-3 text-sm rounded-lg px-4 py-3 ${state.ok ? "text-emerald-700 bg-emerald-50 border border-emerald-200" : "text-rose-700 bg-rose-50 border border-rose-200"}`}
+        >
+          {state.ok ? "✅ " : "❌ "}
+          {state.msg}
+        </div>
+      )}
+    </section>
   );
 }
 
