@@ -151,14 +151,17 @@ Approval usually takes **a few minutes** for authentication templates (longer fo
 ### Step 9 — Set environment variables in Vercel
 
 1. Open https://vercel.com → your Nidham project → **Settings** → **Environment Variables**
-2. Add these four:
+2. Add these five:
 
 | Variable | Value | Source |
 |---|---|---|
 | `WHATSAPP_ACCESS_TOKEN` | `EAAxxxxxxxxxxxx...` | System User token from Step 7 |
 | `WHATSAPP_PHONE_NUMBER_ID` | `123456789012345` | From API Setup (Step 6) |
 | `WHATSAPP_VERIFY_TOKEN` | (any random string) | You pick — use something like `nidham_2026_verify_xyz789` |
+| `META_APP_SECRET` | `1a2b3c...` (32 hex chars) | App Settings → Basic → **App Secret** → Show |
 | `SUPABASE_SERVICE_ROLE_KEY` | `eyJxxxxx...` | From Supabase Dashboard → Settings → API |
+
+> ⚠️ **`META_APP_SECRET` إجباري للبوت.** الـ webhook بيتحقق من توقيع كل رسالة واردة بالـ HMAC المبني على الـ App Secret، ولو المتغير ده ناقص بيرفض **كل** الرسايل بصمت (في الـ Logs: `rejected unsigned/invalid payload`) — يعني البوت هيستلم بس **مش هيرد أبدًا**. ده أكتر سبب شائع لـ "البوت مش شغّال". لو ضايفهم وعمري ما رد، ابدأ بالمتغير ده.
 
 Save each one. Then click **Deployments** → latest deployment → **⋯** → **Redeploy** to pick up the new env vars.
 
