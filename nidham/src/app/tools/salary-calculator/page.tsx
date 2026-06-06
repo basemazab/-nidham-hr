@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { SalaryCalculator } from "./calculator";
+import { ToolLeadCapture } from "@/components/tool-lead-capture";
 import { BlogNav, BlogFooter } from "@/components/blog-chrome";
 import { BreadcrumbSchema, HowToSchema } from "@/components/json-ld";
 import { EmbedSnippet } from "@/components/embed-snippet";
@@ -89,6 +90,7 @@ export default function SalaryCalculatorPage() {
 
       <main className="px-6 pb-12 max-w-3xl mx-auto w-full flex-1">
         <SalaryCalculator />
+        <ToolLeadCapture source="salary-calculator" />
 
         {/* Explanatory section — pure HTML, helps SEO and reassures users */}
         <section className="mt-12 prose-ar">

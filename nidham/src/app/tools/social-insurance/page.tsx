@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { InsuranceCalculator } from "./calculator";
+import { ToolLeadCapture } from "@/components/tool-lead-capture";
 import { BlogNav, BlogFooter } from "@/components/blog-chrome";
 import { BreadcrumbSchema, HowToSchema } from "@/components/json-ld";
 import { EmbedSnippet } from "@/components/embed-snippet";
@@ -80,6 +81,7 @@ export default function SocialInsurancePage() {
 
       <main className="px-6 pb-12 max-w-3xl mx-auto w-full flex-1">
         <InsuranceCalculator />
+        <ToolLeadCapture source="social-insurance" />
 
         <section className="mt-12 prose-ar">
           <h2>إيه هو "الأجر التأميني"؟</h2>
