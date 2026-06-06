@@ -3,6 +3,7 @@ import dynamic from "next/dynamic";
 import { SectionHeader } from "./sections/section-helpers";
 import { DeferredJsonLd } from "@/components/deferred-json-ld";
 import { HeroSection } from "./sections/hero";
+import { DesktopAppSection } from "./sections/desktop-app";
 import { Reveal, CountUp, ScrollProgress } from "./sections/reveal";
 
 const DynamicLiveScreenshots = dynamic(() => import("./sections/live-screenshots").then((m) => ({ default: m.LiveScreenshotsSection })), { loading: () => <div className="h-64 animate-pulse bg-slate-100 rounded-2xl" /> });
@@ -81,6 +82,7 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
       <Reveal><DynamicMobileSection /></Reveal>
       <Reveal><DynamicSecuritySection /></Reveal>
       <Reveal><DynamicDeploymentOptions /></Reveal>
+      <Reveal><DesktopAppSection /></Reveal>
       <Reveal><DynamicHowItWorks /></Reveal>
       <Reveal><DynamicFinalCTA /></Reveal>
       <DynamicFooter />
