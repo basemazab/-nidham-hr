@@ -77,7 +77,7 @@ export function HeroSection() {
               <span className="text-3xl font-black text-white font-display">ن</span>
             </span>
             <span className="text-right">
-              <span className="block text-4xl font-black font-display leading-none bg-gradient-to-r from-brand-cyan-dark via-brand-cyan to-brand-navy bg-clip-text text-transparent">
+              <span className="block text-4xl font-black font-display leading-none bg-gradient-to-r from-brand-cyan-dark via-brand-cyan to-brand-navy bg-clip-text text-transparent animate-gradient-text">
                 نِظام
               </span>
               <span className="block text-[10px] tracking-[0.35em] text-brand-gold font-semibold mt-1.5">
@@ -110,9 +110,14 @@ export function HeroSection() {
           >
             <Link
               href="/signup"
-              className="w-full sm:w-auto px-8 py-4 rounded-xl bg-gradient-to-r from-brand-cyan to-brand-cyan-dark text-white font-bold text-lg shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 hover:-translate-y-0.5 transition-all font-cairo"
+              className="group relative w-full sm:w-auto overflow-hidden px-8 py-4 rounded-xl bg-gradient-to-r from-brand-cyan to-brand-cyan-dark text-white font-bold text-lg shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 hover:-translate-y-0.5 transition-all font-cairo"
             >
-              جرّب مجانًا 14 يوم
+              <span className="relative z-10">جرّب مجانًا 14 يوم</span>
+              {/* Sheen that sweeps across on hover */}
+              <span
+                aria-hidden
+                className="pointer-events-none absolute inset-y-0 -left-1/3 w-1/3 -skew-x-12 bg-white/30 blur-md transition-transform duration-700 ease-out group-hover:translate-x-[300%]"
+              />
             </Link>
             <Link
               href="/login"

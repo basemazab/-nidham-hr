@@ -3,6 +3,7 @@ import dynamic from "next/dynamic";
 import { SectionHeader } from "./sections/section-helpers";
 import { DeferredJsonLd } from "@/components/deferred-json-ld";
 import { HeroSection } from "./sections/hero";
+import { Reveal, CountUp, ScrollProgress } from "./sections/reveal";
 
 const DynamicLiveScreenshots = dynamic(() => import("./sections/live-screenshots").then((m) => ({ default: m.LiveScreenshotsSection })), { loading: () => <div className="h-64 animate-pulse bg-slate-100 rounded-2xl" /> });
 const DynamicBridgeAnalytics = dynamic(() => import("./sections/bridge-analytics").then((m) => ({ default: m.BridgeAnalyticsSection })), { loading: () => <div className="h-64 animate-pulse bg-slate-800 rounded-2xl" /> });
@@ -54,6 +55,7 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
 
   return (
     <main className="bg-white">
+      <ScrollProgress />
       {hasAuthError && (
         <div className="max-w-3xl mx-auto px-6 pt-6">
           <div className="p-4 rounded-xl bg-red-50 border-2 border-red-200 text-right flex items-start gap-3">
@@ -70,17 +72,17 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
       )}
       <HeroSection />
       <ProofStrip />
-      <ComplianceShieldHighlight />
+      <Reveal><ComplianceShieldHighlight /></Reveal>
       <CoreModulesSection />
-      <DynamicLiveScreenshots />
-      <DynamicBridgeAnalytics />
-      <DynamicAISection />
-      <DynamicMarketingStudio />
-      <DynamicMobileSection />
-      <DynamicSecuritySection />
-      <DynamicDeploymentOptions />
-      <DynamicHowItWorks />
-      <DynamicFinalCTA />
+      <Reveal><DynamicLiveScreenshots /></Reveal>
+      <Reveal><DynamicBridgeAnalytics /></Reveal>
+      <Reveal><DynamicAISection /></Reveal>
+      <Reveal><DynamicMarketingStudio /></Reveal>
+      <Reveal><DynamicMobileSection /></Reveal>
+      <Reveal><DynamicSecuritySection /></Reveal>
+      <Reveal><DynamicDeploymentOptions /></Reveal>
+      <Reveal><DynamicHowItWorks /></Reveal>
+      <Reveal><DynamicFinalCTA /></Reveal>
       <DynamicFooter />
       <DeferredJsonLd schema={faqSchema} />
     </main>
@@ -120,21 +122,27 @@ function ComplianceShieldHighlight() {
 }
 
 function ProofStrip() {
-  const items = [
-    { stat: "21", label: "يوم إجازة سنوية محسوبين تلقائيًا" },
-    { stat: "11%", label: "تأمينات اجتماعية على الموظف، لحد سقف الأجر التأميني" },
-    { stat: "100م", label: "geofence حول مكتبك للحضور" },
-    { stat: "6", label: "أدوات AI تسويق بتحل محل وكالة كاملة" },
-    { stat: "AI", label: "بيقرا CVs، يصمم حملات، ويجيب leads" },
+  const items: { value?: number; suffix?: string; text?: string; label: string }[] = [
+    { value: 21, label: "يوم إجازة سنوية محسوبين تلقائيًا" },
+    { value: 11, suffix: "%", label: "تأمينات اجتماعية على الموظف، لحد سقف الأجر التأميني" },
+    { value: 100, suffix: "م", label: "geofence حول مكتبك للحضور" },
+    { value: 6, label: "أدوات AI تسويق بتحل محل وكالة كاملة" },
+    { text: "AI", label: "بيقرا CVs، يصمم حملات، ويجيب leads" },
   ];
   return (
-    <section className="border-y border-slate-200 bg-white px-6 py-8">
+    <section className="border-y border-slate-200 bg-white px-6 py-10">
       <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-5 gap-6">
-        {items.map((i) => (
-          <div key={i.label} className="text-center">
-            <div className="text-3xl font-black font-display bg-gradient-to-r from-brand-cyan-dark to-brand-navy bg-clip-text text-transparent mb-1">{i.stat}</div>
+        {items.map((i, idx) => (
+          <Reveal key={i.label} delay={idx * 0.08} className="text-center">
+            <div className="text-3xl md:text-4xl font-black font-display bg-gradient-to-r from-brand-cyan-dark via-brand-cyan to-brand-navy bg-clip-text text-transparent mb-1 animate-gradient-text">
+              {i.value !== undefined ? (
+                <CountUp value={i.value} suffix={i.suffix ?? ""} />
+              ) : (
+                i.text
+              )}
+            </div>
             <div className="text-xs md:text-sm text-slate-600 font-cairo leading-relaxed">{i.label}</div>
-          </div>
+          </Reveal>
         ))}
       </div>
     </section>
@@ -156,22 +164,26 @@ function CoreModulesSection() {
   return (
     <section className="px-6 py-20 bg-gradient-to-b from-white to-slate-50">
       <div className="max-w-6xl mx-auto">
-        <SectionHeader eyebrow="الموديولات الأساسية" title="كل اللي شركتك محتاجه — في صفحة واحدة" subtitle="من ساعة ما توقّع عقد موظف لحد ما تبعتله شيك آخر الشهر، كل خطوة في نظام واحد." />
+        <Reveal>
+          <SectionHeader eyebrow="الموديولات الأساسية" title="كل اللي شركتك محتاجه — في صفحة واحدة" subtitle="من ساعة ما توقّع عقد موظف لحد ما تبعتله شيك آخر الشهر، كل خطوة في نظام واحد." />
+        </Reveal>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-          {modules.map((m) => (
-            <div key={m.title} className="group bg-white p-6 rounded-2xl border border-slate-200 hover:border-brand-cyan/40 hover:shadow-lg hover:-translate-y-1 transition-all">
-              <div className="text-3xl mb-3">{m.icon}</div>
-              <h3 className="font-black font-cairo text-slate-800 mb-2">{m.title}</h3>
-              <p className="text-sm text-slate-600 leading-relaxed mb-4 font-cairo">{m.desc}</p>
-              <ul className="space-y-1.5">
-                {m.points.map((p) => (
-                  <li key={p} className="text-xs text-slate-500 flex items-start gap-2 font-cairo">
-                    <span className="text-brand-cyan-dark mt-0.5">✓</span>
-                    <span>{p}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+          {modules.map((m, i) => (
+            <Reveal key={m.title} delay={(i % 4) * 0.07}>
+              <div className="group h-full bg-white p-6 rounded-2xl border border-slate-200 hover:border-brand-cyan/50 hover:shadow-xl hover:shadow-cyan-500/10 hover:-translate-y-1.5 transition-all duration-300">
+                <div className="text-3xl mb-3 inline-block transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6">{m.icon}</div>
+                <h3 className="font-black font-cairo text-slate-800 mb-2 group-hover:text-brand-cyan-dark transition-colors">{m.title}</h3>
+                <p className="text-sm text-slate-600 leading-relaxed mb-4 font-cairo">{m.desc}</p>
+                <ul className="space-y-1.5">
+                  {m.points.map((p) => (
+                    <li key={p} className="text-xs text-slate-500 flex items-start gap-2 font-cairo">
+                      <span className="text-brand-cyan-dark mt-0.5">✓</span>
+                      <span>{p}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </Reveal>
           ))}
         </div>
       </div>

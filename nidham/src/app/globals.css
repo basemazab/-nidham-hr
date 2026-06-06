@@ -10,12 +10,40 @@
   to { opacity: 1; }
 }
 
+/* Slow horizontal pan for animated gradient text (logo, headlines, stats).
+   Pair with bg-clip-text + a wide background-size so the gradient drifts. */
+@keyframes gradient-pan {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* Soft brand-tinted glow that breathes — used behind hero/CTA accents. */
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.06); }
+}
+
+/* Sheen sweep for "shine on hover" buttons / badges. */
+@keyframes shine-sweep {
+  0% { transform: translateX(-130%) skewX(-18deg); }
+  100% { transform: translateX(230%) skewX(-18deg); }
+}
+
 @utility animate-fade-in-up {
   animation: fade-in-up 0.3s ease-out both;
 }
 
 @utility animate-fade-in {
   animation: fade-in 0.3s ease-out both;
+}
+
+@utility animate-gradient-text {
+  background-size: 220% auto;
+  animation: gradient-pan 6s ease infinite;
+}
+
+@utility animate-pulse-glow {
+  animation: pulse-glow 7s ease-in-out infinite;
 }
 
 /* ---------------------------------------------------------------------------
