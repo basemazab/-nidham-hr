@@ -188,17 +188,32 @@ export async function testWebhookConnection(): Promise<
     return { ok: false, error: "App Secret ناقص" };
   }
 
-  // 1) Verify the token by fetching page info from Meta
+  // 1) Verify the token. Reading the page NAME needs `pages_read_engagement`,
+  //    which not every app/token has. So a permission error (#100) is NOT a
+  //    failure — the token still authenticated and can send/receive. Only a
+  //    genuine token error (#190 invalid/expired) is fatal.
   let pageName: string;
   try {
     const res = await fetch(
       `https://graph.facebook.com/v21.0/${settings.meta_page_id}?fields=name&access_token=${encodeURIComponent(settings.meta_page_token)}`,
     );
-    const data = (await res.json()) as { name?: string; error?: { message: string } };
-    if (!res.ok || data.error) {
-      return { ok: false, error: `Meta API: ${data.error?.message || "فشل الاتصال"}` };
+    const data = (await res.json()) as {
+      name?: string;
+      error?: { message: string; code?: number };
+    };
+    if (data.error) {
+      if (data.error.code === 190) {
+        return {
+          ok: false,
+          error: "توكن الصفحة غير صالح أو منتهي — جدّده من إعدادات الصفحة.",
+        };
+      }
+      // Permission (#100) etc. — token works, just can't read the name.
+      pageName =
+        "صفحتك (الاسم مش ظاهر لأن صلاحية pages_read_engagement مش مفعّلة — بس التوكن شغّال ✓)";
+    } else {
+      pageName = data.name || "صفحتك";
     }
-    pageName = data.name || "(بلا اسم)";
   } catch (err) {
     return { ok: false, error: `فشل الاتصال بـ Meta: ${err instanceof Error ? err.message : String(err)}` };
   }
