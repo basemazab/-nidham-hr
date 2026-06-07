@@ -218,3 +218,30 @@ export function buildBotXCsv(
 
   return { csv: lines.join("\n") + "\n", count: seen.size };
 }
+
+// ----------------------------------------------------------------------------
+// parseManualContacts — turn pasted text into {name, phone} pairs.
+// Works without the Google key: the user pastes lines like
+//   "شركة الأمل 01001234567"  |  "01112223334"  |  "مصنع كذا, 010..."
+// We pull the first phone-looking run from each line; the rest is the name.
+// ----------------------------------------------------------------------------
+export function parseManualContacts(
+  text: string,
+): Array<{ name: string | null; phone: string }> {
+  const out: Array<{ name: string | null; phone: string }> = [];
+  for (const rawLine of (text || "").split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line) continue;
+    const m = line.match(/\+?\d[\d\s().-]{7,}\d/);
+    if (!m) continue;
+    const phone = m[0];
+    const idx = m.index ?? 0;
+    const name =
+      (line.slice(0, idx) + " " + line.slice(idx + phone.length))
+        .replace(/[,;|\t]+/g, " ")
+        .replace(/\s+/g, " ")
+        .trim() || null;
+    out.push({ name, phone });
+  }
+  return out;
+}

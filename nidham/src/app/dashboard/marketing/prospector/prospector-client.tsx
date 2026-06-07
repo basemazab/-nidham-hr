@@ -10,7 +10,9 @@ import type { ProspectResult } from "@/lib/prospecting";
 import {
   searchProspectsAction,
   importProspectsAction,
+  importManualAction,
   generateOutreachAction,
+  listOutreachAction,
   exportBotXAction,
 } from "./actions";
 
@@ -30,7 +32,9 @@ export function ProspectorClient() {
   return (
     <div className="space-y-5">
       <SearchSection />
+      <ManualImportSection />
       <OutreachSection />
+      <DirectReachSection />
       <ExportSection />
     </div>
   );
@@ -437,6 +441,198 @@ function ExportSection() {
         وزوّد بالتدريج، بفاصل عشوائي بين الرسائل، وخلّي في جملة «اكتب إلغاء». ركّز على الرد على
         اللي بيكلّمك — أأمن وأعلى تحويل.
       </div>
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// 1b) Manual import — paste numbers (works without the Google key)
+// ---------------------------------------------------------------------------
+function ManualImportSection() {
+  const [text, setText] = useState("");
+  const [msg, setMsg] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const [loading, start] = useTransition();
+
+  function run() {
+    setErr(null);
+    setMsg(null);
+    start(async () => {
+      const out = await importManualAction(text);
+      if (!out.ok) {
+        setErr(out.error);
+        return;
+      }
+      setMsg(
+        `تم استيراد ${out.inserted} عميل${out.skipped ? ` (${out.skipped} مكرر/غير صالح اتخطّى)` : ""} كـ Leads.`,
+      );
+      if (out.inserted > 0) setText("");
+    });
+  }
+
+  return (
+    <section className="bg-white border-2 border-slate-200 rounded-2xl p-5">
+      <h2 className="font-black font-cairo text-slate-800 mb-1 flex items-center gap-2">
+        📋 استيراد أرقام يدويًا{" "}
+        <span className="text-xs font-normal text-emerald-600">(بدون مفتاح جوجل)</span>
+      </h2>
+      <p className="text-xs text-slate-500 font-cairo mb-3">
+        الزق أي أرقام — كل عميل في سطر (الاسم والرقم، أو الرقم لوحده). هنحوّلها لصيغة
+        الواتساب ونشيل المكرر ونضيفهم Leads.
+      </p>
+      <textarea
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        rows={5}
+        dir="ltr"
+        placeholder={"شركة الأمل 01001234567\nمصنع النور 01112223334\n01234567890"}
+        className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-slate-400 outline-none text-sm font-mono resize-y mb-3"
+      />
+      <button
+        onClick={run}
+        disabled={loading || text.trim().length === 0}
+        className="px-5 py-2 rounded-lg bg-slate-700 hover:bg-slate-800 disabled:opacity-50 text-white font-bold font-cairo text-sm"
+      >
+        {loading ? "بيستورد…" : "استورد كـ Leads"}
+      </button>
+      {msg && (
+        <div className="mt-3 bg-emerald-50 border border-emerald-200 rounded-lg p-3 text-xs text-emerald-700 font-cairo">
+          {msg}
+        </div>
+      )}
+      {err && (
+        <div className="mt-3 bg-rose-50 border border-rose-200 rounded-lg p-3 text-xs text-rose-700 font-cairo">
+          {err}
+        </div>
+      )}
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// 2b) Direct reach — per-lead wa.me links (manual send, no Bot X, no ban risk)
+// ---------------------------------------------------------------------------
+function DirectReachSection() {
+  const [message, setMessage] = useState("");
+  const [source, setSource] = useState("all");
+  const [status, setStatus] = useState("lead");
+  const [leads, setLeads] = useState<{ id: string; name: string; wa: string }[]>([]);
+  const [loaded, setLoaded] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [loading, start] = useTransition();
+
+  function run() {
+    setErr(null);
+    start(async () => {
+      const out = await listOutreachAction({ source, status, limit: 200 });
+      setLoaded(true);
+      if (!out.ok) {
+        setErr(out.error);
+        setLeads([]);
+        return;
+      }
+      setLeads(out.leads);
+    });
+  }
+
+  function waHref(l: { name: string; wa: string }) {
+    const m = (message || "").split("{name}").join(l.name);
+    const q = m ? `?text=${encodeURIComponent(m)}` : "";
+    return `https://wa.me/${l.wa}${q}`;
+  }
+
+  return (
+    <section className="bg-white border-2 border-green-200 rounded-2xl p-5">
+      <h2 className="font-black font-cairo text-slate-800 mb-1 flex items-center gap-2">
+        💬 تواصل مباشر <span className="text-xs font-normal text-slate-400">(واتساب يدوي — بدون بوت اكس)</span>
+      </h2>
+      <p className="text-xs text-slate-500 font-cairo mb-3">
+        اكتب رسالتك (استخدم <code className="bg-slate-100 px-1 rounded">{"{name}"}</code> وهتتبدل باسم كل عميل)،
+        حمّل العملاء، واضغط «افتح واتساب» — هيفتح المحادثة بالرسالة جاهزة، تبعت بإيدك.
+      </p>
+
+      <textarea
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
+        rows={3}
+        placeholder="أهلًا {name} 👋 معاك فريق نِظام HR..."
+        className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-green-400 outline-none text-sm font-cairo resize-y mb-3"
+      />
+
+      <div className="grid sm:grid-cols-3 gap-2 mb-3">
+        <select
+          value={source}
+          onChange={(e) => setSource(e.target.value)}
+          className="px-3 py-2 rounded-lg border border-slate-200 outline-none text-sm font-cairo"
+        >
+          <option value="all">كل المصادر</option>
+          <option value="google_maps">جوجل ماب</option>
+          <option value="manual">يدوي</option>
+          <option value="landing_page">صفحات الهبوط</option>
+        </select>
+        <select
+          value={status}
+          onChange={(e) => setStatus(e.target.value)}
+          className="px-3 py-2 rounded-lg border border-slate-200 outline-none text-sm font-cairo"
+        >
+          <option value="lead">جديد</option>
+          <option value="contacted">اتواصلنا</option>
+          <option value="all">كل الحالات</option>
+        </select>
+        <button
+          onClick={run}
+          disabled={loading}
+          className="px-5 py-2 rounded-lg bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-bold font-cairo text-sm"
+        >
+          {loading ? "بيحمّل…" : "حمّل العملاء"}
+        </button>
+      </div>
+
+      {err && (
+        <div className="mb-3 bg-rose-50 border border-rose-200 rounded-lg p-3 text-xs text-rose-700 font-cairo">
+          {err}
+        </div>
+      )}
+
+      {loaded && !err && leads.length === 0 && (
+        <div className="text-xs text-slate-500 font-cairo">
+          مفيش عملاء بأرقام موبايل في الفلتر ده. استورد أرقام الأول.
+        </div>
+      )}
+
+      {leads.length > 0 && (
+        <>
+          <div className="text-xs text-slate-500 font-cairo mb-2">
+            {leads.length} عميل جاهز للتواصل
+          </div>
+          <div className="max-h-80 overflow-y-auto border border-slate-100 rounded-lg divide-y divide-slate-100">
+            {leads.map((l) => (
+              <div key={l.id} className="flex items-center justify-between gap-2 p-2">
+                <div className="min-w-0">
+                  <div className="text-sm font-bold text-slate-700 font-cairo truncate">
+                    {l.name}
+                  </div>
+                  <div className="text-[11px] text-slate-400 font-mono" dir="ltr">
+                    {l.wa}
+                  </div>
+                </div>
+                <a
+                  href={waHref(l)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="shrink-0 px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-bold font-cairo"
+                >
+                  افتح واتساب
+                </a>
+              </div>
+            ))}
+          </div>
+          <div className="mt-3 bg-amber-50 border border-amber-200 rounded-lg p-3 text-[11px] text-amber-800 font-cairo leading-relaxed">
+            🛡️ ابعت على دفعات صغيرة وبفاصل بينهم، ونوّع الصياغة شوية — حتى اليدوي
+            لو بعت بسرعة لأرقام كتير ممكن يترصد.
+          </div>
+        </>
+      )}
     </section>
   );
 }
