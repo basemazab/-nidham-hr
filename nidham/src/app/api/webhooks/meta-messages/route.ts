@@ -134,6 +134,7 @@ type MetaWebhookPayload = {
         mid: string;
         text?: string;
         is_echo?: boolean;
+        quick_reply?: { payload?: string }; // tapped Flow button
         attachments?: Array<{ type: string; payload?: { url?: string } }>;
       };
     }>;
@@ -215,6 +216,15 @@ async function processEventAsync(
       .order("priority", { ascending: false });
     const ruleList: AutoReplyRule[] = ruleRows || [];
 
+    // Active button-menu flows for this tenant (trigger keywords only — node
+    // bodies are fetched on demand when a flow starts / navigates).
+    const { data: flowRows } = await supabase
+      .from("marketing_flows")
+      .select("id, trigger_keywords")
+      .eq("company_id", settings.company_id)
+      .eq("active", true);
+    const flowList: FlowRow[] = flowRows || [];
+
     // Process each message in the entry
     for (const event of entry.messaging || []) {
       if (!event.message?.text || event.message.is_echo) continue;
@@ -255,6 +265,37 @@ async function processEventAsync(
       const channelEnabled =
         (channel === "messenger" && settings.channel_messenger) ||
         (channel === "instagram" && settings.channel_instagram);
+
+      // 0) Flow builder. A tapped button (quick_reply payload "FLOW:f:n")
+      //    navigates to that node; otherwise a trigger keyword starts a flow.
+      //    Either way we send the node + its buttons and skip rules/AI.
+      if (channelEnabled && settings.meta_page_token) {
+        const qr = event.message.quick_reply?.payload;
+        if (qr && qr.startsWith("FLOW:")) {
+          await runFlowNavigate({
+            supabase,
+            payload: qr,
+            companyId: settings.company_id,
+            channel,
+            pageToken: settings.meta_page_token,
+            recipientId: senderId,
+            conversationId,
+          });
+          continue;
+        }
+        const startFlowId = findFlowByKeyword(flowList, messageText);
+        if (startFlowId) {
+          await runFlowStart({
+            supabase,
+            flowId: startFlowId,
+            channel,
+            pageToken: settings.meta_page_token,
+            recipientId: senderId,
+            conversationId,
+          });
+          continue;
+        }
+      }
 
       // 1) Keyword rules run FIRST and work even when AI is off (ManyChat-style,
       //    deterministic). First matching rule wins → send + skip AI.
@@ -387,6 +428,137 @@ function findRuleResponse(
     }
   }
   return null;
+}
+
+// ── Button-menu Flows (ManyChat-style) ──
+type FlowRow = { id: string; trigger_keywords: string[] | null };
+type FlowButton = { label?: string; next_node_id?: string | null };
+type FlowNode = {
+  id: string;
+  flow_id: string;
+  message: string;
+  buttons: FlowButton[] | null;
+};
+
+function findFlowByKeyword(flows: FlowRow[], text: string): string | null {
+  const t = (text || "").trim().toLowerCase();
+  if (!t) return null;
+  for (const f of flows) {
+    for (const kwRaw of f.trigger_keywords || []) {
+      const kw = (kwRaw || "").trim().toLowerCase();
+      if (kw && t.includes(kw)) return f.id;
+    }
+  }
+  return null;
+}
+
+// Send a flow node's message + its buttons (as tappable quick replies), and
+// log the outbound message on the conversation.
+async function sendFlowNode(args: {
+  supabase: ReturnType<typeof createServiceClient>;
+  node: FlowNode;
+  flowId: string;
+  channel: "messenger" | "instagram";
+  pageToken: string;
+  recipientId: string;
+  conversationId: string;
+}): Promise<void> {
+  const buttons = (args.node.buttons || []).filter(
+    (b): b is { label: string; next_node_id: string } =>
+      !!b && !!b.label && !!b.next_node_id,
+  );
+  const quickReplies = buttons.map((b) => ({
+    title: b.label,
+    payload: `FLOW:${args.flowId}:${b.next_node_id}`,
+  }));
+  const send = await sendMetaMessage({
+    channel: args.channel,
+    pageToken: args.pageToken,
+    recipientId: args.recipientId,
+    text: args.node.message,
+    quickReplies: quickReplies.length ? quickReplies : undefined,
+  });
+  await args.supabase.from("marketing_inbox_messages").insert({
+    conversation_id: args.conversationId,
+    direction: "outbound",
+    sender: "ai",
+    body: `[فلو] ${args.node.message}`,
+    meta_message_id: send.ok ? send.messageId : null,
+    sent_at: send.ok ? new Date().toISOString() : null,
+    delivery_error: send.ok ? null : send.error,
+  });
+  await args.supabase
+    .from("marketing_inbox_conversations")
+    .update({ ai_intent: "flow", ai_last_run_at: new Date().toISOString() })
+    .eq("id", args.conversationId);
+}
+
+async function runFlowStart(args: {
+  supabase: ReturnType<typeof createServiceClient>;
+  flowId: string;
+  channel: "messenger" | "instagram";
+  pageToken: string;
+  recipientId: string;
+  conversationId: string;
+}): Promise<void> {
+  const { data: nodes } = await args.supabase
+    .from("marketing_flow_nodes")
+    .select("id, flow_id, message, buttons")
+    .eq("flow_id", args.flowId)
+    .order("is_start", { ascending: false })
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .returns<FlowNode[]>();
+  const node = nodes?.[0];
+  if (!node) return;
+  await sendFlowNode({
+    supabase: args.supabase,
+    node,
+    flowId: args.flowId,
+    channel: args.channel,
+    pageToken: args.pageToken,
+    recipientId: args.recipientId,
+    conversationId: args.conversationId,
+  });
+}
+
+async function runFlowNavigate(args: {
+  supabase: ReturnType<typeof createServiceClient>;
+  payload: string;
+  companyId: string;
+  channel: "messenger" | "instagram";
+  pageToken: string;
+  recipientId: string;
+  conversationId: string;
+}): Promise<void> {
+  const parts = args.payload.split(":");
+  const flowId = parts[1];
+  const nodeId = parts[2];
+  if (!flowId || !nodeId) return;
+  // Verify the flow belongs to this tenant (service client bypasses RLS).
+  const { data: flow } = await args.supabase
+    .from("marketing_flows")
+    .select("id")
+    .eq("id", flowId)
+    .eq("company_id", args.companyId)
+    .maybeSingle();
+  if (!flow) return;
+  const { data: node } = await args.supabase
+    .from("marketing_flow_nodes")
+    .select("id, flow_id, message, buttons")
+    .eq("id", nodeId)
+    .eq("flow_id", flowId)
+    .maybeSingle<FlowNode>();
+  if (!node) return;
+  await sendFlowNode({
+    supabase: args.supabase,
+    node,
+    flowId,
+    channel: args.channel,
+    pageToken: args.pageToken,
+    recipientId: args.recipientId,
+    conversationId: args.conversationId,
+  });
 }
 
 async function runCommentReply(args: {

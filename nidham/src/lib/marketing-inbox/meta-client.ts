@@ -26,6 +26,9 @@ export async function sendMetaMessage(input: {
   pageToken: string;       // Page Access Token (from settings)
   recipientId: string;     // PSID (Messenger) or IGSID (Instagram)
   text: string;
+  // Optional tappable buttons (used by Flow builder). On tap, Meta sends a
+  // message event back with message.quick_reply.payload = the payload here.
+  quickReplies?: { title: string; payload: string }[];
 }): Promise<
   | { ok: true; messageId: string }
   | { ok: false; error: string; outsideWindow?: boolean }
@@ -35,9 +38,18 @@ export async function sendMetaMessage(input: {
   // recipient_id format differs but the call shape is identical.
   const url = `${GRAPH_BASE}/me/messages?access_token=${encodeURIComponent(input.pageToken)}`;
 
+  const message: Record<string, unknown> = { text: input.text };
+  if (input.quickReplies && input.quickReplies.length > 0) {
+    message.quick_replies = input.quickReplies.slice(0, 13).map((q) => ({
+      content_type: "text",
+      title: q.title.slice(0, 20), // Meta caps quick-reply titles at 20 chars
+      payload: q.payload.slice(0, 1000),
+    }));
+  }
+
   const body = {
     recipient: { id: input.recipientId },
-    message: { text: input.text },
+    message,
     messaging_type: "RESPONSE", // "I'm responding to a user-initiated message" — within 24h window
   };
 

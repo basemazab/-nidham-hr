@@ -574,6 +574,13 @@ export default async function MarketingHubPage({
               gradient="from-teal-50 to-emerald-50 border-teal-200 hover:border-teal-400"
             />
             <ToolLink
+              href="/dashboard/marketing/flows"
+              icon="🔀"
+              title="الفلوهات (Flows)"
+              text="منيو أزرار تفاعلي — كلمة → رسالة بأزرار → فروع"
+              gradient="from-violet-50 to-fuchsia-50 border-violet-200 hover:border-violet-400"
+            />
+            <ToolLink
               href="/dashboard/marketing/analytics"
               icon="📊"
               title="Analytics"
