@@ -581,6 +581,13 @@ export default async function MarketingHubPage({
               gradient="from-violet-50 to-fuchsia-50 border-violet-200 hover:border-violet-400"
             />
             <ToolLink
+              href="/dashboard/marketing/automations"
+              icon="📊"
+              title="أداء الأتمتة"
+              text="قياس القواعد والفلوهات والبثّ والسلاسل في مكان واحد"
+              gradient="from-slate-50 to-violet-50 border-slate-200 hover:border-violet-400"
+            />
+            <ToolLink
               href="/dashboard/marketing/analytics"
               icon="📊"
               title="Analytics"
