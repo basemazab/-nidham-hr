@@ -1469,3 +1469,69 @@ ${input.content.slice(0, 8000)}
     return object;
   });
 }
+
+// ----------------------------------------------------------------------------
+// 9) EMAIL CAMPAIGN WRITER — AI writes a marketing email for the TENANT's
+// product (subject lines + body). Tenant-generic: never mentions Nidham.
+// ----------------------------------------------------------------------------
+
+export const emailCampaignSchema = z.object({
+  subject_lines: z
+    .array(z.string())
+    .min(2)
+    .max(4)
+    .describe("عناوين بريد مختلفة — دي اللي بتحدد إذا الإيميل هيتفتح ولا لأ"),
+  preview_text: z
+    .string()
+    .describe("نص المعاينة القصير اللي بيظهر جنب العنوان في صندوق الوارد"),
+  body_html: z
+    .string()
+    .describe(
+      "جسم الإيميل بـ HTML بسيط (فقرات <p>، عناوين <h2>، قوائم <ul>، وزر <a>) بالعربي — من غير وسوم <html> أو <body>، الـ wrapper بيتحط برّه",
+    ),
+  body_text: z.string().describe("نسخة نصية بسيطة من نفس المحتوى"),
+  cta_label: z.string().describe("نص زر الدعوة (مثلاً: اطلب عرض سعر)"),
+});
+
+export type EmailCampaign = z.infer<typeof emailCampaignSchema>;
+
+const EMAIL_CAMPAIGN_SYSTEM = `أنت كاتب إيميلات تسويقية محترف للسوق المصري. بتكتب حملة إيميل **عن منتج
+المستخدم الموضّح تحت** — وبس. ممنوع تذكر أي نظام أو منتج أو شركة تانية، وممنوع
+تذكر «نِظام» أو أي برنامج إلا لو ده فعلاً منتج المستخدم.
+
+قواعد:
+1. **العناوين أهم حاجة** — اكتب 2-4 عناوين قصيرة تخلّي الواحد يفتح (فضول/فايدة/رقم)،
+   من غير كلمات سبام (مجاني!!!، اربح، عاجل).
+2. **الجسم مختصر وقابل للمسح بالعين** — فقرات قصيرة، يفضّل نقاط، وزر CTA واحد واضح.
+3. **القيمة للعميل** مش وصف المنتج.
+4. **متخترعش** أسعار/أرقام/ضمانات/لينكات مش مذكورة في وصف المنتج.
+5. عربي مصري محترم، وفي الآخر تحية بسيطة باسم الشركة.
+6. الـ body_html وسوم بسيطة بس (p, h2, ul, li, a, strong) — من غير CSS معقّد.`;
+
+export async function generateEmailCampaign(input: {
+  business: string;
+  goal: string;
+  audience?: string;
+  tone?: string;
+}): Promise<EmailCampaign> {
+  const userPrompt = `**منتج المستخدم (اكتب الحملة عنه هو بس):**
+${input.business}
+
+**هدف الحملة:** ${input.goal}
+${input.audience ? `**الجمهور:** ${input.audience}` : ""}
+${input.tone ? `**نبرة الصوت:** ${input.tone}` : ""}
+
+اكتب حملة إيميل كاملة: عناوين + نص معاينة + جسم HTML بسيط + نسخة نصية + زر CTA.`;
+
+  return callWithFallback(async (picked) => {
+    const { object } = await generateObject({
+      maxRetries: 0, // callWithFallback owns the retry chain
+      model: picked.model,
+      schema: emailCampaignSchema,
+      system: EMAIL_CAMPAIGN_SYSTEM,
+      prompt: userPrompt,
+      temperature: 0.75,
+    });
+    return object;
+  });
+}

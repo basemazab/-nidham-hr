@@ -553,6 +553,13 @@ export default async function MarketingHubPage({
               gradient="from-emerald-50 to-teal-50 border-emerald-200 hover:border-emerald-400"
             />
             <ToolLink
+              href="/dashboard/marketing/email"
+              icon="📧"
+              title="حملات الإيميل"
+              text="الـAI يكتب الحملة + قوائم + إرسال أو تصدير"
+              gradient="from-indigo-50 to-violet-50 border-indigo-200 hover:border-indigo-400"
+            />
+            <ToolLink
               href="/dashboard/marketing/analytics"
               icon="📊"
               title="Analytics"
