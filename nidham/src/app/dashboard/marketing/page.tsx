@@ -567,6 +567,13 @@ export default async function MarketingHubPage({
               gradient="from-fuchsia-50 to-violet-50 border-fuchsia-200 hover:border-fuchsia-400"
             />
             <ToolLink
+              href="/dashboard/marketing/sequences"
+              icon="⏱️"
+              title="السلاسل (Sequences)"
+              text="سلسلة رسائل مجدولة تتبعت أوتوماتيك لشريحة"
+              gradient="from-teal-50 to-emerald-50 border-teal-200 hover:border-teal-400"
+            />
+            <ToolLink
               href="/dashboard/marketing/analytics"
               icon="📊"
               title="Analytics"
