@@ -15,6 +15,8 @@
 //     Ask box. Doubles CTR for ranking pages.
 //   • BreadcrumbListSchema → cleaner site links under the main result
 
+import { PLAN_PRICE_EGP } from "@/lib/pricing";
+
 const SITE = (process.env.NEXT_PUBLIC_SITE_URL || "https://www.nidhamhr.com").replace(/\/$/, "");
 
 // ── Organization (brand identity) ──
@@ -87,7 +89,7 @@ export function SoftwareApplicationSchema() {
       {
         "@type": "Offer",
         name: "Starter Plan",
-        price: "500",
+        price: String(PLAN_PRICE_EGP.starter),
         priceCurrency: "EGP",
         priceValidUntil: "2027-12-31",
         availability: "https://schema.org/InStock",
@@ -96,7 +98,7 @@ export function SoftwareApplicationSchema() {
       {
         "@type": "Offer",
         name: "Pro Plan",
-        price: "1500",
+        price: String(PLAN_PRICE_EGP.pro),
         priceCurrency: "EGP",
         priceValidUntil: "2027-12-31",
         availability: "https://schema.org/InStock",
@@ -105,7 +107,7 @@ export function SoftwareApplicationSchema() {
       {
         "@type": "Offer",
         name: "Business Plan",
-        price: "3500",
+        price: String(PLAN_PRICE_EGP.business),
         priceCurrency: "EGP",
         priceValidUntil: "2027-12-31",
         availability: "https://schema.org/InStock",
