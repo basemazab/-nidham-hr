@@ -560,6 +560,13 @@ export default async function MarketingHubPage({
               gradient="from-indigo-50 to-violet-50 border-indigo-200 hover:border-indigo-400"
             />
             <ToolLink
+              href="/dashboard/marketing/broadcast"
+              icon="📣"
+              title="البثّ (Broadcast)"
+              text="رسالة لشريحة من عملاء الماسنجر/إنستجرام + تاجات"
+              gradient="from-fuchsia-50 to-violet-50 border-fuchsia-200 hover:border-fuchsia-400"
+            />
+            <ToolLink
               href="/dashboard/marketing/analytics"
               icon="📊"
               title="Analytics"
