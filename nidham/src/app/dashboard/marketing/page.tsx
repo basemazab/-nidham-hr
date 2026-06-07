@@ -127,7 +127,20 @@ export default async function MarketingHubPage({
             Leads Inbox, Video Studio) lives alongside the AI tool
             projects. Render them up top so they're always reachable,
             not buried inside a specific project. */}
-        <section className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+        <section className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+          <Link
+            href="/dashboard/marketing/prospector"
+            className="group bg-gradient-to-br from-cyan-50 to-violet-50 border-2 border-cyan-300 hover:border-violet-400 rounded-2xl p-4 transition hover:shadow-lg"
+          >
+            <div className="text-2xl mb-1">🚀</div>
+            <h3 className="text-sm font-black font-cairo text-slate-800 group-hover:text-violet-700 mb-1">
+              ماكينة العملاء
+            </h3>
+            <p className="text-[11px] text-slate-600 font-cairo leading-snug">
+              بحث جوجل ماب + رسائل AI + تصدير لبوت اكس
+            </p>
+          </Link>
+
           <Link
             href="/dashboard/marketing/landing-pages"
             className="group bg-gradient-to-br from-cyan-50 to-blue-50 border-2 border-cyan-200 hover:border-cyan-400 rounded-2xl p-4 transition hover:shadow-lg"
