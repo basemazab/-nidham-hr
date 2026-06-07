@@ -1251,3 +1251,108 @@ export async function generateFullMarketingPlan(
     return object;
   });
 }
+
+// ----------------------------------------------------------------------------
+// 7) AD AUDITOR — review an EXISTING ad against best practices (native
+// replacement for Claude Ads). Pure AI: paste your ad → score + issues +
+// concrete fixes + improved Arabic variants. No external account needed.
+// ----------------------------------------------------------------------------
+
+export const adAuditSchema = z.object({
+  overall_score: z
+    .number()
+    .int()
+    .min(0)
+    .max(100)
+    .describe("درجة جودة الإعلان من 0 لـ100"),
+  verdict: z
+    .string()
+    .describe("حكم سريع في جملة: ينفع ينزل زي ما هو؟ ولا محتاج تظبيط؟"),
+  issues: z
+    .array(
+      z.object({
+        severity: z.enum(["critical", "high", "medium", "low"]),
+        area: z.enum([
+          "hook",
+          "clarity",
+          "benefit",
+          "cta",
+          "targeting",
+          "compliance",
+          "length",
+          "trust",
+          "creative",
+        ]),
+        problem: z.string().describe("المشكلة بالظبط في الإعلان"),
+        fix: z.string().describe("الحل العملي — اكتب البديل لو ينفع"),
+      }),
+    )
+    .min(1)
+    .max(12),
+  improved_variants: z
+    .array(
+      z.object({
+        angle: z.string().describe("زاوية النسخة (ألم/رغبة/دليل اجتماعي...)"),
+        primary_text: z.string().describe("النص الرئيسي المحسّن"),
+        headline: z.string().describe("عنوان قصير قوي"),
+        cta: z.string().describe("زر/دعوة واضحة"),
+      }),
+    )
+    .min(2)
+    .max(3),
+  quick_wins: z
+    .array(z.string())
+    .describe("تعديلات سريعة ليها أثر فوري على الأداء"),
+});
+
+export type AdAudit = z.infer<typeof adAuditSchema>;
+
+const AD_AUDIT_SYSTEM = `أنت Senior Paid-Ads Auditor في وكالة أداء كبيرة، 12 سنة خبرة في السوق
+المصري. شغلتك تراجع إعلان جاهز وتقوله بصراحة: هينجح ولا هيحرق فلوس؟ وليه؟
+
+افحص الإعلان على المحاور دي:
+1. **Hook** — أول سطر بيوقف الواحد ولا ممل؟
+2. **Benefit not Feature** — بيبيع فايدة للعميل ولا بيوصف المنتج؟
+3. **الوضوح** — مفهوم بسرعة ولا فيه لخبطة؟
+4. **CTA** — في دعوة واضحة لإجراء محدد؟ (مش «تواصل معنا» بس)
+5. **الطول** — مناسب للمنصة؟ (Meta primary ≤125 حرف، العنوان قصير)
+6. **الثقة** — في دليل/أرقام/ضمان؟ أو وعود مبالغ فيها تضر؟
+7. **الالتزام** — في ادعاءات كاذبة أو كلام ممكن يرفضه إعلان المنصة؟
+
+قواعدك:
+- **صريح وعملي** — لكل مشكلة اكتب الحل، ويُفضّل تكتب البديل الجاهز.
+- **عربي مصري طبيعي** — مفيش فصحى ثقيلة.
+- **درجة واقعية** — لو الإعلان ضعيف اديله درجة واطية وقول ليه.
+- **variants محسّنة** — اطلع 2-3 نسخ أحسن بزوايا مختلفة، كل واحدة جاهزة للنسخ.
+- متخترعش أرقام أو ادعاءات للمنتج لو مش موجودة في النص الأصلي.`;
+
+export async function auditAd(input: {
+  ad_text: string;
+  platform: string;
+  goal?: string;
+  product?: string;
+}): Promise<AdAudit> {
+  const userPrompt = `**المنصة:** ${input.platform}
+${input.goal ? `**هدف الإعلان:** ${input.goal}` : ""}
+${input.product ? `**المنتج/الخدمة:** ${input.product}` : ""}
+
+**نص الإعلان المطلوب تدقيقه:**
+"""
+${input.ad_text.slice(0, 3000)}
+"""
+
+راجع الإعلان ده: اديله درجة، اطلّع المشاكل بترتيب الخطورة مع حل لكل واحدة،
+واكتب 2-3 نسخ محسّنة جاهزة + أهم quick wins.`;
+
+  return callWithFallback(async (picked) => {
+    const { object } = await generateObject({
+      maxRetries: 0, // callWithFallback owns the retry chain
+      model: picked.model,
+      schema: adAuditSchema,
+      system: AD_AUDIT_SYSTEM,
+      prompt: userPrompt,
+      temperature: 0.4,
+    });
+    return object;
+  });
+}
