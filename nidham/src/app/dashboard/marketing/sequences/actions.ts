@@ -61,6 +61,20 @@ export async function toggleSequence(form: FormData): Promise<void> {
   back("ok=1");
 }
 
+export async function toggleAutoEnroll(form: FormData): Promise<void> {
+  const { profile, supabase } = await gate();
+  const id = String(form.get("id") ?? "");
+  const auto = String(form.get("auto") ?? "") === "1";
+  if (!UUID.test(id)) back("");
+  await supabase
+    .from("marketing_sequences")
+    .update({ auto_enroll: auto })
+    .eq("id", id)
+    .eq("company_id", profile.company_id);
+  revalidatePath(PAGE);
+  back("ok=1");
+}
+
 export async function deleteSequence(form: FormData): Promise<void> {
   const { profile, supabase } = await gate();
   const id = String(form.get("id") ?? "");

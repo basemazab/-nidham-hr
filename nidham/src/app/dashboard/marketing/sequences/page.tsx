@@ -16,12 +16,13 @@ import {
   deleteSequenceStep,
   deleteSequence,
   toggleSequence,
+  toggleAutoEnroll,
   enrollSegment,
 } from "./actions";
 
 export const dynamic = "force-dynamic";
 
-type Seq = { id: string; name: string; active: boolean };
+type Seq = { id: string; name: string; active: boolean; auto_enroll: boolean };
 type Step = {
   id: string;
   sequence_id: string;
@@ -57,7 +58,7 @@ export default async function SequencesPage({
 
   const { data: seqs } = await supabase
     .from("marketing_sequences")
-    .select("id, name, active")
+    .select("id, name, active, auto_enroll")
     .eq("company_id", companyId)
     .order("created_at", { ascending: false })
     .returns<Seq[]>();
@@ -146,6 +147,17 @@ export default async function SequencesPage({
                         <input type="hidden" name="active" value={seq.active ? "0" : "1"} />
                         <button type="submit" className="text-xs font-bold text-slate-500 hover:text-slate-800 font-cairo">
                           {seq.active ? "إيقاف" : "تشغيل"}
+                        </button>
+                      </form>
+                      <form action={toggleAutoEnroll}>
+                        <input type="hidden" name="id" value={seq.id} />
+                        <input type="hidden" name="auto" value={seq.auto_enroll ? "0" : "1"} />
+                        <button
+                          type="submit"
+                          title="تسجيل كل محادثة جديدة في السلسلة دي تلقائيًا"
+                          className={`text-xs font-bold font-cairo ${seq.auto_enroll ? "text-emerald-600" : "text-slate-400 hover:text-slate-700"}`}
+                        >
+                          {seq.auto_enroll ? "🟢 ترحيب تلقائي" : "⚪ ترحيب تلقائي"}
                         </button>
                       </form>
                       <form action={deleteSequence}>

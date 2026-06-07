@@ -717,7 +717,62 @@ async function upsertConversation(args: {
     console.error("[meta-webhook] upsert conv failed:", error);
     return null;
   }
+
+  // Best-effort: enroll the brand-new conversation into any active welcome
+  // (auto_enroll) sequences. Wrapped so a failure never blocks messaging.
+  try {
+    await autoEnrollNewConversation(args.supabase, args.companyId, created.id);
+  } catch (err) {
+    console.warn(
+      "[meta-webhook] auto-enroll failed:",
+      err instanceof Error ? err.message : err,
+    );
+  }
+
   return created.id;
+}
+
+// Enroll a freshly-created conversation into every active auto-enroll sequence
+// for the company (welcome drip). Skips sequences with no steps. Idempotent via
+// the (sequence_id, conversation_id) unique constraint.
+async function autoEnrollNewConversation(
+  supabase: ReturnType<typeof createServiceClient>,
+  companyId: string,
+  conversationId: string,
+): Promise<void> {
+  const { data: seqs } = await supabase
+    .from("marketing_sequences")
+    .select("id")
+    .eq("company_id", companyId)
+    .eq("active", true)
+    .eq("auto_enroll", true)
+    .returns<{ id: string }[]>();
+  if (!seqs || seqs.length === 0) return;
+
+  for (const s of seqs) {
+    const { data: step } = await supabase
+      .from("marketing_sequence_steps")
+      .select("delay_hours")
+      .eq("sequence_id", s.id)
+      .order("step_order", { ascending: true })
+      .limit(1)
+      .maybeSingle<{ delay_hours: number }>();
+    if (!step) continue;
+    const nextRun = new Date(
+      Date.now() + (step.delay_hours ?? 0) * 3600 * 1000,
+    ).toISOString();
+    await supabase.from("marketing_sequence_enrollments").upsert(
+      {
+        company_id: companyId,
+        sequence_id: s.id,
+        conversation_id: conversationId,
+        current_step: 0,
+        status: "active",
+        next_run_at: nextRun,
+      },
+      { onConflict: "sequence_id,conversation_id", ignoreDuplicates: true },
+    );
+  }
 }
 
 // ── Generate AI reply + send via Meta + store outbound message ──
