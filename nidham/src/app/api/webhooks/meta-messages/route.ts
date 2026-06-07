@@ -205,6 +205,16 @@ async function processEventAsync(
       continue;
     }
 
+    // Keyword auto-reply rules for this tenant — fetched once per entry. They
+    // run BEFORE the AI and independently of the AI toggle (deterministic).
+    const { data: ruleRows } = await supabase
+      .from("marketing_auto_reply_rules")
+      .select("keywords, response, match_type, apply_dm, apply_comment")
+      .eq("company_id", settings.company_id)
+      .eq("active", true)
+      .order("priority", { ascending: false });
+    const ruleList: AutoReplyRule[] = ruleRows || [];
+
     // Process each message in the entry
     for (const event of entry.messaging || []) {
       if (!event.message?.text || event.message.is_echo) continue;
@@ -242,10 +252,44 @@ async function processEventAsync(
         continue;
       }
 
-      // AI reply — only if enabled AND the channel is turned on
       const channelEnabled =
         (channel === "messenger" && settings.channel_messenger) ||
         (channel === "instagram" && settings.channel_instagram);
+
+      // 1) Keyword rules run FIRST and work even when AI is off (ManyChat-style,
+      //    deterministic). First matching rule wins → send + skip AI.
+      const ruleReply =
+        channelEnabled && settings.meta_page_token
+          ? findRuleResponse(ruleList, messageText, "dm")
+          : null;
+      if (ruleReply && settings.meta_page_token) {
+        const send = await sendMetaMessage({
+          channel,
+          pageToken: settings.meta_page_token,
+          recipientId: senderId,
+          text: ruleReply,
+        });
+        await supabase.from("marketing_inbox_messages").insert({
+          conversation_id: conversationId,
+          direction: "outbound",
+          sender: "ai",
+          body: ruleReply,
+          meta_message_id: send.ok ? send.messageId : null,
+          sent_at: send.ok ? new Date().toISOString() : null,
+          delivery_error: send.ok ? null : send.error,
+        });
+        await supabase
+          .from("marketing_inbox_conversations")
+          .update({
+            ai_intent: "keyword_rule",
+            status: send.ok ? "ai_replied" : "open",
+            ai_last_run_at: new Date().toISOString(),
+          })
+          .eq("id", conversationId);
+        continue;
+      }
+
+      // 2) Otherwise fall back to the AI reply — only if enabled AND channel on.
       if (settings.ai_enabled && channelEnabled && settings.meta_page_token) {
         await runAiReply({
           supabase,
@@ -290,6 +334,7 @@ async function processEventAsync(
         await runCommentReply({
           supabase,
           settings,
+          rules: ruleList,
           channel,
           pageId,
           commentId,
@@ -313,9 +358,41 @@ type InboxSettings = {
   comment_public_text: string | null;
 };
 
+// ── Keyword auto-reply rules (ManyChat-style, deterministic) ──
+type AutoReplyRule = {
+  keywords: string[] | null;
+  response: string;
+  match_type: string;
+  apply_dm: boolean | null;
+  apply_comment: boolean | null;
+};
+
+// First matching rule wins. Case is normalized (Arabic unaffected). `scope`
+// gates DM-only vs comment-only rules.
+function findRuleResponse(
+  rules: AutoReplyRule[],
+  text: string,
+  scope: "dm" | "comment",
+): string | null {
+  const t = (text || "").trim().toLowerCase();
+  if (!t) return null;
+  for (const r of rules) {
+    if (scope === "dm" && r.apply_dm === false) continue;
+    if (scope === "comment" && r.apply_comment === false) continue;
+    for (const kwRaw of r.keywords || []) {
+      const kw = (kwRaw || "").trim().toLowerCase();
+      if (!kw) continue;
+      const hit = r.match_type === "exact" ? t === kw : t.includes(kw);
+      if (hit) return r.response;
+    }
+  }
+  return null;
+}
+
 async function runCommentReply(args: {
   supabase: ReturnType<typeof createServiceClient>;
   settings: InboxSettings;
+  rules: AutoReplyRule[];
   channel: "messenger" | "instagram";
   pageId: string;
   commentId: string;
@@ -348,20 +425,27 @@ async function runCommentReply(args: {
       "أهلاً 👋 شكراً لتعليقك! ابعتلنا استفسارك وهنفيدك حالاً. للتفاصيل: https://www.nidhamhr.com";
     let leadQuality: "hot" | "warm" | "cold" | "spam" = "warm";
     let intent = "comment";
-    try {
-      const ai = await generateMarketingReply({
-        userMessage: args.text,
-        businessContext: settings.ai_business_context || undefined,
-        systemPromptOverride: settings.ai_system_prompt || undefined,
-      });
-      reply = ai.reply;
-      leadQuality = ai.leadQuality;
-      intent = ai.intent;
-    } catch (err) {
-      console.error(
-        "[meta-webhook] comment AI failed:",
-        err instanceof Error ? err.message : err,
-      );
+    // A keyword rule (if it matches the comment text) wins over the AI.
+    const ruleHit = findRuleResponse(args.rules, args.text, "comment");
+    if (ruleHit) {
+      reply = ruleHit;
+      intent = "keyword_rule";
+    } else {
+      try {
+        const ai = await generateMarketingReply({
+          userMessage: args.text,
+          businessContext: settings.ai_business_context || undefined,
+          systemPromptOverride: settings.ai_system_prompt || undefined,
+        });
+        reply = ai.reply;
+        leadQuality = ai.leadQuality;
+        intent = ai.intent;
+      } catch (err) {
+        console.error(
+          "[meta-webhook] comment AI failed:",
+          err instanceof Error ? err.message : err,
+        );
+      }
     }
 
     const send = await sendPrivateReply({ pageToken, commentId, message: reply });

@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { requireHR } from "@/lib/permissions";
 import { sendMetaMessage } from "@/lib/marketing-inbox/meta-client";
 
@@ -448,4 +449,71 @@ function textOrNull(value: FormDataEntryValue | null): string | null {
   if (value === null) return null;
   const trimmed = String(value).trim();
   return trimmed.length === 0 ? null : trimmed;
+}
+
+// ── Keyword auto-reply rules (ManyChat-style) ──
+
+// Add a rule: comma/newline-separated keywords + a fixed reply. Fires on DMs
+// and/or comments per the checkboxes, BEFORE the AI, even when AI is off.
+export async function addAutoReplyRule(form: FormData): Promise<void> {
+  const { supabase, profile } = await requireHR();
+
+  const keywords = String(form.get("keywords") ?? "")
+    .split(/[,\n]/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .slice(0, 30);
+  const response = String(form.get("response") ?? "").trim();
+  const matchType =
+    String(form.get("match_type") ?? "contains") === "exact"
+      ? "exact"
+      : "contains";
+  const applyDm = form.get("apply_dm") === "on";
+  const applyComment = form.get("apply_comment") === "on";
+
+  if (keywords.length === 0 || !response) {
+    redirect(
+      "/dashboard/marketing/inbox/settings?rule_error=" +
+        encodeURIComponent("اكتب كلمة مفتاحية واحدة على الأقل + نص الرد"),
+    );
+  }
+
+  const { error } = await supabase.from("marketing_auto_reply_rules").insert({
+    company_id: profile.company_id,
+    keywords,
+    response: response.slice(0, 2000),
+    match_type: matchType,
+    // If the user unchecked both, default to DM so the rule isn't a no-op.
+    apply_dm: applyDm || !applyComment,
+    apply_comment: applyComment,
+  });
+
+  if (error) {
+    redirect(
+      "/dashboard/marketing/inbox/settings?rule_error=" +
+        encodeURIComponent(
+          /relation .* does not exist|PGRST205|schema cache/i.test(error.message)
+            ? "طبّق migration 095 في Supabase الأول"
+            : error.message,
+        ),
+    );
+  }
+
+  revalidatePath("/dashboard/marketing/inbox/settings");
+  redirect("/dashboard/marketing/inbox/settings?rule_added=1");
+}
+
+export async function deleteAutoReplyRule(form: FormData): Promise<void> {
+  const { supabase, profile } = await requireHR();
+  const id = String(form.get("id") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(id)) {
+    redirect("/dashboard/marketing/inbox/settings");
+  }
+  await supabase
+    .from("marketing_auto_reply_rules")
+    .delete()
+    .eq("id", id)
+    .eq("company_id", profile.company_id);
+  revalidatePath("/dashboard/marketing/inbox/settings");
+  redirect("/dashboard/marketing/inbox/settings?rule_deleted=1");
 }

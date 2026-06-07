@@ -1,11 +1,30 @@
 import Link from "next/link";
 import { requireHRPage } from "@/lib/permissions";
 import { SettingsForm } from "./settings-form";
+import { addAutoReplyRule, deleteAutoReplyRule } from "../actions";
 
 export const dynamic = "force-dynamic";
 
-export default async function MarketingInboxSettingsPage() {
+type AutoReplyRuleRow = {
+  id: string;
+  keywords: string[] | null;
+  response: string;
+  match_type: string;
+  apply_dm: boolean | null;
+  apply_comment: boolean | null;
+};
+
+export default async function MarketingInboxSettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    rule_added?: string;
+    rule_deleted?: string;
+    rule_error?: string;
+  }>;
+}) {
   const { supabase, profile } = await requireHRPage();
+  const sp = await searchParams;
 
   const { data: settings } = await supabase
     .from("marketing_inbox_settings")
@@ -14,6 +33,14 @@ export default async function MarketingInboxSettingsPage() {
     )
     .eq("company_id", profile.company_id)
     .maybeSingle();
+
+  const { data: rules } = await supabase
+    .from("marketing_auto_reply_rules")
+    .select("id, keywords, response, match_type, apply_dm, apply_comment")
+    .eq("company_id", profile.company_id)
+    .order("priority", { ascending: false })
+    .order("created_at", { ascending: false })
+    .returns<AutoReplyRuleRow[]>();
 
   // Compute the webhook URL based on the current site URL
   const SITE = (process.env.NEXT_PUBLIC_SITE_URL || "https://www.nidhamhr.com").replace(
@@ -114,6 +141,130 @@ export default async function MarketingInboxSettingsPage() {
           comment_public_text: settings?.comment_public_text || "",
         }}
       />
+
+      {/* ── Keyword auto-reply rules (ManyChat-style) ── */}
+      <div className="mt-10">
+        <h2 className="text-xl font-black text-slate-900 mb-1">
+          🤖 قواعد الرد بالكلمات المفتاحية
+        </h2>
+        <p className="text-sm text-slate-500 mb-4">
+          لما رسالة أو كومنت فيه كلمة من دول، النظام يرد بالنص ده فورًا — حتى لو
+          الـ AI مقفول. (أول قاعدة تطابق هي اللي ترد.)
+        </p>
+
+        {sp.rule_added && (
+          <div className="mb-3 p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-sm text-emerald-800">
+            تمت إضافة القاعدة ✓
+          </div>
+        )}
+        {sp.rule_deleted && (
+          <div className="mb-3 p-3 rounded-lg bg-slate-50 border border-slate-200 text-sm text-slate-700">
+            تم حذف القاعدة
+          </div>
+        )}
+        {sp.rule_error && (
+          <div className="mb-3 p-3 rounded-lg bg-rose-50 border border-rose-200 text-sm text-rose-700">
+            {decodeURIComponent(sp.rule_error)}
+          </div>
+        )}
+
+        <form
+          action={addAutoReplyRule}
+          className="p-4 rounded-xl border border-slate-200 bg-white space-y-3 mb-5"
+        >
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1">
+              الكلمات المفتاحية (افصل بفاصلة أو سطر)
+            </label>
+            <textarea
+              name="keywords"
+              required
+              rows={2}
+              placeholder="السعر، بكام، الأسعار، التكلفة"
+              className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1">
+              الرد
+            </label>
+            <textarea
+              name="response"
+              required
+              rows={3}
+              placeholder="أهلًا 👋 أسعارنا تبدأ من... ابعتلنا رقمك ونكلمك بالتفاصيل."
+              className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm"
+            />
+          </div>
+          <div className="flex flex-wrap items-center gap-4">
+            <label className="text-sm flex items-center gap-2 text-slate-700">
+              المطابقة:
+              <select
+                name="match_type"
+                className="px-2 py-1 rounded border border-slate-200 text-sm"
+              >
+                <option value="contains">يحتوي الكلمة</option>
+                <option value="exact">مطابقة تامة</option>
+              </select>
+            </label>
+            <label className="text-sm flex items-center gap-1.5 text-slate-700">
+              <input type="checkbox" name="apply_dm" defaultChecked /> الرسائل
+            </label>
+            <label className="text-sm flex items-center gap-1.5 text-slate-700">
+              <input type="checkbox" name="apply_comment" defaultChecked /> الكومنتات
+            </label>
+            <button
+              type="submit"
+              className="ms-auto px-4 py-2 rounded-lg bg-brand-cyan text-white font-bold text-sm hover:bg-brand-cyan-dark transition"
+            >
+              + أضف القاعدة
+            </button>
+          </div>
+        </form>
+
+        {rules && rules.length > 0 ? (
+          <div className="space-y-2">
+            {rules.map((r) => (
+              <div
+                key={r.id}
+                className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 bg-white"
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-1 mb-1">
+                    {(r.keywords || []).map((k, i) => (
+                      <span
+                        key={i}
+                        className="text-xs font-bold px-2 py-0.5 rounded bg-cyan-50 text-brand-cyan-dark border border-cyan-100"
+                      >
+                        {k}
+                      </span>
+                    ))}
+                    <span className="text-[10px] text-slate-400 px-1.5">
+                      {r.match_type === "exact" ? "تام" : "يحتوي"}
+                      {r.apply_dm !== false ? " · رسائل" : ""}
+                      {r.apply_comment !== false ? " · كومنتات" : ""}
+                    </span>
+                  </div>
+                  <p className="text-sm text-slate-700 whitespace-pre-wrap">
+                    {r.response}
+                  </p>
+                </div>
+                <form action={deleteAutoReplyRule}>
+                  <input type="hidden" name="id" value={r.id} />
+                  <button
+                    type="submit"
+                    className="text-rose-500 hover:text-rose-700 text-sm font-bold shrink-0"
+                  >
+                    حذف
+                  </button>
+                </form>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-slate-400">مفيش قواعد لسه — ضيف أول قاعدة فوق.</p>
+        )}
+      </div>
     </div>
   );
 }
