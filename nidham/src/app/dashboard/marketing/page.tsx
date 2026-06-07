@@ -518,6 +518,13 @@ export default async function MarketingHubPage({
               gradient="from-amber-50 to-orange-50 border-amber-200 hover:border-amber-400"
             />
             <ToolLink
+              href="/dashboard/marketing/seo-optimizer"
+              icon="📈"
+              title="محسّن SEO"
+              text="حلّل مقالك مقابل الكلمة + عنوان وميتا وبنية"
+              gradient="from-sky-50 to-cyan-50 border-sky-200 hover:border-sky-400"
+            />
+            <ToolLink
               href="/dashboard/marketing/video-studio"
               icon="🎬"
               title="استوديو الفيديو"

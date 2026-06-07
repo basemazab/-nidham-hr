@@ -48,6 +48,18 @@ export default async function ProspectorPage() {
       .eq("status", "lead"),
   ]);
 
+  // Pre-fill the outreach generator with THIS tenant's own product (from their
+  // latest marketing project) so the AI writes about THEIR business — not
+  // Nidham. Multi-tenant: every company markets itself, not the platform.
+  const { data: proj } = await supabase
+    .from("marketing_projects")
+    .select("product_summary")
+    .eq("company_id", companyId)
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle<{ product_summary: string | null }>();
+  const defaultBusiness = (proj?.product_summary ?? "").trim();
+
   return (
     <main className="flex-1 px-4 md:px-6 py-6 bg-gradient-to-b from-slate-50 via-white to-cyan-50/20 min-h-screen">
       <div className="max-w-5xl mx-auto">
@@ -90,7 +102,7 @@ export default async function ProspectorPage() {
           </div>
         </div>
 
-        <ProspectorClient />
+        <ProspectorClient defaultBusiness={defaultBusiness} />
       </div>
     </main>
   );

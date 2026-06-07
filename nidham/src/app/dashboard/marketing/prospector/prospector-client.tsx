@@ -28,12 +28,16 @@ function downloadCsv(filename: string, csv: string) {
   URL.revokeObjectURL(url);
 }
 
-export function ProspectorClient() {
+export function ProspectorClient({
+  defaultBusiness = "",
+}: {
+  defaultBusiness?: string;
+}) {
   return (
     <div className="space-y-5">
       <SearchSection />
       <ManualImportSection />
-      <OutreachSection />
+      <OutreachSection defaultBusiness={defaultBusiness} />
       <DirectReachSection />
       <ExportSection />
     </div>
@@ -239,7 +243,8 @@ function SearchSection() {
 // ---------------------------------------------------------------------------
 // 2) AI outreach messages
 // ---------------------------------------------------------------------------
-function OutreachSection() {
+function OutreachSection({ defaultBusiness }: { defaultBusiness: string }) {
+  const [business, setBusiness] = useState(defaultBusiness);
   const [sector, setSector] = useState("");
   const [city, setCity] = useState("");
   const [angle, setAngle] = useState("");
@@ -251,7 +256,7 @@ function OutreachSection() {
   function run() {
     setErr(null);
     start(async () => {
-      const out = await generateOutreachAction({ sector, city, angle });
+      const out = await generateOutreachAction({ business, sector, city, angle });
       if (!out.ok) {
         setErr(out.error);
         setMessages([]);
@@ -276,16 +281,28 @@ function OutreachSection() {
       <h2 className="font-black font-cairo text-slate-800 mb-1 flex items-center gap-2">
         ✍️ مولّد رسائل التواصل <span className="text-xs font-normal text-slate-400">(AI)</span>
       </h2>
-      <p className="text-xs text-slate-500 font-cairo mb-4">
-        رسائل واتساب افتتاحية بالعامية تستخدم <code className="bg-slate-100 px-1 rounded">{"{name}"}</code> — جاهزة تحطها في بوت اكس.
+      <p className="text-xs text-slate-500 font-cairo mb-3">
+        رسائل واتساب افتتاحية بالعامية عن <strong>منتجك إنت</strong>، تستخدم{" "}
+        <code className="bg-slate-100 px-1 rounded">{"{name}"}</code> — جاهزة تحطها في بوت اكس.
       </p>
+
+      <label className="block text-[11px] font-bold text-slate-600 mb-1 font-cairo">
+        منتجك / خدمتك (اللي بتبيعه) <span className="text-rose-500">*</span>
+      </label>
+      <textarea
+        value={business}
+        onChange={(e) => setBusiness(e.target.value)}
+        rows={2}
+        placeholder="مثلاً: أبواب WPC مقاومة للمياه بضمان 5 سنين — تركيب وتوصيل لكل المحافظات"
+        className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-violet-400 outline-none text-sm font-cairo resize-y mb-3"
+      />
 
       <div className="grid sm:grid-cols-3 gap-2 mb-3">
         <input
           type="text"
           value={sector}
           onChange={(e) => setSector(e.target.value)}
-          placeholder="القطاع (مصانع، عيادات…)"
+          placeholder="العملاء المستهدفين (تجار أبواب…)"
           className="px-3 py-2 rounded-lg border border-slate-200 focus:border-violet-400 outline-none text-sm font-cairo"
         />
         <input
@@ -299,7 +316,7 @@ function OutreachSection() {
           type="text"
           value={angle}
           onChange={(e) => setAngle(e.target.value)}
-          placeholder="زاوية (اختياري: الغرامات…)"
+          placeholder="زاوية (اختياري)"
           className="px-3 py-2 rounded-lg border border-slate-200 focus:border-violet-400 outline-none text-sm font-cairo"
         />
       </div>
@@ -555,7 +572,7 @@ function DirectReachSection() {
         value={message}
         onChange={(e) => setMessage(e.target.value)}
         rows={3}
-        placeholder="أهلًا {name} 👋 معاك فريق نِظام HR..."
+        placeholder="أهلًا {name} 👋 معاك [اسم شركتك] — عندنا..."
         className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-green-400 outline-none text-sm font-cairo resize-y mb-3"
       />
 

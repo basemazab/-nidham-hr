@@ -1,14 +1,12 @@
 // ============================================================================
-// Outreach AI — generate WhatsApp opener messages for cold B2B prospects
+// Outreach AI — generate WhatsApp opener messages for a TENANT's prospects
 // ============================================================================
 //
-// The "create the content" half of the growth tool. Given a target sector
-// (and optional angle), produces a few short, value-first WhatsApp openers
-// that personalize with {name} — the same merge tag Bot X uses — and end
-// with a soft CTA + an opt-out line (anti-ban + anti-spam hygiene).
-//
-// Goes through callWithFallback (Groq → Gemini) like the rest of the
-// Marketing Studio so it inherits the multi-provider resilience.
+// IMPORTANT: Nidham is multi-tenant. Each company uses this tool to market
+// THEIR OWN product/service — NOT to market Nidham. So the messages are
+// driven entirely by the caller-supplied `business` (the tenant's product).
+// The model must never inject Nidham or any other product. If `business` is
+// thin, it writes generic professional copy without inventing details.
 
 import { generateObject } from "ai";
 import { z } from "zod";
@@ -20,11 +18,11 @@ export const outreachMessagesSchema = z.object({
       z.object({
         angle: z
           .string()
-          .describe("زاوية الرسالة باختصار (مثلاً: توفير وقت، خوف من الغرامات، فضول)"),
+          .describe("زاوية الرسالة باختصار (مثلاً: توفير، جودة، عرض، فضول)"),
         text: z
           .string()
           .describe(
-            "رسالة واتساب قصيرة بالعامية المصرية تبدأ بـ {name}، فيها قيمة وسؤال، وتنتهي بدعوة + سطر إلغاء",
+            "رسالة واتساب قصيرة بالعامية المصرية تبدأ بـ {name}، عن منتج المستخدم، وتنتهي بدعوة + سطر إلغاء",
           ),
       }),
     )
@@ -34,36 +32,42 @@ export const outreachMessagesSchema = z.object({
 
 export type OutreachMessages = z.infer<typeof outreachMessagesSchema>;
 
-const OUTREACH_SYSTEM = `أنت خبير مبيعات B2B (SDR) للسوق المصري بتسوّق لنظام «نِظام HR» —
-نظام مصري سحابي لإدارة الموارد البشرية والمرتبات + CRM، بيحسب المرتبات
-والتأمينات (11% موظف / 18.75% شركة) والضريبة والأوفر تايم والإجازات
-ونهاية الخدمة أوتوماتيك، ويربط أجهزة البصمة. الباقات 750 / 2,500 / 6,000
-جنيه شهريًا، وفيه تجربة مجانية 14 يوم. الموقع nidhamhr.com والتجربة
-nidhamhr.com/signup
+const OUTREACH_SYSTEM = `أنت خبير مبيعات B2B (SDR) محترف. مهمتك تكتب رسائل واتساب افتتاحية لصاحب
+شغل عشان يبدأ محادثة مع عملاء محتملين.
 
-مهمتك: تكتب رسائل واتساب افتتاحية لعملاء جدد (شركات/مصانع) عشان تبدأ
-محادثة، مش عشان تبيع في أول رسالة.
+⚠️ قاعدة أساسية: إنت بتسوّق **لمنتج/خدمة المستخدم** (الموضّحة تحت في «منتج
+المستخدم») وبس. ممنوع منعًا باتًا تذكر أي نظام أو منتج أو شركة تانية، وممنوع
+تذكر «نِظام» أو أي برنامج HR — إلا لو ده فعلاً منتج المستخدم المكتوب تحت.
 
 قواعد إلزامية:
-1. **قصيرة جدًا** — 3 لـ 5 أسطر بحد أقصى. الناس مش بتقرا رسائل طويلة من رقم غريب.
-2. **تبدأ بـ {name}** — استخدم العلامة دي حرفيًا عشان البرنامج يستبدلها باسم الشركة/العميل.
-3. **القيمة الأول** — اذكر ألم حقيقي (غرامات تأمينات، وقت آخر الشهر، أخطاء إكسل) قبل ما تذكر النظام.
-4. **سؤال يفتح حوار** — اقفل بسؤال بسيط (مثلاً: حضرتك كام موظف؟) أو دعوة للتجربة.
-5. **سطر إلغاء** — اختم بجملة مهذبة زي: (لو مش مهتم اكتب «إلغاء» وما هزعّجكش تاني).
-6. **مفيش مبالغة ولا CAPS ولا وعود كاذبة** — نبرة محترمة وطبيعية.
-7. **عامية مصرية** — مفيش فصحى ثقيلة.`;
+1. كل الرسائل عن «منتج المستخدم» فقط، وموجّهة للعملاء المستهدفين المذكورين.
+2. متخترعش مميزات أو أسعار أو أرقام أو لينكات أو ضمانات مش مكتوبة في وصف
+   المنتج. لو الوصف مختصر، اكتب رسائل مهنية عامة عن المنتج من غير تفاصيل ملفّقة.
+3. كل رسالة تبدأ بـ {name} (هتتبدل باسم العميل).
+4. قصيرة جدًا (3-5 أسطر)، القيمة الأول، واقفل بسؤال بسيط أو دعوة.
+5. اختم بسطر إلغاء مهذب، مثل: (لو مش مهتم اكتب «إلغاء» وما هزعّجكش تاني).
+6. عامية مصرية محترمة، نبرة طبيعية، من غير مبالغة ولا CAPS.`;
 
 export async function generateOutreachMessages(input: {
+  /** The TENANT's own product/service — what THEY sell. Drives everything. */
+  business: string;
+  /** Target audience / sector the tenant wants to reach. */
   sector: string;
   angle?: string;
   city?: string;
+  /** Optional CTA / contact info / link the tenant wants included. */
+  contact?: string;
 }): Promise<OutreachMessages> {
-  const userPrompt = `**القطاع المستهدف:** ${input.sector}
+  const userPrompt = `**منتج المستخدم (اللي بنسوّقله — ركّز عليه هو بس):**
+${input.business}
+
+**العملاء المستهدفين:** ${input.sector}
 ${input.city ? `**المدينة/المنطقة:** ${input.city}` : ""}
 ${input.angle ? `**زاوية مطلوبة بالذات:** ${input.angle}` : ""}
+${input.contact ? `**طريقة التواصل/الدعوة المطلوب ذكرها:** ${input.contact}` : ""}
 
-اكتب 3-5 رسائل واتساب افتتاحية مختلفة الزوايا لعملاء في القطاع ده،
-كل رسالة تبدأ بـ {name} وتنتهي بدعوة + سطر إلغاء. خليها طبيعية وقصيرة.`;
+اكتب 3-5 رسائل واتساب افتتاحية مختلفة الزوايا، كلها عن «منتج المستخدم» فقط،
+موجّهة للعملاء المستهدفين. كل رسالة تبدأ بـ {name} وتنتهي بدعوة + سطر إلغاء.`;
 
   return callWithFallback(async (picked) => {
     const { object } = await generateObject({

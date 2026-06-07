@@ -196,6 +196,7 @@ export async function importManualAction(
 // generateOutreachAction — AI-written WhatsApp openers for a sector.
 // ----------------------------------------------------------------------------
 export async function generateOutreachAction(input: {
+  business: string;
   sector: string;
   angle?: string;
   city?: string;
@@ -204,12 +205,20 @@ export async function generateOutreachAction(input: {
   | { ok: false; error: string }
 > {
   await gate();
+  const business = (input.business || "").trim();
   const sector = (input.sector || "").trim();
+  if (business.length < 5) {
+    return {
+      ok: false,
+      error: "اكتب منتجك/خدمتك الأول — عشان الرسائل تكون عن شغلك إنت مش حاجة تانية",
+    };
+  }
   if (sector.length < 2) {
-    return { ok: false, error: "اكتب القطاع المستهدف (مثلاً: مصانع، عيادات، مكاتب محاسبة)" };
+    return { ok: false, error: "اكتب العملاء المستهدفين (مثلاً: تجار أبواب، عيادات، مطاعم)" };
   }
   try {
     const out = await generateOutreachMessages({
+      business,
       sector,
       angle: input.angle?.trim() || undefined,
       city: input.city?.trim() || undefined,

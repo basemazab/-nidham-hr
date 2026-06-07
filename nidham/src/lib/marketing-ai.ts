@@ -1356,3 +1356,116 @@ ${input.ad_text.slice(0, 3000)}
     return object;
   });
 }
+
+// ----------------------------------------------------------------------------
+// 8) SEO CONTENT OPTIMIZER — score an article against a target keyword and
+// return concrete on-page fixes (native, AI-based replacement for Surfer).
+// No SERP scraping: the model reasons about Egyptian search intent + on-page
+// SEO best practices from the supplied text.
+// ----------------------------------------------------------------------------
+
+export const seoOptimizeSchema = z.object({
+  overall_score: z
+    .number()
+    .int()
+    .min(0)
+    .max(100)
+    .describe("درجة تحسين المحتوى للكلمة المستهدفة 0-100"),
+  keyword_analysis: z.object({
+    occurrences: z
+      .number()
+      .int()
+      .describe("عدد مرات ظهور الكلمة المفتاحية تقريبًا"),
+    in_title: z.boolean(),
+    in_first_paragraph: z.boolean(),
+    in_headings: z.boolean(),
+    density_note: z
+      .string()
+      .describe("ملاحظة على الكثافة: قليلة / مناسبة / حشو زيادة"),
+  }),
+  issues: z
+    .array(
+      z.object({
+        severity: z.enum(["critical", "high", "medium", "low"]),
+        area: z.enum([
+          "title",
+          "meta",
+          "headings",
+          "keyword",
+          "structure",
+          "readability",
+          "length",
+          "links",
+          "intent",
+        ]),
+        problem: z.string(),
+        fix: z.string(),
+      }),
+    )
+    .min(1)
+    .max(12),
+  suggested_title: z
+    .string()
+    .max(70)
+    .describe("عنوان مقترح محسّن (≤60 حرف يفضّل)"),
+  suggested_meta_description: z
+    .string()
+    .max(170)
+    .describe("وصف ميتا مقترح (≤155 حرف يفضّل)"),
+  missing_subtopics: z
+    .array(z.string())
+    .describe("مواضيع فرعية المنافسين بيغطّوها وانت ناقصها — ضيفها"),
+  outline_suggestion: z
+    .array(z.string())
+    .describe("عناوين H2/H3 مقترحة لتقوية البنية"),
+  quick_wins: z.array(z.string()),
+});
+
+export type SeoOptimizeResult = z.infer<typeof seoOptimizeSchema>;
+
+const SEO_OPTIMIZE_SYSTEM = `أنت خبير SEO محتوى للسوق المصري، 12 سنة خبرة. شغلتك تراجع مقال/صفحة
+مقابل كلمة مفتاحية مستهدفة وتقول بدقة: هترتّب كويس ولا محتاجة شغل؟
+
+افحص:
+1. **العنوان (Title)** — فيه الكلمة؟ جذّاب وطوله مناسب (≤60 حرف)؟
+2. **Meta description** — فيه الكلمة + دعوة، ≤155 حرف؟
+3. **العناوين (H2/H3)** — منظّمة؟ فيها الكلمة ومشتقاتها؟
+4. **الكلمة المفتاحية** — موجودة في أول فقرة؟ كثافتها طبيعية مش حشو؟
+5. **البنية والقابلية للقراءة** — فقرات قصيرة، قوائم، أمثلة؟
+6. **نية البحث (intent)** — المحتوى بيجاوب اللي بيدوّر فعلاً عايزه؟
+7. **المواضيع الناقصة** — إيه اللي المنافسين بيغطّوه وانت ناسيه؟
+
+قواعدك:
+- **عملي وصريح** — لكل مشكلة حل، ويُفضّل تكتب البديل (عنوان/ميتا جاهزين).
+- **عربي مصري**، ومراعي إن المصري بيبحث بالعامي والإنجليزي أحيانًا.
+- **متحشّيش الكلمة** — لو الكثافة عالية قول ده ضار.
+- **اقترح outline** يقوّي الصفحة، ومواضيع فرعية فعلاً ذات صلة.`;
+
+export async function optimizeSeoContent(input: {
+  keyword: string;
+  content: string;
+  title?: string;
+}): Promise<SeoOptimizeResult> {
+  const userPrompt = `**الكلمة المفتاحية المستهدفة:** ${input.keyword}
+${input.title ? `**العنوان الحالي:** ${input.title}` : ""}
+
+**المحتوى المطلوب تحسينه:**
+"""
+${input.content.slice(0, 8000)}
+"""
+
+راجع المحتوى ده مقابل الكلمة المستهدفة: اديله درجة، حلّل استخدام الكلمة،
+اطلّع المشاكل مع حل لكل واحدة، واقترح عنوان + ميتا + outline + مواضيع ناقصة.`;
+
+  return callWithFallback(async (picked) => {
+    const { object } = await generateObject({
+      maxRetries: 0, // callWithFallback owns the retry chain
+      model: picked.model,
+      schema: seoOptimizeSchema,
+      system: SEO_OPTIMIZE_SYSTEM,
+      prompt: userPrompt,
+      temperature: 0.4,
+    });
+    return object;
+  });
+}
