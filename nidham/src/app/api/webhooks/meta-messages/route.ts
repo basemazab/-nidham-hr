@@ -863,17 +863,9 @@ async function runAiReply(args: {
     });
   }
 
-  if (ai.shouldHandoff) {
-    await args.supabase.from("marketing_inbox_messages").insert({
-      conversation_id: args.conversationId,
-      direction: "outbound",
-      sender: "ai",
-      body: `[تنبيه داخلي] العميل ده محتاج تدخّل بشري. السبب: ${ai.handoffReason || "محادثة معقدة"}.`,
-      delivery_error: "handoff_requested",
-    });
-    return;
-  }
-
+  // ALWAYS reply to the customer — the bot must never go silent. Even when the
+  // AI flags a handoff, its `reply` is a polite holding line, so we send it and
+  // ALSO drop an internal note (below) so a human follows up.
   const send = await sendMetaMessage({
     channel: args.channel,
     pageToken: args.pageToken,
@@ -904,6 +896,18 @@ async function runAiReply(args: {
           : "send_failed",
       })
       .eq("id", args.conversationId);
+  }
+
+  // On handoff the customer already got a reply above; add an INTERNAL note
+  // (delivery_error marks it internal — never sent to Meta) so a human follows up.
+  if (ai.shouldHandoff) {
+    await args.supabase.from("marketing_inbox_messages").insert({
+      conversation_id: args.conversationId,
+      direction: "outbound",
+      sender: "ai",
+      body: `[تنبيه داخلي] محتاج متابعة بشرية: ${ai.handoffReason || "محادثة محتاجة تدخّل"}.`,
+      delivery_error: "handoff_flag",
+    });
   }
 }
 

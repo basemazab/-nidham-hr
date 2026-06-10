@@ -1,12 +1,12 @@
 import { z } from "zod";
-import { generateText } from "ai";
+import { generateObject } from "ai";
 import { callWithFallback } from "@/lib/ai-models";
 
 export const AiReplyResultSchema = z.object({
   reply: z
     .string()
     .min(1)
-    .max(400)
+    .max(800)
     .describe(
       "Reply text in Egyptian Arabic. Short, friendly, ≤ 60 words. End with a CTA.",
     ),
@@ -30,7 +30,7 @@ export const AiReplyResultSchema = z.object({
     ),
   handoffReason: z
     .string()
-    .max(120)
+    .max(200)
     .describe(
       "Short Arabic note for the sales rep — why this lead is hot or needs human attention. Empty string if not needed.",
     ),
@@ -38,27 +38,9 @@ export const AiReplyResultSchema = z.object({
 
 export type AiReplyResult = z.infer<typeof AiReplyResultSchema>;
 
-// Lenient mirror used ONLY to parse the model's raw output. Every field has a
-// .catch() fallback, so a missing or odd field can never throw — the inbox
-// degrades to a graceful human-handoff instead of surfacing an "ai_error".
-const LenientReplySchema = z.object({
-  reply: z.string().catch(""),
-  intent: z
-    .enum([
-      "pricing_inquiry",
-      "demo_request",
-      "feature_question",
-      "support_request",
-      "complaint",
-      "spam",
-      "greeting",
-      "other",
-    ])
-    .catch("other"),
-  leadQuality: z.enum(["hot", "warm", "cold", "spam"]).catch("warm"),
-  shouldHandoff: z.boolean().catch(false),
-  handoffReason: z.string().catch(""),
-});
+// (Removed the lenient parse schema — generateObject validates the model's
+// structured output against AiReplyResultSchema directly, so manual JSON
+// extraction + fallback parsing is no longer needed.)
 
 const DEFAULT_BUSINESS_CONTEXT = `
 الشركة: نِظام (Nidham) — أول نظام HR + Payroll + CRM مصري متكامل بالذكاء الاصطناعي.
@@ -167,17 +149,7 @@ export async function generateMarketingReply(input: {
   • spam: مش relevant خالص.
 
 ● معلومات الشركة (استخدمها للرد):
-${businessContext}
-
-● IMPORTANT: ردّ بجسون ONLY — أي كلام برة الـ JSON هيكسر النظام.
-اكتب JSON بالشكل ده بالظبط:
-{
-  "reply": "ردك بالعامية المصرية",
-  "intent": "pricing_inquiry | demo_request | feature_question | support_request | complaint | spam | greeting | other",
-  "leadQuality": "hot | warm | cold | spam",
-  "shouldHandoff": true أو false,
-  "handoffReason": "سبب التحويل لبشر (أو نص فاضي لو shouldHandoff = false)"
-}`.trim();
+${businessContext}`.trim();
 
   const historyTurns = (input.history || []).slice(-5);
   const conversationContext = historyTurns
@@ -187,70 +159,47 @@ ${businessContext}
   const userPrompt = `
 ${conversationContext ? `المحادثة قبل كده:\n${conversationContext}\n\n` : ""}الرسالة الجديدة من العميل:
 "${input.userMessage}"
-
-اكتب JSON فقط — من غير أي كلام تاني.
   `.trim();
 
-  // Wrapped in callWithFallback so a Groq quota / overload doesn't kill
-  // the whole inbox-AI feature — the chain transparently swaps to a
-  // smaller Groq model, then Gemini.
-  const result = await callWithFallback((picked) =>
-    generateText({
-      model: picked.model,
-      system: systemPrompt,
-      prompt: userPrompt,
-      temperature: 0.4,
-      maxRetries: 0, // we do our own retry through callWithFallback
-    }),
-  );
+  // generateObject forces RELIABLE structured output (json_schema / tool call)
+  // instead of free text we parse by hand. callWithFallback swaps Groq → Gemini
+  // on quota/overload. The OLD generateText + manual JSON parse was fragile: the
+  // model often replied in prose, the parse failed, the reply came back empty,
+  // and the inbox showed a spurious human-handoff ("تعذّر توليد رد آلي منظّم")
+  // even for a simple greeting. A TOTAL provider failure degrades to a warm ack.
+  try {
+    const { object } = await callWithFallback((picked) =>
+      generateObject({
+        model: picked.model,
+        schema: AiReplyResultSchema,
+        system: systemPrompt,
+        prompt: userPrompt,
+        temperature: 0.4,
+        maxRetries: 0, // callWithFallback owns the retry chain
+      }),
+    );
 
-  // Parse defensively. The model is told to return JSON, but it sometimes
-  // wraps it in ```json fences or drops a field. Strip fences, extract the
-  // object, and validate through the lenient schema (every field has a safe
-  // fallback). If we still can't get a usable reply, degrade to a polite
-  // acknowledgement + human handoff — NEVER throw, so the conversation is
-  // never flagged "ai_error" in the inbox.
-  const text = result.text.trim();
-  const cleaned = text.replace(/```json/gi, "").replace(/```/g, "");
-  const jsonStart = cleaned.indexOf("{");
-  const jsonEnd = cleaned.lastIndexOf("}");
+    // Never let a hallucinated/broken nidhamhr.com link reach a customer.
+    const reply = sanitizeReplyLinks(object.reply.trim()).slice(0, 600);
 
-  let raw: unknown = {};
-  if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
-    try {
-      raw = JSON.parse(cleaned.slice(jsonStart, jsonEnd + 1));
-    } catch {
-      raw = {};
-    }
+    return {
+      reply: reply || "أهلًا بيك 🌟 قوللي محتاج إيه بالظبط وأنا أساعدك فورًا.",
+      intent: object.intent,
+      leadQuality: object.leadQuality,
+      shouldHandoff: object.shouldHandoff,
+      handoffReason: object.handoffReason.trim().slice(0, 200),
+    };
+  } catch {
+    // Only a total provider failure reaches here — degrade to a friendly ack +
+    // soft handoff, never a scary error in the inbox.
+    return {
+      reply: "أهلًا بيك 🌟 ابعتلنا استفسارك أو رقمك وفريقنا هيرد عليك حالًا.",
+      intent: "other",
+      leadQuality: "warm",
+      shouldHandoff: true,
+      handoffReason: "تعذّر الوصول لخدمة الـ AI مؤقتًا — متابعة بشرية",
+    };
   }
-  if (!raw || typeof raw !== "object" || Array.isArray(raw)) raw = {};
-
-  const data = LenientReplySchema.parse(raw);
-  let reply = data.reply.trim();
-  let shouldHandoff = data.shouldHandoff;
-  let handoffReason = data.handoffReason.trim();
-
-  if (!reply) {
-    // Model gave nothing usable — hand off to a human instead of erroring.
-    reply =
-      "وصلتني رسالتك ✅ فريقنا هيتواصل معاك حالًا. وللاطلاع على النظام: https://www.nidhamhr.com";
-    shouldHandoff = true;
-    if (!handoffReason) {
-      handoffReason = "تعذّر توليد رد آلي منظّم — يحتاج متابعة بشرية";
-    }
-  }
-
-  // Final guard: never let a hallucinated/broken nidhamhr.com link reach a
-  // customer — unknown paths collapse to the homepage.
-  reply = sanitizeReplyLinks(reply);
-
-  return {
-    reply: reply.slice(0, 400),
-    intent: data.intent,
-    leadQuality: data.leadQuality,
-    shouldHandoff,
-    handoffReason: handoffReason.slice(0, 120),
-  };
 }
 
 export function tryTemplateMatch(input: {
