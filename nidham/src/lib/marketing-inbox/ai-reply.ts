@@ -6,9 +6,9 @@ export const AiReplyResultSchema = z.object({
   reply: z
     .string()
     .min(1)
-    .max(800)
+    .max(2000)
     .describe(
-      "Reply text in Egyptian Arabic. Short, friendly, ≤ 60 words. End with a CTA.",
+      "Reply text in Egyptian Arabic, friendly, ends with a CTA. Short (≤60 words) for general questions — but for PRICING or detailed questions, give the FULL answer (all prices/details) even if it's longer.",
     ),
   intent: z.enum([
     "pricing_inquiry",
@@ -125,7 +125,7 @@ export async function generateMarketingReply(input: {
 وتحولهم لـ Lead مؤهل للنظام.
 
 ● قواعد الرد الأساسية:
-1. رد قصير محترم (≤ 60 كلمة) — عملي مش تسويقي زايد.
+1. رد محترم وعملي. خليه مختصر (≤ 60 كلمة) للأسئلة العامة — لكن لو العميل بيسأل عن الأسعار أو تفاصيل، اعرض كل الأسعار/التفاصيل بوضوح حتى لو الرد بقى أطول.
 2. عامية مصرية واضحة — مش فصحى ولا خليجي.
 3. كل رد ينتهي بـ CTA واحد: لينك أو سؤال.
 4. ممنوع الكذب. لو مش متأكد من حاجة، قول "هخلي فريق المبيعات يتواصل معاك".
@@ -180,7 +180,7 @@ ${conversationContext ? `المحادثة قبل كده:\n${conversationContext}
     );
 
     // Never let a hallucinated/broken nidhamhr.com link reach a customer.
-    const reply = sanitizeReplyLinks(object.reply.trim()).slice(0, 600);
+    const reply = sanitizeReplyLinks(object.reply.trim()).slice(0, 1800);
 
     return {
       reply: reply || "أهلًا بيك 🌟 قوللي محتاج إيه بالظبط وأنا أساعدك فورًا.",
