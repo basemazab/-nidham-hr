@@ -83,6 +83,64 @@ export async function sendMetaMessage(input: {
   }
 }
 
+// ── Send a FILE / IMAGE attachment back to a user (by public URL) ──
+// Meta's Send API can't carry text + an attachment in one message, so the
+// webhook sends the text reply first (sendMetaMessage) and then each file here
+// as its own message. `is_reusable` lets Meta cache the upload so re-sending
+// the same catalog later is instant. Same 24h-window rules as text.
+export async function sendMetaAttachment(input: {
+  channel: "messenger" | "instagram";
+  pageToken: string;
+  recipientId: string;
+  url: string;
+  type: "file" | "image" | "video" | "audio";
+}): Promise<
+  | { ok: true; messageId: string }
+  | { ok: false; error: string; outsideWindow?: boolean }
+> {
+  const endpoint = `${GRAPH_BASE}/me/messages?access_token=${encodeURIComponent(input.pageToken)}`;
+
+  const body = {
+    recipient: { id: input.recipientId },
+    message: {
+      attachment: {
+        type: input.type,
+        payload: { url: input.url, is_reusable: true },
+      },
+    },
+    messaging_type: "RESPONSE",
+  };
+
+  try {
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    const data = (await res.json()) as {
+      message_id?: string;
+      error?: { message?: string; code?: number; error_subcode?: number };
+    };
+
+    if (!res.ok || data.error) {
+      const friendly = friendlyMetaError(data.error, res.status);
+      return {
+        ok: false,
+        error: friendly.message,
+        outsideWindow: friendly.outsideWindow,
+      };
+    }
+
+    return { ok: true, messageId: data.message_id || "" };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
 // Translate Meta's terse English error codes into clear Arabic guidance HR
 // can act on. The most common one by far is the 24-hour messaging window:
 // Meta only lets a business send a FREE-FORM reply within 24h of the user's

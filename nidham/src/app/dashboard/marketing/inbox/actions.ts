@@ -1,5 +1,6 @@
 "use server";
 
+import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireHR } from "@/lib/permissions";
@@ -531,4 +532,100 @@ export async function deleteAutoReplyRule(form: FormData): Promise<void> {
     .eq("company_id", profile.company_id);
   revalidatePath("/dashboard/marketing/inbox/settings");
   redirect("/dashboard/marketing/inbox/settings?rule_deleted=1");
+}
+
+// ── Auto-reply attachments (files the bot can SEND to customers) ──
+
+type StoredAttachment = {
+  id: string;
+  label: string;
+  url: string;
+  type: "file" | "image" | "video";
+  triggers: string[];
+  whenToUse?: string;
+};
+
+async function loadAttachments(
+  supabase: Awaited<ReturnType<typeof requireHR>>["supabase"],
+  companyId: string,
+): Promise<StoredAttachment[]> {
+  const { data } = await supabase
+    .from("marketing_inbox_settings")
+    .select("ai_attachments")
+    .eq("company_id", companyId)
+    .maybeSingle();
+  const raw = (data as { ai_attachments?: unknown } | null)?.ai_attachments;
+  return Array.isArray(raw) ? (raw as StoredAttachment[]) : [];
+}
+
+// Add a file to the tenant's auto-reply library. The bot attaches it to a reply
+// whenever the AI decides it fits — or a trigger keyword matches.
+export async function addInboxAttachment(form: FormData): Promise<void> {
+  const { supabase, profile } = await requireHR();
+
+  const label = String(form.get("label") ?? "").trim().slice(0, 80);
+  const url = String(form.get("url") ?? "").trim();
+  const rawType = String(form.get("type") ?? "file");
+  const type = (["file", "image", "video"].includes(rawType)
+    ? rawType
+    : "file") as StoredAttachment["type"];
+  const triggers = String(form.get("triggers") ?? "")
+    .split(/[,\n]/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .slice(0, 30);
+  const whenToUse = String(form.get("when_to_use") ?? "").trim().slice(0, 200);
+
+  if (!label || !/^https?:\/\/.+/i.test(url)) {
+    redirect(
+      "/dashboard/marketing/inbox/settings?att_error=" +
+        encodeURIComponent("اكتب اسم الملف + رابط صحيح يبدأ بـ https://"),
+    );
+  }
+
+  const existing = await loadAttachments(supabase, profile.company_id);
+  const next: StoredAttachment[] = [
+    ...existing,
+    { id: randomUUID(), label, url, type, triggers, whenToUse: whenToUse || undefined },
+  ].slice(0, 20);
+
+  const { error } = await supabase
+    .from("marketing_inbox_settings")
+    .upsert(
+      { company_id: profile.company_id, ai_attachments: next },
+      { onConflict: "company_id" },
+    );
+
+  if (error) {
+    redirect(
+      "/dashboard/marketing/inbox/settings?att_error=" +
+        encodeURIComponent(
+          /ai_attachments|column .* does not exist|PGRST204|schema cache/i.test(
+            error.message,
+          )
+            ? "طبّق migration 100 في Supabase الأول"
+            : error.message,
+        ),
+    );
+  }
+
+  revalidatePath("/dashboard/marketing/inbox/settings");
+  redirect("/dashboard/marketing/inbox/settings?att_added=1");
+}
+
+export async function deleteInboxAttachment(form: FormData): Promise<void> {
+  const { supabase, profile } = await requireHR();
+  const id = String(form.get("id") ?? "").trim();
+  if (!id) redirect("/dashboard/marketing/inbox/settings");
+
+  const existing = await loadAttachments(supabase, profile.company_id);
+  const next = existing.filter((a) => a.id !== id);
+
+  await supabase
+    .from("marketing_inbox_settings")
+    .update({ ai_attachments: next })
+    .eq("company_id", profile.company_id);
+
+  revalidatePath("/dashboard/marketing/inbox/settings");
+  redirect("/dashboard/marketing/inbox/settings?att_deleted=1");
 }

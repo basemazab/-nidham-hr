@@ -40,6 +40,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import {
   verifyMetaSignature,
   sendMetaMessage,
+  sendMetaAttachment,
   fetchUserProfile,
   replyToComment,
   sendPrivateReply,
@@ -173,7 +174,7 @@ async function processEventAsync(
     const { data: settings } = await supabase
       .from("marketing_inbox_settings")
       .select(
-        "company_id, meta_page_token, meta_app_secret, ai_enabled, ai_system_prompt, ai_business_context, ai_handoff_keywords, auto_push_to_crm, channel_messenger, channel_instagram, auto_reply_comments, comment_public_reply, comment_private_reply, comment_public_text",
+        "company_id, meta_page_token, meta_app_secret, ai_enabled, ai_system_prompt, ai_business_context, ai_handoff_keywords, ai_attachments, auto_push_to_crm, channel_messenger, channel_instagram, auto_reply_comments, comment_public_reply, comment_private_reply, comment_public_text",
       )
       .eq("meta_page_id", pageId)
       .maybeSingle();
@@ -344,6 +345,7 @@ async function processEventAsync(
           systemPromptOverride: settings.ai_system_prompt,
           handoffKeywords: settings.ai_handoff_keywords || [],
           autoPushToCrm: settings.auto_push_to_crm,
+          attachments: parseInboxAttachments(settings.ai_attachments),
         });
       } else if (!settings.ai_enabled) {
         await supabase
@@ -393,11 +395,53 @@ type InboxSettings = {
   meta_page_token: string | null;
   ai_business_context: string | null;
   ai_system_prompt: string | null;
+  ai_attachments?: unknown;
   auto_push_to_crm: boolean | null;
   comment_public_reply: boolean | null;
   comment_private_reply: boolean | null;
   comment_public_text: string | null;
 };
+
+// A file the AI auto-reply can attach (configured per-tenant in inbox settings).
+type InboxAttachment = {
+  id: string;
+  label: string;
+  url: string;
+  type: "file" | "image" | "video" | "audio";
+  triggers?: string[];
+  whenToUse?: string;
+};
+
+// jsonb comes back as already-parsed JS — but defend against bad/legacy rows so
+// one malformed entry can never crash the webhook (which would drop the reply).
+function parseInboxAttachments(raw: unknown): InboxAttachment[] {
+  if (!Array.isArray(raw)) return [];
+  const out: InboxAttachment[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== "object") continue;
+    const a = item as Record<string, unknown>;
+    const id = typeof a.id === "string" ? a.id : "";
+    const label = typeof a.label === "string" ? a.label : "";
+    const url = typeof a.url === "string" ? a.url : "";
+    if (!id || !label || !/^https?:\/\//i.test(url)) continue;
+    const type =
+      a.type === "image" || a.type === "video" || a.type === "audio"
+        ? a.type
+        : "file";
+    const triggers = Array.isArray(a.triggers)
+      ? a.triggers.filter((t): t is string => typeof t === "string")
+      : [];
+    out.push({
+      id,
+      label,
+      url,
+      type,
+      triggers,
+      whenToUse: typeof a.whenToUse === "string" ? a.whenToUse : undefined,
+    });
+  }
+  return out.slice(0, 20);
+}
 
 // ── Keyword auto-reply rules (ManyChat-style, deterministic) ──
 type AutoReplyRule = {
@@ -788,6 +832,7 @@ async function runAiReply(args: {
   systemPromptOverride: string | null;
   handoffKeywords: string[];
   autoPushToCrm: boolean;
+  attachments: InboxAttachment[];
 }): Promise<void> {
   const lowered = args.userMessage.toLowerCase();
   const handoffHit = args.handoffKeywords.some((kw) =>
@@ -823,6 +868,11 @@ async function runAiReply(args: {
       history,
       businessContext: args.businessContext || undefined,
       systemPromptOverride: args.systemPromptOverride || undefined,
+      availableAttachments: args.attachments.map((a) => ({
+        id: a.id,
+        label: a.label,
+        whenToUse: a.whenToUse,
+      })),
     });
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err);
@@ -908,6 +958,57 @@ async function runAiReply(args: {
       body: `[تنبيه داخلي] محتاج متابعة بشرية: ${ai.handoffReason || "محادثة محتاجة تدخّل"}.`,
       delivery_error: "handoff_flag",
     });
+  }
+
+  // ── Send any files the AI (or a keyword trigger) picked as attachments ──
+  // Only when the text reply actually went out (within the 24h window) — a file
+  // would just hit the same wall otherwise. De-duped per conversation so the
+  // same catalog is never re-sent to a customer who already received it.
+  if (send.ok && args.attachments.length) {
+    const wantedIds = new Set<string>(ai.attachmentIds || []);
+    // Keyword fallback: catch a clear ask ("الوان؟", "ضمان؟") even if the model
+    // forgot to flag the file — belt and suspenders.
+    for (const a of args.attachments) {
+      if (
+        (a.triggers || []).some((t) => t && lowered.includes(t.toLowerCase()))
+      ) {
+        wantedIds.add(a.id);
+      }
+    }
+
+    if (wantedIds.size) {
+      const { data: priorRows } = await args.supabase
+        .from("marketing_inbox_messages")
+        .select("body")
+        .eq("conversation_id", args.conversationId)
+        .like("body", "📎%");
+      const alreadySent = new Set((priorRows || []).map((r) => r.body));
+
+      for (const id of wantedIds) {
+        const att = args.attachments.find((a) => a.id === id);
+        if (!att) continue;
+        const marker = `📎 ${att.label}`;
+        if (alreadySent.has(marker)) continue; // already sent in this conversation
+
+        const sent = await sendMetaAttachment({
+          channel: args.channel,
+          pageToken: args.pageToken,
+          recipientId: args.recipientId,
+          url: att.url,
+          type: att.type,
+        });
+        await args.supabase.from("marketing_inbox_messages").insert({
+          conversation_id: args.conversationId,
+          direction: "outbound",
+          sender: "ai",
+          body: marker,
+          meta_message_id: sent.ok ? sent.messageId : null,
+          sent_at: sent.ok ? new Date().toISOString() : null,
+          delivery_error: sent.ok ? null : sent.error,
+        });
+        alreadySent.add(marker);
+      }
+    }
   }
 }
 

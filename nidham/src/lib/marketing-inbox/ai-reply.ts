@@ -34,6 +34,11 @@ export const AiReplyResultSchema = z.object({
     .describe(
       "Short Arabic note for the sales rep — why this lead is hot or needs human attention. Empty string if not needed.",
     ),
+  attachmentIds: z
+    .array(z.string())
+    .describe(
+      "IDs of files to ATTACH to this reply, chosen ONLY from the 'available files' list given in the prompt. Pick a file ONLY when it directly answers the customer's current question (e.g. asks about colors -> the colors catalog; asks about quality/specs/certificates/warranty -> the datasheet). Return an empty array [] when no listed file fits, none are provided, or the message is just a greeting. Never invent an id.",
+    ),
 });
 
 export type AiReplyResult = z.infer<typeof AiReplyResultSchema>;
@@ -92,6 +97,7 @@ const VALID_SITE_PATHS = new Set<string>([
   "brochure", "sales-brochure", "download", "enterprise", "contact", "faq",
   "about", "blog", "tools", "compliance-shield", "product", "industries",
   "ai", "crm", "security", "integrations", "help", "developers", "api-docs",
+  "files",
 ]);
 
 export function sanitizeReplyLinks(text: string): string {
@@ -114,11 +120,12 @@ export async function generateMarketingReply(input: {
   history?: ConversationTurn[];
   businessContext?: string;
   systemPromptOverride?: string;
+  availableAttachments?: { id: string; label: string; whenToUse?: string }[];
 }): Promise<AiReplyResult> {
   const businessContext =
     input.businessContext?.trim() || DEFAULT_BUSINESS_CONTEXT.trim();
 
-  const systemPrompt =
+  const baseSystemPrompt =
     input.systemPromptOverride?.trim() ||
     `أنت مساعد مبيعات خبير وودود بتتكلم بالعامية المصرية.
 شغلك إنك ترد على رسائل واردة من إعلانات Facebook و Instagram 
@@ -151,6 +158,22 @@ export async function generateMarketingReply(input: {
 ● معلومات الشركة (استخدمها للرد):
 ${businessContext}`.trim();
 
+  // Tell the model which files it can attach (if the tenant configured any), so
+  // it can put their ids in attachmentIds when they answer the question. Appended
+  // to the final prompt so it works even with a custom systemPromptOverride.
+  const attachmentsList = (input.availableAttachments || [])
+    .map(
+      (a) =>
+        `  • id: "${a.id}" — ${a.label}${a.whenToUse ? ` (يُرسَل لما: ${a.whenToUse})` : ""}`,
+    )
+    .join("\n");
+  const systemPrompt = attachmentsList
+    ? `${baseSystemPrompt}
+
+● ملفات جاهزة تقدر ترفقها مع ردك (حط الـ id بتاعها في attachmentIds لما تخدم سؤال العميل، ومتبعتش ملف في رسالة ترحيب أو سؤال مش متعلق):
+${attachmentsList}`
+    : baseSystemPrompt;
+
   const historyTurns = (input.history || []).slice(-5);
   const conversationContext = historyTurns
     .map((t) => `${t.role === "user" ? "العميل" : "المساعد"}: ${t.body}`)
@@ -182,12 +205,21 @@ ${conversationContext ? `المحادثة قبل كده:\n${conversationContext}
     // Never let a hallucinated/broken nidhamhr.com link reach a customer.
     const reply = sanitizeReplyLinks(object.reply.trim()).slice(0, 1800);
 
+    // Keep only ids the tenant actually configured — drop any the model invented.
+    const validIds = new Set(
+      (input.availableAttachments || []).map((a) => a.id),
+    );
+    const attachmentIds = (object.attachmentIds || [])
+      .filter((id) => validIds.has(id))
+      .slice(0, 5);
+
     return {
       reply: reply || "أهلًا بيك 🌟 قوللي محتاج إيه بالظبط وأنا أساعدك فورًا.",
       intent: object.intent,
       leadQuality: object.leadQuality,
       shouldHandoff: object.shouldHandoff,
       handoffReason: object.handoffReason.trim().slice(0, 200),
+      attachmentIds,
     };
   } catch {
     // Only a total provider failure reaches here — degrade to a friendly ack +
@@ -198,6 +230,7 @@ ${conversationContext ? `المحادثة قبل كده:\n${conversationContext}
       leadQuality: "warm",
       shouldHandoff: true,
       handoffReason: "تعذّر الوصول لخدمة الـ AI مؤقتًا — متابعة بشرية",
+      attachmentIds: [],
     };
   }
 }
