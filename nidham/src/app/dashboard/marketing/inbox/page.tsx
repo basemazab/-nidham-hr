@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireHRPage } from "@/lib/permissions";
+import { RefreshNamesButton } from "./refresh-names-button";
 
 // ============================================================================
 // /dashboard/marketing/inbox — Conversations list
@@ -112,12 +113,15 @@ export default async function MarketingInboxPage() {
             بالـ AI وتحويل العملاء المؤهلين لـ CRM.
           </p>
         </div>
-        <Link
-          href="/dashboard/marketing/inbox/settings"
-          className="px-4 py-2 rounded-lg bg-slate-900 text-white font-bold text-sm hover:bg-slate-800 transition"
-        >
-          ⚙️ الإعدادات
-        </Link>
+        <div className="flex items-start gap-2">
+          <RefreshNamesButton />
+          <Link
+            href="/dashboard/marketing/inbox/settings"
+            className="px-4 py-2 rounded-lg bg-slate-900 text-white font-bold text-sm hover:bg-slate-800 transition"
+          >
+            ⚙️ الإعدادات
+          </Link>
+        </div>
       </div>
 
       {/* Webhook status banner */}

@@ -637,10 +637,14 @@ async function runCommentReply(args: {
 
   // 2) Private DM with the real (AI) answer → tracked as a lead in the inbox.
   if (settings.comment_private_reply) {
+    // Tenant-neutral fallback (NO product link — this used to push nidhamhr.com
+    // to other tenants' customers). Only reached if the AI errors out entirely.
     let reply =
-      "أهلاً 👋 شكراً لتعليقك! ابعتلنا استفسارك وهنفيدك حالاً. للتفاصيل: https://www.nidhamhr.com";
+      "أهلًا بيك 👋 شفنا تعليقك — اكتبلنا طلبك هنا في الرسائل وهنرد عليك في الحال.";
     let leadQuality: "hot" | "warm" | "cold" | "spam" = "warm";
     let intent = "comment";
+    const attachments = parseInboxAttachments(settings.ai_attachments);
+    const wantedFileIds = new Set<string>();
     // A keyword rule (if it matches the comment text) wins over the AI.
     const ruleHit = findRuleResponse(args.rules, args.text, "comment");
     if (ruleHit) {
@@ -652,16 +656,45 @@ async function runCommentReply(args: {
           userMessage: args.text,
           businessContext: settings.ai_business_context || undefined,
           systemPromptOverride: settings.ai_system_prompt || undefined,
+          availableAttachments: attachments.map((a) => ({
+            id: a.id,
+            label: a.label,
+            whenToUse: a.whenToUse,
+          })),
+          situation:
+            "العميل كتب الكومنت ده على بوست/إعلان للصفحة، وإنت بترد عليه في رسالة خاصة. رد على طلبه اللي في الكومنت تحديدًا وبشكل مباشر — وعرّفه إنك بترد على تعليقه.",
         });
         reply = ai.reply;
         leadQuality = ai.leadQuality;
         intent = ai.intent;
+        for (const id of ai.attachmentIds || []) wantedFileIds.add(id);
       } catch (err) {
         console.error(
           "[meta-webhook] comment AI failed:",
           err instanceof Error ? err.message : err,
         );
       }
+    }
+
+    // Private replies are ONE message per comment (Meta rule) — we can't send
+    // files separately like the DM path, so append matched files as links.
+    const loweredComment = args.text.toLowerCase();
+    for (const a of attachments) {
+      if (
+        (a.triggers || []).some(
+          (t) => t && loweredComment.includes(t.toLowerCase()),
+        )
+      ) {
+        wantedFileIds.add(a.id);
+      }
+    }
+    const filesToLink = attachments
+      .filter((a) => wantedFileIds.has(a.id))
+      .slice(0, 2);
+    if (filesToLink.length) {
+      reply = `${reply}\n\n${filesToLink
+        .map((a) => `📎 ${a.label}: ${a.url}`)
+        .join("\n")}`;
     }
 
     const send = await sendPrivateReply({ pageToken, commentId, message: reply });
@@ -727,13 +760,34 @@ async function upsertConversation(args: {
 }): Promise<string | null> {
   const { data: existing } = await args.supabase
     .from("marketing_inbox_conversations")
-    .select("id")
+    .select("id, external_user_name")
     .eq("company_id", args.companyId)
     .eq("channel", args.channel)
     .eq("external_user_id", args.externalUserId)
     .maybeSingle();
 
-  if (existing) return existing.id;
+  if (existing) {
+    // Backfill: conversations created before the page token worked (or while a
+    // profile fetch failed) have no name — grab it on the next inbound message
+    // so the inbox shows real people, not "مستخدم 4247".
+    if (!existing.external_user_name && args.pageToken) {
+      const profile = await fetchUserProfile({
+        channel: args.channel,
+        pageToken: args.pageToken,
+        externalUserId: args.externalUserId,
+      });
+      if (profile?.name) {
+        await args.supabase
+          .from("marketing_inbox_conversations")
+          .update({
+            external_user_name: profile.name,
+            external_user_picture: profile.picture || null,
+          })
+          .eq("id", existing.id);
+      }
+    }
+    return existing.id;
+  }
 
   let profile: { name?: string; picture?: string } | null = null;
   if (args.pageToken) {

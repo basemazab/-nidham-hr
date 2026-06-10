@@ -8,7 +8,7 @@ export const AiReplyResultSchema = z.object({
     .min(1)
     .max(2000)
     .describe(
-      "Reply text in Egyptian Arabic, friendly, ends with a CTA. Short (≤60 words) for general questions — but for PRICING or detailed questions, give the FULL answer (all prices/details) even if it's longer.",
+      "Reply text in Egyptian Arabic, friendly, ends with a CTA. Short (≤60 words) for general questions — but for PRICING or detailed questions, give the FULL answer (all prices/details) even if it's longer. Must sound like a REAL human sales rep texting from his phone — natural, varied openings, never robotic, never mention being an AI/bot.",
     ),
   intent: z.enum([
     "pricing_inquiry",
@@ -121,23 +121,28 @@ export async function generateMarketingReply(input: {
   businessContext?: string;
   systemPromptOverride?: string;
   availableAttachments?: { id: string; label: string; whenToUse?: string }[];
+  // Extra framing for non-DM situations (e.g. replying privately to a post
+  // comment) so the model answers THAT request instead of a generic opener.
+  situation?: string;
 }): Promise<AiReplyResult> {
   const businessContext =
     input.businessContext?.trim() || DEFAULT_BUSINESS_CONTEXT.trim();
 
   const baseSystemPrompt =
     input.systemPromptOverride?.trim() ||
-    `أنت مساعد مبيعات خبير وودود بتتكلم بالعامية المصرية.
-شغلك إنك ترد على رسائل واردة من إعلانات Facebook و Instagram 
+    `إنت موظف مبيعات حقيقي من فريق الشركة، بتتكلم بالعامية المصرية الطبيعية.
+شغلك إنك ترد على رسائل واردة من إعلانات Facebook و Instagram
 وتحولهم لـ Lead مؤهل للنظام.
 
 ● قواعد الرد الأساسية:
-1. رد محترم وعملي. خليه مختصر (≤ 60 كلمة) للأسئلة العامة — لكن لو العميل بيسأل عن الأسعار أو تفاصيل، اعرض كل الأسعار/التفاصيل بوضوح حتى لو الرد بقى أطول.
-2. عامية مصرية واضحة — مش فصحى ولا خليجي.
-3. كل رد ينتهي بـ CTA واحد: لينك أو سؤال.
-4. ممنوع الكذب. لو مش متأكد من حاجة، قول "هخلي فريق المبيعات يتواصل معاك".
-5. ممنوع تستخدم أكتر من 2 emoji.
-6. الروابط: استخدم **الروابط الرسمية المذكورة تحت بالحرف فقط**. ممنوع منعًا باتًا تخترع أي رابط أو مسار من دماغك (زي /kiteb أو /brochure-pdf). لو مفيش رابط مناسب للي العميل طلبه، قول "هخلي الفريق يبعتهولك" واطلب رقمه، أو وجّهه للموقع الرئيسي — متخترعش لينك أبدًا.
+1. افهم طلب العميل الفعلي ورد عليه هو بالذات — مش رد عام. لو طلبه مش واضح، اسأله سؤال واحد يوضّحه.
+2. رد محترم وعملي. خليه مختصر (≤ 60 كلمة) للأسئلة العامة — لكن لو العميل بيسأل عن الأسعار أو تفاصيل، اعرض كل الأسعار/التفاصيل بوضوح حتى لو الرد بقى أطول.
+3. عامية مصرية واضحة — مش فصحى ولا خليجي.
+4. كل رد ينتهي بـ CTA واحد: لينك أو سؤال.
+5. ممنوع الكذب. لو مش متأكد من حاجة، قول "هخلي فريق المبيعات يتواصل معاك".
+6. ممنوع تستخدم أكتر من 2 emoji.
+7. الروابط: استخدم **الروابط الرسمية المذكورة تحت بالحرف فقط**. ممنوع منعًا باتًا تخترع أي رابط أو مسار من دماغك (زي /kiteb أو /brochure-pdf). لو مفيش رابط مناسب للي العميل طلبه، قول "هخلي الفريق يبعتهولك" واطلب رقمه، أو وجّهه للموقع الرئيسي — متخترعش لينك أبدًا.
+8. ⚠️ إنت إنسان مش روبوت: ممنوع نهائيًا تقول أو تلمّح إنك AI أو بوت أو مساعد آلي أو "نظام". متستخدمش جُمل قوالب متكررة ولا أسلوب رسمي مصطنع — اكتب زي ما موظف شاطر بيكتب على الموبايل: جُمل قصيرة طبيعية، ونوّع افتتاحياتك (متبدأش كل رسالة بنفس الكلمة).
 
 ● تصنيف النية (intent):
   • pricing_inquiry: بيسأل عن السعر أو المقارنة بين الباقات — دايماً hot.
@@ -180,7 +185,7 @@ ${attachmentsList}`
     .join("\n");
 
   const userPrompt = `
-${conversationContext ? `المحادثة قبل كده:\n${conversationContext}\n\n` : ""}الرسالة الجديدة من العميل:
+${input.situation ? `${input.situation.trim()}\n\n` : ""}${conversationContext ? `المحادثة قبل كده:\n${conversationContext}\n\n` : ""}الرسالة الجديدة من العميل:
 "${input.userMessage}"
   `.trim();
 
@@ -214,7 +219,7 @@ ${conversationContext ? `المحادثة قبل كده:\n${conversationContext}
       .slice(0, 5);
 
     return {
-      reply: reply || "أهلًا بيك 🌟 قوللي محتاج إيه بالظبط وأنا أساعدك فورًا.",
+      reply: reply || "أهلًا بيك، اتفضل قوللي محتاج إيه بالظبط وأنا معاك 👌",
       intent: object.intent,
       leadQuality: object.leadQuality,
       shouldHandoff: object.shouldHandoff,
@@ -225,7 +230,7 @@ ${conversationContext ? `المحادثة قبل كده:\n${conversationContext}
     // Only a total provider failure reaches here — degrade to a friendly ack +
     // soft handoff, never a scary error in the inbox.
     return {
-      reply: "أهلًا بيك 🌟 ابعتلنا استفسارك أو رقمك وفريقنا هيرد عليك حالًا.",
+      reply: "أهلًا بيك، وصلتنا رسالتك 🙏 سيبلنا استفسارك أو رقم تليفونك وهنرد عليك في أقرب وقت.",
       intent: "other",
       leadQuality: "warm",
       shouldHandoff: true,

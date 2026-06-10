@@ -4,7 +4,10 @@ import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireHR } from "@/lib/permissions";
-import { sendMetaMessage } from "@/lib/marketing-inbox/meta-client";
+import {
+  sendMetaMessage,
+  fetchUserProfile,
+} from "@/lib/marketing-inbox/meta-client";
 
 // ============================================================================
 // Server Actions — Marketing Inbox
@@ -611,6 +614,56 @@ export async function addInboxAttachment(form: FormData): Promise<void> {
 
   revalidatePath("/dashboard/marketing/inbox/settings");
   redirect("/dashboard/marketing/inbox/settings?att_added=1");
+}
+
+// Fetch names + profile pictures for conversations that are missing them
+// (e.g. created before the page token was fixed). Best-effort per user — Meta
+// hides some profiles (privacy/EU), those just stay as "مستخدم ...".
+export async function refreshCustomerProfiles(): Promise<
+  | { ok: true; updated: number; remaining: number }
+  | { ok: false; error: string }
+> {
+  const { supabase, profile } = await requireHR();
+
+  const { data: settings } = await supabase
+    .from("marketing_inbox_settings")
+    .select("meta_page_token")
+    .eq("company_id", profile.company_id)
+    .maybeSingle();
+
+  if (!settings?.meta_page_token) {
+    return { ok: false, error: "Page Access Token مش مضبوط — اكمل الإعدادات الأول" };
+  }
+
+  const { data: convs } = await supabase
+    .from("marketing_inbox_conversations")
+    .select("id, channel, external_user_id")
+    .eq("company_id", profile.company_id)
+    .is("external_user_name", null)
+    .in("channel", ["messenger", "instagram"])
+    .limit(100);
+
+  let updated = 0;
+  for (const conv of convs || []) {
+    const p = await fetchUserProfile({
+      channel: conv.channel as "messenger" | "instagram",
+      pageToken: settings.meta_page_token,
+      externalUserId: conv.external_user_id,
+    });
+    if (p?.name) {
+      await supabase
+        .from("marketing_inbox_conversations")
+        .update({
+          external_user_name: p.name,
+          external_user_picture: p.picture || null,
+        })
+        .eq("id", conv.id);
+      updated++;
+    }
+  }
+
+  revalidatePath("/dashboard/marketing/inbox");
+  return { ok: true, updated, remaining: (convs?.length || 0) - updated };
 }
 
 export async function deleteInboxAttachment(form: FormData): Promise<void> {
