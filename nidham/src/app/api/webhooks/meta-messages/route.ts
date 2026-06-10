@@ -328,6 +328,20 @@ async function processEventAsync(
             ai_last_run_at: new Date().toISOString(),
           })
           .eq("id", conversationId);
+        // Rules answer the TEXT — but if the message also asks for a configured
+        // file ("عايز اشوف الالوان"), send it too. Without this, a rule match
+        // would silently swallow the attachment the customer asked for.
+        if (send.ok) {
+          await sendInboxAttachments({
+            supabase,
+            conversationId,
+            channel,
+            pageToken: settings.meta_page_token,
+            recipientId: senderId,
+            attachments: parseInboxAttachments(settings.ai_attachments),
+            userMessage: messageText,
+          });
+        }
         continue;
       }
 
@@ -1016,53 +1030,80 @@ async function runAiReply(args: {
 
   // ── Send any files the AI (or a keyword trigger) picked as attachments ──
   // Only when the text reply actually went out (within the 24h window) — a file
-  // would just hit the same wall otherwise. De-duped per conversation so the
-  // same catalog is never re-sent to a customer who already received it.
-  if (send.ok && args.attachments.length) {
-    const wantedIds = new Set<string>(ai.attachmentIds || []);
-    // Keyword fallback: catch a clear ask ("الوان؟", "ضمان؟") even if the model
-    // forgot to flag the file — belt and suspenders.
-    for (const a of args.attachments) {
-      if (
-        (a.triggers || []).some((t) => t && lowered.includes(t.toLowerCase()))
-      ) {
-        wantedIds.add(a.id);
-      }
+  // would just hit the same wall otherwise.
+  if (send.ok) {
+    await sendInboxAttachments({
+      supabase: args.supabase,
+      conversationId: args.conversationId,
+      channel: args.channel,
+      pageToken: args.pageToken,
+      recipientId: args.recipientId,
+      attachments: args.attachments,
+      userMessage: args.userMessage,
+      extraWantedIds: ai.attachmentIds || [],
+    });
+  }
+}
+
+// Send every configured file whose trigger matches the customer's message
+// (plus any ids the AI explicitly picked) as a native Messenger attachment.
+// Shared by BOTH the keyword-rule path and the AI path, so the catalog still
+// goes out when a deterministic rule answered the text. De-duped per
+// conversation via the 📎 marker rows so a customer never gets the same file
+// twice.
+async function sendInboxAttachments(args: {
+  supabase: ReturnType<typeof createServiceClient>;
+  conversationId: string;
+  channel: "messenger" | "instagram";
+  pageToken: string;
+  recipientId: string;
+  attachments: InboxAttachment[];
+  userMessage: string;
+  extraWantedIds?: string[];
+}): Promise<void> {
+  if (!args.attachments.length) return;
+
+  const lowered = args.userMessage.toLowerCase();
+  const wantedIds = new Set<string>(args.extraWantedIds || []);
+  for (const a of args.attachments) {
+    if (
+      (a.triggers || []).some((t) => t && lowered.includes(t.toLowerCase()))
+    ) {
+      wantedIds.add(a.id);
     }
+  }
+  if (!wantedIds.size) return;
 
-    if (wantedIds.size) {
-      const { data: priorRows } = await args.supabase
-        .from("marketing_inbox_messages")
-        .select("body")
-        .eq("conversation_id", args.conversationId)
-        .like("body", "📎%");
-      const alreadySent = new Set((priorRows || []).map((r) => r.body));
+  const { data: priorRows } = await args.supabase
+    .from("marketing_inbox_messages")
+    .select("body")
+    .eq("conversation_id", args.conversationId)
+    .like("body", "📎%");
+  const alreadySent = new Set((priorRows || []).map((r) => r.body));
 
-      for (const id of wantedIds) {
-        const att = args.attachments.find((a) => a.id === id);
-        if (!att) continue;
-        const marker = `📎 ${att.label}`;
-        if (alreadySent.has(marker)) continue; // already sent in this conversation
+  for (const id of wantedIds) {
+    const att = args.attachments.find((a) => a.id === id);
+    if (!att) continue;
+    const marker = `📎 ${att.label}`;
+    if (alreadySent.has(marker)) continue; // already sent in this conversation
 
-        const sent = await sendMetaAttachment({
-          channel: args.channel,
-          pageToken: args.pageToken,
-          recipientId: args.recipientId,
-          url: att.url,
-          type: att.type,
-        });
-        await args.supabase.from("marketing_inbox_messages").insert({
-          conversation_id: args.conversationId,
-          direction: "outbound",
-          sender: "ai",
-          body: marker,
-          meta_message_id: sent.ok ? sent.messageId : null,
-          sent_at: sent.ok ? new Date().toISOString() : null,
-          delivery_error: sent.ok ? null : sent.error,
-        });
-        alreadySent.add(marker);
-      }
-    }
+    const sent = await sendMetaAttachment({
+      channel: args.channel,
+      pageToken: args.pageToken,
+      recipientId: args.recipientId,
+      url: att.url,
+      type: att.type,
+    });
+    await args.supabase.from("marketing_inbox_messages").insert({
+      conversation_id: args.conversationId,
+      direction: "outbound",
+      sender: "ai",
+      body: marker,
+      meta_message_id: sent.ok ? sent.messageId : null,
+      sent_at: sent.ok ? new Date().toISOString() : null,
+      delivery_error: sent.ok ? null : sent.error,
+    });
+    alreadySent.add(marker);
   }
 }
 

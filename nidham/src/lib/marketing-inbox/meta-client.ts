@@ -178,6 +178,22 @@ function friendlyMetaError(
         "توكن صفحة Meta منتهي أو غير صالح — جدّد Page Access Token من إعدادات الصندوق.",
     };
   }
+  // "Unsupported post request / Object does not exist or missing permissions"
+  // — the classic comment-ops failure: the token lacks the COMMENT permissions
+  // (pages_manage_engagement + pages_read_user_content), or the app is in
+  // Development mode and the commenter has no role on the app, so Meta hides
+  // the comment object entirely.
+  if (
+    code === 100 &&
+    (raw.includes("unsupported post request") || raw.includes("does not exist"))
+  ) {
+    return {
+      outsideWindow: false,
+      message:
+        "Meta رفضت الوصول للكومنت — التوكن غالبًا ناقص صلاحيات الكومنتات (pages_manage_engagement + pages_read_user_content)، " +
+        "أو التطبيق وضع Development والمعلّق ملوش دور عليه. جدّد التوكن بالصلاحيتين دول من Graph API Explorer وحوّله لدائم، وجرّب بكومنت من حساب أدمن/تستر.",
+    };
+  }
   if (code === 200 || code === 10 || code === 803) {
     return {
       outsideWindow: false,
