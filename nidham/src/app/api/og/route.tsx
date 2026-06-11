@@ -15,6 +15,12 @@ export const runtime = "edge";
 const GOLD = "#C9A84C";
 const NAVY = "#0D1B2A";
 
+// Satori lays text with an LTR base direction, which visually scrambles
+// mixed Arabic+Latin strings ("مسؤول مبيعات B2B" puts B2B on the wrong side).
+// Wrapping in RLE…PDF forces an RTL embedding so the bidi order comes out
+// right. Harakat (كسرة نِظام) also misposition in Satori → brand uses نظام.
+const rtl = (s: string) => `‫${s}‬`;
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const title = (searchParams.get("title") || "تقديم على وظيفة").slice(0, 80);
@@ -76,7 +82,7 @@ export async function GET(req: Request) {
               }}
             >
               <div style={{ fontSize: 34, fontWeight: 700, color: GOLD }}>
-                نِظام
+                نظام
               </div>
               <div
                 style={{
@@ -102,7 +108,7 @@ export async function GET(req: Request) {
               fontWeight: 700,
             }}
           >
-            فرصة عمل جديدة 🔥
+            {rtl("فرصة عمل جديدة 🔥")}
           </div>
         </div>
 
@@ -125,7 +131,7 @@ export async function GET(req: Request) {
               lineHeight: 1.25,
             }}
           >
-            {title}
+            {rtl(title)}
           </div>
           <div
             style={{
@@ -138,7 +144,7 @@ export async function GET(req: Request) {
               style={{ width: 46, height: 4, borderRadius: 2, backgroundColor: GOLD }}
             />
             <div style={{ fontSize: 26, color: "rgba(255,255,255,0.75)" }}>
-              التقديم أونلاين في دقيقتين — من غير ما تروح أي مكان
+              {rtl("التقديم أونلاين في دقيقتين — من غير ما تروح أي مكان")}
             </div>
             <div
               style={{ width: 46, height: 4, borderRadius: 2, backgroundColor: GOLD }}
@@ -168,7 +174,7 @@ export async function GET(req: Request) {
               boxShadow: "0 8px 30px rgba(201,168,76,0.4)",
             }}
           >
-            👈 اضغط اللينك وقدّم دلوقتي
+            {rtl("اضغط اللينك وقدّم دلوقتي 👇")}
           </div>
           <div
             style={{
