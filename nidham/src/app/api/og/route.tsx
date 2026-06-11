@@ -48,18 +48,25 @@ function RtlLine({
   );
 }
 
+// Fonts load ONCE per isolate (module scope). A cold render used to take
+// ~6.3s (font fetches on every request) — longer than Facebook's image-fetch
+// timeout, so the scraper aborted and flagged the image "corrupted". Warm
+// renders are ~1.4s, and s-maxage below lets Vercel's CDN serve repeat
+// fetches of the same URL instantly.
+const fontsPromise = Promise.all([
+  fetch(new URL("./Tajawal-Bold.ttf", import.meta.url)).then((r) =>
+    r.arrayBuffer(),
+  ),
+  fetch(new URL("./Tajawal-Regular.ttf", import.meta.url)).then((r) =>
+    r.arrayBuffer(),
+  ),
+]);
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const title = (searchParams.get("title") || "تقديم على وظيفة").slice(0, 80);
 
-  const [bold, regular] = await Promise.all([
-    fetch(new URL("./Tajawal-Bold.ttf", import.meta.url)).then((r) =>
-      r.arrayBuffer(),
-    ),
-    fetch(new URL("./Tajawal-Regular.ttf", import.meta.url)).then((r) =>
-      r.arrayBuffer(),
-    ),
-  ]);
+  const [bold, regular] = await fontsPromise;
 
   return new ImageResponse(
     (
@@ -223,7 +230,8 @@ export async function GET(req: Request) {
         { name: "Tajawal", data: regular, weight: 400, style: "normal" },
       ],
       headers: {
-        "cache-control": "public, max-age=86400",
+        // s-maxage → Vercel CDN caches per-URL; FB's fetch then gets a HIT.
+        "cache-control": "public, max-age=86400, s-maxage=31536000",
       },
     },
   );

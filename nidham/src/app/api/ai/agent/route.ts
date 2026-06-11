@@ -2173,6 +2173,19 @@ export async function POST(req: Request) {
         ).replace(/\/$/, "");
         const applyUrl = `${site}/jobs/${job.slug}`;
         const encodedUrl = encodeURIComponent(applyUrl);
+
+        // Pre-warm the OG image into Vercel's CDN: a cold render (~6s) exceeds
+        // Facebook's image-fetch timeout and gets flagged "corrupted". Warming
+        // it now means the scraper hits the CDN cache instantly when the link
+        // is first shared.
+        try {
+          await fetch(
+            `${site}/api/og?title=${encodeURIComponent(payload.title)}&v=2`,
+            { signal: AbortSignal.timeout(15000) },
+          );
+        } catch {
+          // Best effort — sharing still works, first scrape may just be slow.
+        }
         return {
           ok: true,
           job_id: job.id,
