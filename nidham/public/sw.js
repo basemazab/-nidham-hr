@@ -16,10 +16,11 @@
 // Cache versioning: bump CACHE_NAME whenever we change the SW so old
 // clients evict on next load.
 
-// Bumped to v2 (2026-05-26): force eviction of v1 caches that may have
-// staled HTML for dashboard pages. Increase this whenever a major UI
-// change ships so old PWA installs evict the cached shell.
-const CACHE_NAME = "nidham-v2";
+// Bumped to v3 (2026-06-12): 4xx responses no longer trigger the offline
+// fallback (a mistyped /jobs/... URL showed "مفيش اتصال بالنت" instead of
+// the 404 page). Increase this whenever the SW logic changes so old PWA
+// installs evict and update.
+const CACHE_NAME = "nidham-v3";
 
 // Pre-cache the offline fallback + icon — tiny payload, must-have for
 // the install to look professional when the user is offline.
@@ -78,6 +79,11 @@ self.addEventListener("fetch", (event) => {
       fetch(event.request)
         .then((response) => {
           if (response.ok || response.status === 304) return response;
+          // 4xx are REAL answers (404 not-found page, 403…) — show them as-is.
+          // Treating them as outages made a mistyped link render offline.html
+          // ("مفيش اتصال بالنت") instead of the 404 page. Only 5xx means the
+          // origin itself is down → friendly offline fallback.
+          if (response.status < 500) return response;
           throw new Error(`Upstream returned ${response.status}`);
         })
         .catch(async () => {
