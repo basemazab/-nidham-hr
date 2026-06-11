@@ -15,6 +15,7 @@ import { generateObject, generateText } from "ai";
 import { createClient } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { callWithFallback, pickAgentModelLargeContext } from "@/lib/ai-models";
+import { extractPdfText } from "@/lib/pdf-extract";
 import {
   cvTranslationSchema,
   buildCvTranslationPrompt,
@@ -101,39 +102,60 @@ export async function POST(req: Request) {
         );
       }
     } else if (isPdf || isImage) {
-      if (!process.env.GEMINI_API_KEY) {
-        return Response.json({ error: "AI configuration missing — GEMINI_API_KEY" }, { status: 500 });
+      // 1) PDFs: try the local byte-level extractor FIRST — instant, free,
+      //    and immune to model overload. Most CVs are text PDFs; only scanned
+      //    ones fall through to the AI OCR below.
+      if (isPdf) {
+        try {
+          const local = await extractPdfText(file);
+          if (local && local.length >= 200) cvText = local;
+        } catch {
+          // scanned / unusual PDF → OCR below
+        }
       }
-      try {
-        const bytes = new Uint8Array(await file.arrayBuffer());
-        const google = createGoogleGenerativeAI({ apiKey: process.env.GEMINI_API_KEY });
-        const { text } = await generateText({
-          model: google("gemini-2.5-flash"),
-          temperature: 0,
-          messages: [
-            {
-              role: "user",
-              content: [
+
+      if (!cvText) {
+        if (!process.env.GEMINI_API_KEY) {
+          return Response.json({ error: "AI configuration missing — GEMINI_API_KEY" }, { status: 500 });
+        }
+        try {
+          const bytes = new Uint8Array(await file.arrayBuffer());
+          const google = createGoogleGenerativeAI({ apiKey: process.env.GEMINI_API_KEY });
+          const ocr = (model: string) =>
+            generateText({
+              model: google(model),
+              temperature: 0,
+              maxRetries: 1,
+              messages: [
                 {
-                  type: "text",
-                  text: "استخرج كل النص المكتوب في السيرة الذاتية المرفقة كما هو حرفيًا، بدون تلخيص أو تعليق.",
-                },
-                {
-                  type: "file",
-                  data: bytes,
-                  mediaType: isPdf ? "application/pdf" : file.type || "image/jpeg",
+                  role: "user",
+                  content: [
+                    {
+                      type: "text",
+                      text: "استخرج كل النص المكتوب في السيرة الذاتية المرفقة كما هو حرفيًا، بدون تلخيص أو تعليق.",
+                    },
+                    {
+                      type: "file",
+                      data: bytes,
+                      mediaType: isPdf ? "application/pdf" : file.type || "image/jpeg",
+                    },
+                  ],
                 },
               ],
-            },
-          ],
-        });
-        cvText = (text ?? "").trim();
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
-        return Response.json(
-          { error: `ما قدرناش نقرا الملف — جرّب PDF/صورة أوضح أو الصق النص. (${msg.slice(0, 140)})` },
-          { status: 502 },
-        );
+            }).then((r) => (r.text ?? "").trim());
+          try {
+            cvText = await ocr("gemini-2.5-flash");
+          } catch {
+            // flash pool overloaded ("high demand") → lite usually has room
+            cvText = await ocr("gemini-2.5-flash-lite");
+          }
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          return Response.json(
+            { error: `خدمة قراءة الملفات عليها ضغط دلوقتي — استنى دقيقة وجرّب تاني، أو الصق نص الـ CV مباشرة. (${msg.slice(0, 120)})` },
+            { status: 502 },
+          );
+        }
       }
     } else {
       return Response.json(
