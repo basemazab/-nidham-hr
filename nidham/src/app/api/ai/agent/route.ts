@@ -90,7 +90,7 @@ function buildSystemPrompt(companyName: string, userName: string): string {
 
 ## الأدوات المتاحة (Tools)
 
-عندك ١٥ أداة. اختار الأداة الصح حسب طلب المستخدم:
+عندك ١٩ أداة. اختار الأداة الصح حسب طلب المستخدم:
 
 1. **search_employees** — لما المستخدم بيسأل عن موظف معين أو بيقولك
    "إيه أداء سعيد"، "إجازات أحمد"، "موظف رقم 102". رجع البيانات
@@ -255,6 +255,29 @@ bulk_import_* (لأن مفيش بيانات منظمة).
 أنت: **لا تنادي execute_payroll_period مباشرة**. ترد:
 "تمام، بس محتاج تحدد لي: شهري ولا أسبوعي؟ والفترة (من تاريخ - لتاريخ)؟
 وعدد أيام العمل في الفترة دي؟"
+
+## وضع التوظيف — إنت كمان مسؤول توظيف شخصي كامل 🎯
+
+لما المستخدم يقول "ابحثلي عن / عايز أوظف / محتاج [وظيفة]"، نفّذ الـ flow ده بالكامل:
+
+1. **دوّر في بنك المواهب الأول**: نادي search_talent_pool بالكلمة المفتاحية —
+   ممكن يكون فيه مرشح جاهز قدّم قبل كده. لو لقيت، اعرضهم عليه فورًا.
+2. **اجمع تفاصيل الوظيفة** اللي ناقصة بسؤال واحد مجمّع (المكان؟ الخبرة؟
+   المرتب؟) — ولو المستخدم مستعجل، اقترح إنت قيم معقولة واستأذنه.
+3. **اكتب إعلان توظيف احترافي** بنفسك (نص جذاب بالعربي + هيكل واضح:
+   المسمى، المهام، الشروط، المميزات، طريقة التقديم) واعرضه عليه في الشات.
+4. **انشر الوظيفة**: نادي create_job_posting بـ user_confirmed=false للـ
+   preview، وبعد موافقته نادي تاني بـ true. هترجعلك **لينك تقديم عام** —
+   اديهوله وقوله ينشره على فيسبوك/لينكدإن/واتساب، وكل اللي هيقدّم الـ CV
+   بتاعه هيتجمع تلقائيًا في النظام.
+5. **تابع المتقدمين**: لما يسألك "مين قدّم؟" نادي list_job_applications.
+   ولما يقولك "قيّملي مرشح" نادي get_application_cv واقرا الـ CV وقيّمه
+   بصراحة (نقاط قوة/ضعف/أسئلة مقابلة).
+
+قواعد وضع التوظيف:
+- متخترعش مرشحين أو أرقام — كل حاجة من الأدوات.
+- إعلان التوظيف اكتبه إنت بإبداع، بس تفاصيل الشركة الحقيقية بس.
+- لينك التقديم اللي بترجعه الأداة هو الوحيد اللي تستخدمه — متألفش لينكات.
 
 ابدأ كل محادثة بشكل ودي ومحترم، واتعامل مع المستخدم كأنك زميل مخلص
 بيساعده يخلص شغله بدقة وسرعة.
@@ -2037,6 +2060,241 @@ export async function POST(req: Request) {
         if (upsertErr) return { ok: false, error: upsertErr.message };
 
         return { ok: true, applied: true };
+      },
+    }),
+
+    // ----------- Tool 16: create_job_posting -----------
+    create_job_posting: tool({
+      description:
+        "أنشئ وانشر وظيفة جديدة في نظام التوظيف — بتظهر فورًا على صفحة الوظائف العامة " +
+        "وبيتولد لينك تقديم يتشارك على فيسبوك/لينكدإن/واتساب، وكل الـ CVs بتتجمع تلقائيًا. " +
+        "**flow إجباري**: نادي بـ user_confirmed=false أولاً للـ preview، اعرض التفاصيل، " +
+        "استنى موافقة، نادي تاني بـ user_confirmed=true.",
+      inputSchema: z.object({
+        title: z.string().min(2).describe("المسمى الوظيفي (إجباري)."),
+        description: z
+          .string()
+          .min(10)
+          .describe("وصف الوظيفة — اكتبه احترافي وجذاب لو المستخدم مدّاش تفاصيل."),
+        requirements: z
+          .string()
+          .min(5)
+          .describe("المتطلبات — سطور مفصولة بأسطر جديدة."),
+        responsibilities: z.string().optional().describe("المسؤوليات الرئيسية."),
+        department: z.string().optional(),
+        job_type: z
+          .enum(["full_time", "part_time", "contract", "internship"])
+          .optional()
+          .describe("الافتراضي full_time."),
+        location: z.string().optional().describe("المدينة/المحافظة."),
+        remote_ok: z.boolean().optional(),
+        salary_min: z.number().nonnegative().optional(),
+        salary_max: z.number().nonnegative().optional(),
+        show_salary: z
+          .boolean()
+          .optional()
+          .describe("يظهر المرتب في الإعلان العام؟ الافتراضي لا."),
+        experience_years_min: z.number().int().nonnegative().optional(),
+        user_confirmed: z
+          .boolean()
+          .describe("حطّها true فقط بعد موافقة المستخدم الصريحة في الـ chat."),
+      }),
+      execute: async ({ user_confirmed, ...payload }) => {
+        if (!user_confirmed) {
+          return {
+            ok: true,
+            preview: true,
+            proposed: payload,
+            confirmation_prompt: `هنشر وظيفة «${payload.title}» على صفحة التوظيف العامة ويتولد لينك تقديم يتجمع عليه الـ CVs تلقائيًا. تأكيد؟`,
+          };
+        }
+
+        const supa = await createClient();
+        const {
+          data: { user },
+        } = await supa.auth.getUser();
+        if (!user) return { ok: false, error: "Unauthorized" };
+        const { data: prof } = await supa
+          .from("profiles")
+          .select("company_id")
+          .eq("id", user.id)
+          .single();
+        if (!prof) return { ok: false, error: "Profile not found" };
+
+        // Same slug recipe as the jobs/new form (Arabic-safe + unique suffix).
+        let slug = payload.title
+          .toLowerCase()
+          .replace(/[؀-ۿ\s]+/g, "-")
+          .replace(/[^a-z0-9-]/g, "")
+          .replace(/-+/g, "-")
+          .replace(/^-|-$/g, "")
+          .slice(0, 60);
+        if (slug.length === 0) slug = "job-" + Date.now().toString(36);
+        slug = `${slug}-${Math.random().toString(36).slice(2, 6)}`;
+
+        const { data: job, error } = await supa
+          .from("jobs")
+          .insert({
+            company_id: prof.company_id,
+            title: payload.title,
+            department: payload.department ?? null,
+            description: payload.description,
+            requirements: payload.requirements,
+            responsibilities: payload.responsibilities ?? null,
+            job_type: payload.job_type ?? "full_time",
+            location: payload.location ?? null,
+            remote_ok: payload.remote_ok ?? false,
+            salary_min: payload.salary_min ?? null,
+            salary_max: payload.salary_max ?? null,
+            show_salary: payload.show_salary ?? false,
+            experience_years_min: payload.experience_years_min ?? 0,
+            status: "open",
+            is_public: true,
+            slug,
+            created_by: user.id,
+          })
+          .select("id, slug")
+          .single();
+
+        if (error || !job) {
+          return { ok: false, error: error?.message ?? "فشل إنشاء الوظيفة" };
+        }
+
+        const site = (
+          process.env.NEXT_PUBLIC_SITE_URL || "https://www.nidhamhr.com"
+        ).replace(/\/$/, "");
+        return {
+          ok: true,
+          job_id: job.id,
+          apply_url: `${site}/jobs/${job.slug}`,
+          manage_url: `${site}/dashboard/jobs/${job.id}`,
+          note:
+            "اللينك جاهز للنشر على فيسبوك/لينكدإن/واتساب — أي حد يقدّم، الـ CV " +
+            "بيتسحب نصه تلقائيًا ويتجمع في صفحة المتقدمين.",
+        };
+      },
+    }),
+
+    // ----------- Tool 17: list_job_applications -----------
+    list_job_applications: tool({
+      description:
+        "اعرض المتقدمين (الـ CVs المتجمعة) — لوظيفة معينة بالاسم أو لكل الوظائف. " +
+        "بترجع آخر ١٥ متقدم: الاسم، المسمى الحالي، سنين الخبرة، المكان، الحالة.",
+      inputSchema: z.object({
+        job_title: z
+          .string()
+          .optional()
+          .describe("اسم الوظيفة أو جزء منه — سيبه فاضي لكل الوظائف."),
+      }),
+      execute: async ({ job_title }) => {
+        const supa = await createClient();
+
+        let jobIds: string[] | null = null;
+        if (job_title) {
+          const { data: jobs } = await supa
+            .from("jobs")
+            .select("id")
+            .ilike("title", `%${job_title}%`);
+          jobIds = (jobs ?? []).map((j: { id: string }) => j.id);
+          if (jobIds.length === 0) {
+            return { ok: false, error: `مفيش وظيفة باسم «${job_title}»` };
+          }
+        }
+
+        let q = supa
+          .from("applications")
+          .select(
+            "id, status, created_at, jobs(title), candidates(full_name, current_title, years_experience, location)",
+          )
+          .order("created_at", { ascending: false })
+          .limit(15);
+        if (jobIds) q = q.in("job_id", jobIds);
+
+        const { data, error } = await q;
+        if (error) return { ok: false, error: error.message };
+        return { ok: true, count: data?.length ?? 0, applications: data ?? [] };
+      },
+    }),
+
+    // ----------- Tool 18: search_talent_pool -----------
+    search_talent_pool: tool({
+      description:
+        "دوّر في بنك المواهب — كل المرشحين اللي قدّموا قبل كده على أي وظيفة في الشركة — " +
+        "بكلمة مفتاحية في نص الـ CV (مهارة/مسمى/برنامج/مدينة). " +
+        "استخدمها أول حاجة لما المستخدم يطلب يوظّف حد: ممكن يكون فيه مرشح جاهز.",
+      inputSchema: z.object({
+        keyword: z
+          .string()
+          .min(2)
+          .describe("كلمة البحث — مثلاً: محاسب، AutoCAD، مبيعات، المنصورة."),
+      }),
+      execute: async ({ keyword }) => {
+        const supa = await createClient();
+        const { data, error } = await supa
+          .from("applications")
+          .select(
+            "id, created_at, cv_text, jobs(title), candidates(full_name, current_title, years_experience, location)",
+          )
+          .ilike("cv_text", `%${keyword}%`)
+          .order("created_at", { ascending: false })
+          .limit(8);
+
+        if (error) return { ok: false, error: error.message };
+
+        const excerpt = (text: string): string => {
+          const i = text.toLowerCase().indexOf(keyword.toLowerCase());
+          if (i < 0) return text.slice(0, 180);
+          const start = Math.max(0, i - 80);
+          return (start > 0 ? "…" : "") + text.slice(start, i + 120) + "…";
+        };
+
+        type Row = {
+          id: string;
+          created_at: string;
+          cv_text: string | null;
+          jobs: { title: string } | { title: string }[] | null;
+          candidates: unknown;
+        };
+        const matches = ((data ?? []) as Row[]).map((a) => ({
+          application_id: a.id,
+          candidate: a.candidates,
+          applied_for: Array.isArray(a.jobs) ? a.jobs[0]?.title : a.jobs?.title,
+          applied_at: a.created_at,
+          cv_excerpt: excerpt(a.cv_text ?? ""),
+        }));
+        return { ok: true, count: matches.length, matches };
+      },
+    }),
+
+    // ----------- Tool 19: get_application_cv -----------
+    get_application_cv: tool({
+      description:
+        "هات نص الـ CV الكامل لمتقدم معين (بالـ application_id من list_job_applications " +
+        "أو search_talent_pool) عشان تقيّمه أو تلخصه أو تقارنه بغيره.",
+      inputSchema: z.object({
+        application_id: z.string().min(10).describe("معرّف طلب التقديم."),
+      }),
+      execute: async ({ application_id }) => {
+        const supa = await createClient();
+        const { data, error } = await supa
+          .from("applications")
+          .select(
+            "id, status, cv_text, jobs(title), candidates(full_name, current_title, years_experience, location)",
+          )
+          .eq("id", application_id)
+          .single();
+
+        if (error || !data) {
+          return { ok: false, error: error?.message ?? "الطلب مش موجود" };
+        }
+        const jobRel = data.jobs as { title: string } | { title: string }[] | null;
+        return {
+          ok: true,
+          candidate: data.candidates,
+          job: Array.isArray(jobRel) ? jobRel[0]?.title : jobRel?.title,
+          status: data.status,
+          cv_text: (data.cv_text ?? "").slice(0, 12000),
+        };
       },
     }),
   };
