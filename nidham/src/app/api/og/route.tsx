@@ -1,41 +1,197 @@
+// ============================================================================
+// /api/og?title=... — Open Graph image for public job pages (1200×630 PNG)
+// ============================================================================
+//
+// History: this used to return a raw SVG with `system-ui` text. Facebook's
+// scraper can't shape Arabic in SVGs → titles rendered as hex tofu boxes
+// (06 2A 06 27 …) on every shared job link. Now it's a real PNG via
+// next/og ImageResponse with the Tajawal Arabic font bundled next to this
+// file, so the title renders correctly everywhere (FB/WhatsApp/LinkedIn).
+
+import { ImageResponse } from "next/og";
+
 export const runtime = "edge";
 
-function esc(s: string): string {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-}
-
-function box(x: number, y: number, text: string): string {
-  const escaped = esc(text);
-  return `<rect x="${x}" y="${y}" width="344" height="56" rx="8" fill="rgba(255,255,255,0.1)"/><text x="${x + 44}" y="${y + 36}" font-family="system-ui, sans-serif" font-size="18" fill="#fff" font-weight="600">${escaped}</text><circle cx="${x + 20}" cy="${y + 28}" r="4" fill="#c9a84c"/>`;
-}
+const GOLD = "#C9A84C";
+const NAVY = "#0D1B2A";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const title = searchParams.get("title") || "تقديم على وظيفة";
-  const display = title.length > 40 ? title.slice(0, 40) + "..." : title;
+  const title = (searchParams.get("title") || "تقديم على وظيفة").slice(0, 80);
 
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630">
-<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0d9488"/><stop offset="100%" stop-color="#0f766e"/></linearGradient></defs>
-<rect x="0" y="0" width="720" height="630" fill="#0a0f1a"/>
-<rect x="720" y="0" width="480" height="630" fill="url(#g)"/>
-<rect x="48" y="96" width="6" height="32" rx="3" fill="#c9a84c"/>
-<text x="68" y="118" font-family="system-ui, sans-serif" font-size="26" font-weight="900" fill="#c9a84c">نِظام HR</text>
-<rect x="48" y="380" width="60" height="4" rx="2" fill="#c9a84c"/>
-<text x="48" y="456" font-family="system-ui, sans-serif" font-size="56" font-weight="900" fill="#fff">${esc(display)}</text>
-<text x="48" y="508" font-family="system-ui, sans-serif" font-size="20" fill="rgba(255,255,255,0.6)">قدم على الوظيفة الآن — خطوة واحدة نحو مستقبلك المهني</text>
-<text x="48" y="578" font-family="system-ui, sans-serif" font-size="16" fill="rgba(255,255,255,0.4)">nidhamhr.com</text>
-<text x="210" y="578" font-family="system-ui, sans-serif" font-size="14" fill="rgba(201,168,76,0.6)">نظام متكامل لإدارة الموارد البشرية</text>
-<rect x="788" y="100" width="344" height="44" rx="12" fill="rgba(255,255,255,0.15)"/>
-<text x="960" y="128" font-family="system-ui, sans-serif" font-size="18" font-weight="700" fill="#fff" text-anchor="middle">AI-Powered</text>
-${box(788, 170, "تقييم ذكي للسيرة الذاتية")}
-${box(788, 240, "تصفية تلقائية للمتقدمين")}
-${box(788, 310, "تتبع المتقدمين في الوقت الحقيقي")}
-</svg>`;
+  const [bold, regular] = await Promise.all([
+    fetch(new URL("./Tajawal-Bold.ttf", import.meta.url)).then((r) =>
+      r.arrayBuffer(),
+    ),
+    fetch(new URL("./Tajawal-Regular.ttf", import.meta.url)).then((r) =>
+      r.arrayBuffer(),
+    ),
+  ]);
 
-  return new Response(svg, {
-    headers: {
-      "content-type": "image/svg+xml",
-      "cache-control": "public, max-age=31536000, immutable",
+  return new ImageResponse(
+    (
+      <div
+        style={{
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "space-between",
+          backgroundColor: NAVY,
+          backgroundImage:
+            "radial-gradient(circle at 85% 15%, rgba(201,168,76,0.18) 0%, rgba(201,168,76,0) 45%), radial-gradient(circle at 10% 90%, rgba(13,148,136,0.25) 0%, rgba(13,148,136,0) 50%)",
+          fontFamily: "Tajawal",
+          padding: "48px 64px",
+        }}
+      >
+        {/* Top brand row */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            width: "100%",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 14,
+            }}
+          >
+            <div
+              style={{
+                width: 8,
+                height: 40,
+                borderRadius: 4,
+                backgroundColor: GOLD,
+              }}
+            />
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+              }}
+            >
+              <div style={{ fontSize: 34, fontWeight: 700, color: GOLD }}>
+                نِظام
+              </div>
+              <div
+                style={{
+                  fontSize: 13,
+                  color: "rgba(255,255,255,0.5)",
+                  letterSpacing: 4,
+                }}
+              >
+                NIDHAM HR
+              </div>
+            </div>
+          </div>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              backgroundColor: "rgba(16,185,129,0.15)",
+              border: "1px solid rgba(16,185,129,0.45)",
+              color: "#34d399",
+              borderRadius: 999,
+              padding: "10px 26px",
+              fontSize: 22,
+              fontWeight: 700,
+            }}
+          >
+            فرصة عمل جديدة 🔥
+          </div>
+        </div>
+
+        {/* Job title — the hero */}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 22,
+            maxWidth: 1020,
+          }}
+        >
+          <div
+            style={{
+              fontSize: title.length > 35 ? 56 : 68,
+              fontWeight: 700,
+              color: "#ffffff",
+              textAlign: "center",
+              lineHeight: 1.25,
+            }}
+          >
+            {title}
+          </div>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+            }}
+          >
+            <div
+              style={{ width: 46, height: 4, borderRadius: 2, backgroundColor: GOLD }}
+            />
+            <div style={{ fontSize: 26, color: "rgba(255,255,255,0.75)" }}>
+              التقديم أونلاين في دقيقتين — من غير ما تروح أي مكان
+            </div>
+            <div
+              style={{ width: 46, height: 4, borderRadius: 2, backgroundColor: GOLD }}
+            />
+          </div>
+        </div>
+
+        {/* CTA bar */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            width: "100%",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              backgroundColor: GOLD,
+              color: NAVY,
+              borderRadius: 16,
+              padding: "16px 40px",
+              fontSize: 28,
+              fontWeight: 700,
+              boxShadow: "0 8px 30px rgba(201,168,76,0.4)",
+            }}
+          >
+            👈 اضغط اللينك وقدّم دلوقتي
+          </div>
+          <div
+            style={{
+              display: "flex",
+              fontSize: 22,
+              color: "rgba(255,255,255,0.45)",
+            }}
+          >
+            nidhamhr.com
+          </div>
+        </div>
+      </div>
+    ),
+    {
+      width: 1200,
+      height: 630,
+      fonts: [
+        { name: "Tajawal", data: bold, weight: 700, style: "normal" },
+        { name: "Tajawal", data: regular, weight: 400, style: "normal" },
+      ],
+      headers: {
+        "cache-control": "public, max-age=86400",
+      },
     },
-  });
+  );
 }
