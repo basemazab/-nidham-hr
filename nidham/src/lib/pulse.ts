@@ -1,5 +1,5 @@
 // ============================================================================
-// نبض نيدهام (Nidham Pulse) — AI Chief of Staff
+// نبض نِظام (Nidham Pulse) — AI Chief of Staff
 // ============================================================================
 //
 // Scans EVERY module of the tenant (HR attendance, leaves, advances, payroll
@@ -321,7 +321,7 @@ export const PULSE_CATEGORY_LINKS: Record<string, { href: string; label: string 
 };
 
 export async function generatePulseBrief(data: PulseData): Promise<PulseBrief> {
-  const prompt = `إنت «نبض نيدهام» — مدير المكتب التنفيذي الآلي لشركة مصرية. دي بيانات الشركة النهاردة، محسوبة بدقة من قاعدة البيانات (مش تقديرات):
+  const prompt = `إنت «نبض نِظام» — مدير المكتب التنفيذي الآلي لشركة مصرية. دي بيانات الشركة النهاردة، محسوبة بدقة من قاعدة البيانات (مش تقديرات):
 
 ${JSON.stringify(data, null, 1)}
 

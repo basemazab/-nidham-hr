@@ -4,7 +4,7 @@ import { PulseClient } from "./pulse-client";
 import type { PulseBriefRow } from "./actions";
 
 export const metadata = {
-  title: "نبض نيدهام | ذكاء HR",
+  title: "نبض نِظام | ذكاء HR",
 };
 
 export const dynamic = "force-dynamic";
@@ -34,12 +34,12 @@ export default async function PulsePage() {
         <nav className="text-xs text-slate-500 mb-4 font-cairo">
           <Link href="/dashboard" className="hover:text-brand-cyan-dark">الرئيسية</Link>
           <span className="mx-2">›</span>
-          <span className="text-slate-700 dark:text-slate-300">نبض نيدهام</span>
+          <span className="text-slate-700 dark:text-slate-300">نبض نِظام</span>
         </nav>
 
         <div className="mb-6">
           <h1 className="text-2xl font-black font-cairo text-slate-900 dark:text-slate-100">
-            ⚡ نبض نيدهام
+            ⚡ نبض نِظام
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 font-cairo">
             مديرك التنفيذي الآلي: بيمسح شركتك كلها — حضور، إجازات، مرتبات،

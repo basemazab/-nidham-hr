@@ -1,7 +1,7 @@
 set client_encoding to 'UTF8';
 
 -- ============================================================================
--- 104 — نبض نيدهام (Nidham Pulse): daily AI executive briefing
+-- 104 — نبض نِظام (Nidham Pulse): daily AI executive briefing
 -- ============================================================================
 -- One brief per company per day. The brief is generated from a cross-module
 -- scan (attendance, leaves, advances, payroll cost, expiring documents,
