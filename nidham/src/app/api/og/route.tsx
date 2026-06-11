@@ -7,6 +7,13 @@
 // (06 2A 06 27 …) on every shared job link. Now it's a real PNG via
 // next/og ImageResponse with the Tajawal Arabic font bundled next to this
 // file, so the title renders correctly everywhere (FB/WhatsApp/LinkedIn).
+//
+// RTL: Satori lays text out with an LTR base direction and mangles bidi
+// control chars (RLE reversed letters INSIDE the first word). The reliable
+// fix is word-level layout: split each line into words and render them in a
+// `row-reverse` flex row — logical word order displayed right→left, while
+// each single word is one direction so its glyph shaping stays correct.
+// Harakat also misposition in Satori, so the brand mark is نظام (no kasra).
 
 import { ImageResponse } from "next/og";
 
@@ -15,11 +22,31 @@ export const runtime = "edge";
 const GOLD = "#C9A84C";
 const NAVY = "#0D1B2A";
 
-// Satori lays text with an LTR base direction, which visually scrambles
-// mixed Arabic+Latin strings ("مسؤول مبيعات B2B" puts B2B on the wrong side).
-// Wrapping in RLE…PDF forces an RTL embedding so the bidi order comes out
-// right. Harakat (كسرة نِظام) also misposition in Satori → brand uses نظام.
-const rtl = (s: string) => `‫${s}‬`;
+function RtlLine({
+  text,
+  style = {},
+}: {
+  text: string;
+  style?: Record<string, unknown>;
+}) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "row-reverse",
+        flexWrap: "wrap",
+        justifyContent: "center",
+        alignItems: "center",
+        gap: 12,
+        ...style,
+      }}
+    >
+      {text.split(/\s+/).map((w, i) => (
+        <span key={i}>{w}</span>
+      ))}
+    </div>
+  );
+}
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -98,17 +125,17 @@ export async function GET(req: Request) {
           <div
             style={{
               display: "flex",
-              alignItems: "center",
               backgroundColor: "rgba(16,185,129,0.15)",
               border: "1px solid rgba(16,185,129,0.45)",
               color: "#34d399",
               borderRadius: 999,
               padding: "10px 26px",
-              fontSize: 22,
-              fontWeight: 700,
             }}
           >
-            {rtl("فرصة عمل جديدة 🔥")}
+            <RtlLine
+              text="فرصة عمل جديدة 🔥"
+              style={{ fontSize: 22, fontWeight: 700, gap: 8 }}
+            />
           </div>
         </div>
 
@@ -118,34 +145,34 @@ export async function GET(req: Request) {
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            gap: 22,
-            maxWidth: 1020,
+            gap: 26,
+            maxWidth: 1040,
           }}
         >
-          <div
+          <RtlLine
+            text={title}
             style={{
               fontSize: title.length > 35 ? 56 : 68,
               fontWeight: 700,
               color: "#ffffff",
-              textAlign: "center",
               lineHeight: 1.25,
+              gap: 18,
             }}
-          >
-            {rtl(title)}
-          </div>
+          />
           <div
             style={{
               display: "flex",
               alignItems: "center",
-              gap: 12,
+              gap: 14,
             }}
           >
             <div
               style={{ width: 46, height: 4, borderRadius: 2, backgroundColor: GOLD }}
             />
-            <div style={{ fontSize: 26, color: "rgba(255,255,255,0.75)" }}>
-              {rtl("التقديم أونلاين في دقيقتين — من غير ما تروح أي مكان")}
-            </div>
+            <RtlLine
+              text="التقديم أونلاين في دقيقتين من موبايلك"
+              style={{ fontSize: 26, color: "rgba(255,255,255,0.75)", gap: 8 }}
+            />
             <div
               style={{ width: 46, height: 4, borderRadius: 2, backgroundColor: GOLD }}
             />
@@ -164,17 +191,17 @@ export async function GET(req: Request) {
           <div
             style={{
               display: "flex",
-              alignItems: "center",
               backgroundColor: GOLD,
               color: NAVY,
               borderRadius: 16,
               padding: "16px 40px",
-              fontSize: 28,
-              fontWeight: 700,
               boxShadow: "0 8px 30px rgba(201,168,76,0.4)",
             }}
           >
-            {rtl("اضغط اللينك وقدّم دلوقتي 👇")}
+            <RtlLine
+              text="اضغط اللينك وقدّم دلوقتي 👇"
+              style={{ fontSize: 28, fontWeight: 700, gap: 10 }}
+            />
           </div>
           <div
             style={{
