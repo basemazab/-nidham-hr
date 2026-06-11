@@ -55,6 +55,40 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: message }, { status: 400 });
     }
 
+    // Instant heads-up for the HR team: candidate name + phone so they can
+    // call right away, without waiting to open the applications page.
+    // Best-effort — never blocks the application itself.
+    try {
+      const { createServiceClient } = await import("@/lib/supabase/service");
+      const svc = createServiceClient();
+      const { data: job } = await svc
+        .from("jobs")
+        .select("id, company_id, title")
+        .eq("slug", jobSlug)
+        .maybeSingle();
+      if (job) {
+        const { data: hrs } = await svc
+          .from("profiles")
+          .select("id")
+          .eq("company_id", job.company_id)
+          .in("role", ["admin", "manager"]);
+        if (hrs && hrs.length > 0) {
+          await svc.from("notifications").insert(
+            hrs.map((p: { id: string }) => ({
+              user_id: p.id,
+              company_id: job.company_id,
+              title: `🎯 متقدم جديد: ${fullName}`,
+              body: `قدّم على وظيفة «${job.title}»${phone ? ` — موبايل: ${phone}` : ""}${city ? ` — ${city}` : ""}`,
+              type: "recruitment",
+              link_url: `/dashboard/jobs/${job.id}/applications`,
+            })),
+          );
+        }
+      }
+    } catch {
+      // notifications table missing or transient error — ignore
+    }
+
     try {
       await screenApplicationInline(appId as string);
     } catch {

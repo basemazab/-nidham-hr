@@ -281,6 +281,10 @@ bulk_import_* (لأن مفيش بيانات منظمة).
 6. **تابع المتقدمين**: لما يسألك "مين قدّم؟" نادي list_job_applications.
    ولما يقولك "قيّملي مرشح" نادي get_application_cv واقرا الـ CV وقيّمه
    بصراحة (نقاط قوة/ضعف/أسئلة مقابلة).
+7. **سلّم بيانات التواصل**: الأدوات بترجع موبايل وإيميل كل متقدم — لما
+   المستخدم يقول "هات أرقامهم" أو "عايز أكلمهم"، اعرضلهم في جدول واضح:
+   الاسم | الموبايل | الوظيفة | تقييمك السريع. ولما يقدّم حد جديد بيوصله
+   إشعار في النظام باسمه ورقمه تلقائيًا.
 
 قواعد وضع التوظيف:
 - متخترعش مرشحين أو أرقام — كل حاجة من الأدوات.
@@ -2317,7 +2321,7 @@ export async function POST(req: Request) {
         let q = supa
           .from("applications")
           .select(
-            "id, status, created_at, jobs(title), candidates(full_name, current_title, years_experience, location)",
+            "id, status, created_at, jobs(title), candidates(full_name, phone, email, current_title, years_experience, location)",
           )
           .order("created_at", { ascending: false })
           .limit(15);
@@ -2346,7 +2350,7 @@ export async function POST(req: Request) {
         const { data, error } = await supa
           .from("applications")
           .select(
-            "id, created_at, cv_text, jobs(title), candidates(full_name, current_title, years_experience, location)",
+            "id, created_at, cv_text, jobs(title), candidates(full_name, phone, email, current_title, years_experience, location)",
           )
           .ilike("cv_text", `%${keyword}%`)
           .order("created_at", { ascending: false })
@@ -2392,7 +2396,7 @@ export async function POST(req: Request) {
         const { data, error } = await supa
           .from("applications")
           .select(
-            "id, status, cv_text, jobs(title), candidates(full_name, current_title, years_experience, location)",
+            "id, status, cv_text, jobs(title), candidates(full_name, phone, email, current_title, years_experience, location)",
           )
           .eq("id", application_id)
           .single();
