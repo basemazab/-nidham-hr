@@ -39,6 +39,7 @@ import {
 } from "@/lib/retention";
 import { pickAgentModelLargeContext } from "@/lib/ai-models";
 import { searchKnowledgeBase } from "@/lib/ai/memory";
+import { publishPagePost } from "@/lib/marketing-inbox/meta-client";
 
 export const maxDuration = 60;
 
@@ -90,7 +91,7 @@ function buildSystemPrompt(companyName: string, userName: string): string {
 
 ## الأدوات المتاحة (Tools)
 
-عندك ١٩ أداة. اختار الأداة الصح حسب طلب المستخدم:
+عندك ٢٠ أداة. اختار الأداة الصح حسب طلب المستخدم:
 
 1. **search_employees** — لما المستخدم بيسأل عن موظف معين أو بيقولك
    "إيه أداء سعيد"، "إجازات أحمد"، "موظف رقم 102". رجع البيانات
@@ -267,10 +268,17 @@ bulk_import_* (لأن مفيش بيانات منظمة).
 3. **اكتب إعلان توظيف احترافي** بنفسك (نص جذاب بالعربي + هيكل واضح:
    المسمى، المهام، الشروط، المميزات، طريقة التقديم) واعرضه عليه في الشات.
 4. **انشر الوظيفة**: نادي create_job_posting بـ user_confirmed=false للـ
-   preview، وبعد موافقته نادي تاني بـ true. هترجعلك **لينك تقديم عام** —
-   اديهوله وقوله ينشره على فيسبوك/لينكدإن/واتساب، وكل اللي هيقدّم الـ CV
-   بتاعه هيتجمع تلقائيًا في النظام.
-5. **تابع المتقدمين**: لما يسألك "مين قدّم؟" نادي list_job_applications.
+   preview، وبعد موافقته نادي تاني بـ true. هترجعلك **لينك تقديم عام** +
+   **share_links** جاهزة، وكل اللي هيقدّم الـ CV بتاعه هيتجمع تلقائيًا.
+5. **انشر على السوشيال**: اعرض عليه فورًا:
+   أ) «أنشرهالك بوست على صفحة الفيسبوك؟» → publish_job_to_facebook_page
+      (preview الأول، وبعد موافقته بينزل بوست حقيقي على الصفحة المربوطة).
+   ب) **للجروبات**: اديله لينك share_links.facebook_groups وقوله: «دوس
+      عليه → اختار Share to a group → اختار الجروب → نشر». اشرحله إن
+      Meta قافلة نشر التطبيقات في الجروبات نهائيًا من 2024، والانضمام
+      التلقائي للجروبات بيقفل الحسابات — فده أسرع وأأمن طريق.
+   ج) لينكد إن → share_links.linkedin، وواتساب → share_links.whatsapp.
+6. **تابع المتقدمين**: لما يسألك "مين قدّم؟" نادي list_job_applications.
    ولما يقولك "قيّملي مرشح" نادي get_application_cv واقرا الـ CV وقيّمه
    بصراحة (نقاط قوة/ضعف/أسئلة مقابلة).
 
@@ -2163,14 +2171,103 @@ export async function POST(req: Request) {
         const site = (
           process.env.NEXT_PUBLIC_SITE_URL || "https://www.nidhamhr.com"
         ).replace(/\/$/, "");
+        const applyUrl = `${site}/jobs/${job.slug}`;
+        const encodedUrl = encodeURIComponent(applyUrl);
         return {
           ok: true,
           job_id: job.id,
-          apply_url: `${site}/jobs/${job.slug}`,
+          apply_url: applyUrl,
           manage_url: `${site}/dashboard/jobs/${job.id}`,
+          // One-click share kit: opens the native share dialog where the user
+          // picks a GROUP / feed / profile themselves (Meta killed the Groups
+          // API in 2024 — apps can't post into groups directly, the dialog is
+          // the legitimate path).
+          share_links: {
+            facebook_groups: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
+            linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
+            whatsapp: `https://wa.me/?text=${encodedUrl}`,
+          },
           note:
-            "اللينك جاهز للنشر على فيسبوك/لينكدإن/واتساب — أي حد يقدّم، الـ CV " +
+            "اللينك جاهز — وممكن كمان أنشر الإعلان بوست فعلي على صفحة الفيسبوك " +
+            "المربوطة بالنظام (publish_job_to_facebook_page). أي حد يقدّم، الـ CV " +
             "بيتسحب نصه تلقائيًا ويتجمع في صفحة المتقدمين.",
+        };
+      },
+    }),
+
+    // ----------- Tool 20: publish_job_to_facebook_page -----------
+    publish_job_to_facebook_page: tool({
+      description:
+        "انشر إعلان التوظيف (أو أي بوست) **بوست فعلي على صفحة الفيسبوك المربوطة بالنظام** " +
+        "(نفس صفحة صندوق رسائل التسويق). " +
+        "**flow إجباري**: نادي بـ user_confirmed=false أولاً واعرض نص البوست للمراجعة، " +
+        "استنى موافقة صريحة، بعدين نادي بـ user_confirmed=true. " +
+        "ملحوظة: النشر في الجروبات مش متاح من الـ API (Meta قفلته) — استخدم share_links بدلها.",
+      inputSchema: z.object({
+        message: z
+          .string()
+          .min(20)
+          .describe(
+            "نص البوست كامل — اكتبه إعلان توظيف جذاب: المسمى، المهام باختصار، الشروط، المكان، وطريقة التقديم. منسق بسطور وإيموجي معقول.",
+          ),
+        link: z
+          .string()
+          .optional()
+          .describe("لينك التقديم (apply_url من create_job_posting) — يتعرض كبطاقة مع البوست."),
+        user_confirmed: z
+          .boolean()
+          .describe("حطّها true فقط بعد موافقة المستخدم الصريحة في الـ chat."),
+      }),
+      execute: async ({ user_confirmed, message, link }) => {
+        if (!user_confirmed) {
+          return {
+            ok: true,
+            preview: true,
+            proposed_post: message,
+            link: link ?? null,
+            confirmation_prompt:
+              "ده نص البوست اللي هينزل على صفحة الفيسبوك المربوطة — راجعه وقولي أنشر؟",
+          };
+        }
+
+        const supa = await createClient();
+        const {
+          data: { user },
+        } = await supa.auth.getUser();
+        if (!user) return { ok: false, error: "Unauthorized" };
+        const { data: prof } = await supa
+          .from("profiles")
+          .select("company_id")
+          .eq("id", user.id)
+          .single();
+        if (!prof) return { ok: false, error: "Profile not found" };
+
+        const { data: settings } = await supa
+          .from("marketing_inbox_settings")
+          .select("meta_page_id, meta_page_token")
+          .eq("company_id", prof.company_id)
+          .maybeSingle();
+
+        if (!settings?.meta_page_id || !settings?.meta_page_token) {
+          return {
+            ok: false,
+            error:
+              "مفيش صفحة فيسبوك مربوطة بالنظام — اربط صفحتك الأول من: التسويق ← صندوق الرسائل ← الإعدادات.",
+          };
+        }
+
+        const res = await publishPagePost({
+          pageToken: settings.meta_page_token,
+          pageId: settings.meta_page_id,
+          message,
+          link,
+        });
+
+        if (!res.ok) return { ok: false, error: res.error };
+        return {
+          ok: true,
+          post_url: res.postUrl,
+          note: "البوست اتنشر فعليًا على الصفحة — افتح اللينك وشاركه في الجروبات بزرار مشاركة.",
         };
       },
     }),

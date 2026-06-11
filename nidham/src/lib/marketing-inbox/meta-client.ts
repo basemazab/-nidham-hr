@@ -208,6 +208,53 @@ function friendlyMetaError(
   };
 }
 
+// ── Publish a post on the Page feed (job ads etc.) ──
+// POST /{page-id}/feed — needs pages_manage_posts on the token (already part
+// of the permissions we ask for). Returns the public post URL.
+export async function publishPagePost(input: {
+  pageToken: string;
+  pageId: string;
+  message: string;
+  link?: string;
+}): Promise<
+  { ok: true; postId: string; postUrl: string } | { ok: false; error: string }
+> {
+  const url = `${GRAPH_BASE}/${encodeURIComponent(input.pageId)}/feed`;
+  const body: Record<string, string> = {
+    message: input.message,
+    access_token: input.pageToken,
+  };
+  if (input.link) body.link = input.link;
+
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams(body),
+    });
+    const data = (await res.json()) as {
+      id?: string;
+      error?: { message?: string; code?: number; error_subcode?: number };
+    };
+    if (!res.ok || data.error) {
+      return {
+        ok: false,
+        error: friendlyMetaError(data.error, res.status).message,
+      };
+    }
+    return {
+      ok: true,
+      postId: data.id || "",
+      postUrl: `https://www.facebook.com/${data.id || ""}`,
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
 // ── Public reply under a comment ──
 // POST /{comment-id}/comments → posts a visible reply beneath the comment.
 export async function replyToComment(input: {
