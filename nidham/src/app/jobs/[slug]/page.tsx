@@ -60,7 +60,9 @@ export async function generateMetadata({ params }: PageProps) {
   const origin = h.get("x-forwarded-host") || h.get("host") || "nidhamhr.com";
   const protocol = process.env.NODE_ENV === "development" ? "http" : "https";
   const base = `${protocol}://${origin}`;
-  const ogUrl = `${base}/api/og?title=${encodedTitle}`;
+  // v=2 busts Facebook's per-URL image cache: the scraper permanently flagged
+  // the OLD url "corrupted" back when this endpoint returned an SVG.
+  const ogUrl = `${base}/api/og?title=${encodedTitle}&v=2`;
   return {
     title: `${parts.join(" · ")} — نِظام`,
     description: `قدم على وظيفة ${job.title} من خلال منصة نِظام`,
