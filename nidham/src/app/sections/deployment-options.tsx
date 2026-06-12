@@ -34,8 +34,8 @@ export function DeploymentOptionsSection() {
             <p className="text-sm text-slate-300 mb-5 leading-relaxed font-cairo">تثبيت كامل على سيرفر شركتك الداخلي. بياناتك ما تخرجش من شبكتك. تحكم كامل، عزل كامل، وخصوصية على مستوى الصفر.</p>
             <ul className="space-y-2.5 mb-6 text-sm font-cairo">
               <CheckDark text="نشر على بنية شركتك (On-premise / Private Cloud)" />
-              <CheckDark text="عزل بيانات كامل — صفر مشاركة مع أي طرف ثالث" />
-              <CheckDark text="عمل بدون إنترنت (Air-gapped) ممكن" />
+              <CheckDark text="عزل بيانات كامل — بياناتك على سيرفرك، ومفيش مشاركة مع أي طرف خارجي (ميزات AI السحابية اختيارية وبتتعطل بالكامل لو حبيت)" />
+              <CheckDark text="عمل بدون إنترنت (Air-gapped) ممكن — مع تعطيل ميزات الـ AI السحابية" />
               <CheckDark text="Dockerized — تشغيل + ترقية بضغطة" />
               <CheckDark text="دومين خاص + Branding مخصص" />
               <CheckDark text="SLA ودعم فني مباشر + تدريب على الفريق" />

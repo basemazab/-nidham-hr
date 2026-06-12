@@ -107,14 +107,14 @@ export function MobileAttendanceMockup() {
         <text x="68" y="153" fontSize="7" fill="#15803d" fontWeight="700" textAnchor="middle" fontFamily="sans-serif">✓ داخل نطاق المكتب</text>
         <rect x="20" y="170" width="96" height="32" rx="10" fill="#22d3ee" />
         <text x="68" y="190" fontSize="10" fill="#0a1428" fontWeight="900" textAnchor="middle" fontFamily="sans-serif">تسجيل دخول</text>
-        <text x="68" y="214" fontSize="6" fill="#94a3b8" textAnchor="middle" fontFamily="sans-serif">GPS · ±3m</text>
+        <text x="68" y="214" fontSize="6" fill="#94a3b8" textAnchor="middle" fontFamily="sans-serif">GPS · ±5-10m</text>
       </g>
       <text x="20" y="40" fontSize="9" fill="#475569" fontFamily="sans-serif" fontWeight="700">حضور بالـ GPS</text>
       <text x="20" y="56" fontSize="8" fill="#64748b" fontFamily="sans-serif">Geofence حوالين</text>
       <text x="20" y="68" fontSize="8" fill="#64748b" fontFamily="sans-serif">المكتب — مفيش</text>
       <text x="20" y="80" fontSize="8" fill="#64748b" fontFamily="sans-serif">حد يـ-clock-in</text>
       <text x="20" y="92" fontSize="8" fill="#64748b" fontFamily="sans-serif">من برّاه</text>
-      <text x="380" y="40" fontSize="9" fill="#475569" textAnchor="end" fontFamily="sans-serif" fontWeight="700">±3 متر دقة</text>
+      <text x="380" y="40" fontSize="9" fill="#475569" textAnchor="end" fontFamily="sans-serif" fontWeight="700">دقة 5-10 متر</text>
       <text x="380" y="56" fontSize="8" fill="#64748b" textAnchor="end" fontFamily="sans-serif">يدعم iOS</text>
       <text x="380" y="68" fontSize="8" fill="#64748b" textAnchor="end" fontFamily="sans-serif">و Android</text>
     </svg>

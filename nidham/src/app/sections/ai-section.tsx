@@ -14,7 +14,7 @@ export function AISection() {
           <AICard icon="📂" title="استيراد موظفين من PDF" desc="ارفع PDF فيه أسامي وبيانات (من برنامج HR قديم، شيت مطبوع، أي ملف). الـ AI بيستخرج كل صف ويعرضه عليك للتأكيد قبل الحفظ." cta="جرّب على /dashboard/employees/import" />
           <AICard icon="🤖" title="مساعد الموارد البشرية" desc="اسأل بالعربي: 'ضريبة الدخل على مرتب 8000 كام؟' أو 'مين أحسن موظف الشهر ده؟' — مدرّب على قانون العمل + بياناتك." cta="جرّب على /dashboard/ai" />
           <AICard icon="🎯" title="ترشيح أسئلة مقابلة" desc="بناءً على الـ JD والمرشح، الـ AI بيولّد أسئلة technical + behavioral مفصّلة، كل واحدة بسبب فني واضح." cta="ضمن فحص الـ CV" />
-          <AICard icon="✦" title="٦ أدوات تسويق AI (Enterprise)" desc="محلل منتج + باني personas + كاتب إعلانات + ماستر SEO + معالج حملات + Page Doctor — وكالة Big4 جواه نظامك." cta="شوف القسم اللي تحت ↓" />
+          <AICard icon="✦" title="٦ أدوات تسويق AI (Enterprise)" desc="محلل منتج + باني personas + كاتب إعلانات + ماستر SEO + معالج حملات + Page Doctor — أدوات وكالة تسويق متكاملة جواه نظامك، من الفكرة للتنفيذ." cta="شوف القسم اللي تحت ↓" />
           <AICard icon="🏠" title="Landing Pages + Lead Capture (Enterprise)" desc="صفحات هبوط بتجمع leads تلقائياً مع UTM tracking كامل. Pipeline Kanban بـ drag-and-drop يخلّيك تتابع كل lead لحد ما يبقى عميل." cta="ضمن استوديو التسويق" />
         </div>
         <div className="mt-10 p-5 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-4 max-w-4xl mx-auto">

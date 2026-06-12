@@ -14,7 +14,7 @@ export function MarketingStudioSection() {
           </div>
           <h2 className="text-3xl md:text-5xl font-black font-cairo mb-4 leading-tight">
             استوديو التسويق الذكي<br />
-            <span className="bg-gradient-to-r from-amber-300 via-orange-400 to-rose-400 bg-clip-text text-transparent">وكالة Big4 جواه نظامك</span>
+            <span className="bg-gradient-to-r from-amber-300 via-orange-400 to-rose-400 bg-clip-text text-transparent">وكالة تسويق كاملة جواه نظامك</span>
           </h2>
           <p className="text-lg text-slate-300 max-w-3xl mx-auto leading-relaxed font-cairo">
             بدل ما تدفع <strong className="text-amber-300">10,000-50,000 ج/شهر</strong> لوكالة تسويق، AI بيصمم لك حملاتك، يكتب إعلاناتك، يبني landing pages، ويجيب لك leads — وكله بالعربي المصري.

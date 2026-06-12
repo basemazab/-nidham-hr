@@ -11,7 +11,7 @@ export function HowItWorksSection() {
   return (
     <section className="px-6 py-20 bg-gradient-to-b from-cyan-50/30 to-white">
       <div className="max-w-6xl mx-auto">
-        <SectionHeader eyebrow="بداية سهلة" title="من التسجيل لأول راتب + أول حملة — في يوم واحد" />
+        <SectionHeader eyebrow="بداية سهلة" title="نظامك جاهز في دقايق — وأول كشف مرتبات تجريبي في نفس اليوم" />
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
           {steps.map((s, i) => (
             <div key={s.n} className={`relative bg-white border rounded-2xl p-6 hover:shadow-lg transition ${i === 4 ? "border-amber-300" : "border-slate-200"}`}>
