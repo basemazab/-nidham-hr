@@ -40,6 +40,7 @@ import {
 import { pickAgentModelLargeContext } from "@/lib/ai-models";
 import { searchKnowledgeBase } from "@/lib/ai/memory";
 import { publishPagePost } from "@/lib/marketing-inbox/meta-client";
+import { publishLinkedInPost } from "@/lib/linkedin";
 
 export const maxDuration = 60;
 
@@ -91,7 +92,7 @@ function buildSystemPrompt(companyName: string, userName: string): string {
 
 ## الأدوات المتاحة (Tools)
 
-عندك ٢٠ أداة. اختار الأداة الصح حسب طلب المستخدم:
+عندك ٢١ أداة. اختار الأداة الصح حسب طلب المستخدم:
 
 1. **search_employees** — لما المستخدم بيسأل عن موظف معين أو بيقولك
    "إيه أداء سعيد"، "إجازات أحمد"، "موظف رقم 102". رجع البيانات
@@ -277,7 +278,9 @@ bulk_import_* (لأن مفيش بيانات منظمة).
       عليه → اختار Share to a group → اختار الجروب → نشر». اشرحله إن
       Meta قافلة نشر التطبيقات في الجروبات نهائيًا من 2024، والانضمام
       التلقائي للجروبات بيقفل الحسابات — فده أسرع وأأمن طريق.
-   ج) لينكد إن → share_links.linkedin، وواتساب → share_links.whatsapp.
+   ج) «أنشرها على لينكد إن؟» → publish_job_to_linkedin (بوست رسمي على
+      بروفايله المربوط — preview الأول ثم النشر بعد الموافقة). لو الحساب مش
+      مربوط، وجّهه لـ: الإعدادات ← ربط لينكد إن. وواتساب → share_links.whatsapp.
 6. **تابع المتقدمين**: لما يسألك "مين قدّم؟" نادي list_job_applications.
    ولما يقولك "قيّملي مرشح" نادي get_application_cv واقرا الـ CV وقيّمه
    بصراحة (نقاط قوة/ضعف/أسئلة مقابلة).
@@ -2411,6 +2414,92 @@ export async function POST(req: Request) {
           job: Array.isArray(jobRel) ? jobRel[0]?.title : jobRel?.title,
           status: data.status,
           cv_text: (data.cv_text ?? "").slice(0, 12000),
+        };
+      },
+    }),
+
+    // ----------- Tool 21: publish_job_to_linkedin -----------
+    publish_job_to_linkedin: tool({
+      description:
+        "انشر إعلان التوظيف **بوست رسمي على بروفايل لينكد إن المربوط بالنظام** " +
+        "(بيتربط من: الإعدادات ← ربط لينكد إن). " +
+        "**flow إجباري**: نادي بـ user_confirmed=false أولاً واعرض نص البوست، " +
+        "استنى موافقة صريحة، بعدين نادي بـ user_confirmed=true.",
+      inputSchema: z.object({
+        message: z
+          .string()
+          .min(20)
+          .describe(
+            "نص البوست — إعلان توظيف احترافي بصيغة تناسب لينكد إن (أكثر رسمية من فيسبوك، ينفع عربي أو إنجليزي حسب الوظيفة) + هاشتاجات مناسبة.",
+          ),
+        link: z
+          .string()
+          .optional()
+          .describe("لينك التقديم (apply_url) — بيظهر كبطاقة مع البوست."),
+        user_confirmed: z
+          .boolean()
+          .describe("حطّها true فقط بعد موافقة المستخدم الصريحة في الـ chat."),
+      }),
+      execute: async ({ user_confirmed, message, link }) => {
+        if (!user_confirmed) {
+          return {
+            ok: true,
+            preview: true,
+            proposed_post: message,
+            link: link ?? null,
+            confirmation_prompt:
+              "ده نص البوست اللي هينزل على بروفايل لينكد إن المربوط — راجعه وقولي أنشر؟",
+          };
+        }
+
+        const supa = await createClient();
+        const {
+          data: { user },
+        } = await supa.auth.getUser();
+        if (!user) return { ok: false, error: "Unauthorized" };
+        const { data: prof } = await supa
+          .from("profiles")
+          .select("company_id")
+          .eq("id", user.id)
+          .single();
+        if (!prof) return { ok: false, error: "Profile not found" };
+
+        const { data: conn } = await supa
+          .from("linkedin_connections")
+          .select("access_token, token_expires_at, member_urn")
+          .eq("company_id", prof.company_id)
+          .maybeSingle();
+
+        if (!conn?.access_token || !conn?.member_urn) {
+          return {
+            ok: false,
+            error:
+              "حساب لينكد إن مش مربوط — اربطه الأول من: الإعدادات ← ربط لينكد إن (/dashboard/settings/linkedin).",
+          };
+        }
+        if (
+          conn.token_expires_at &&
+          new Date(conn.token_expires_at) <= new Date()
+        ) {
+          return {
+            ok: false,
+            error:
+              "توكن لينكد إن انتهى (بيتجدد كل ٦٠ يوم) — افتح الإعدادات ← ربط لينكد إن واضغط «جدّد الربط».",
+          };
+        }
+
+        const res = await publishLinkedInPost({
+          accessToken: conn.access_token,
+          memberUrn: conn.member_urn,
+          text: message,
+          link,
+        });
+
+        if (!res.ok) return { ok: false, error: res.error };
+        return {
+          ok: true,
+          post_url: res.postUrl,
+          note: "البوست اتنشر رسميًا على بروفايل لينكد إن.",
         };
       },
     }),

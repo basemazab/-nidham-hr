@@ -181,6 +181,7 @@ const NAV_ITEMS: readonly NavItem[] = [
   { href: "/dashboard/referrals",            label: "ادعُ شركة (شهر مجاني)", icon: "🎁", section: "settings", visibleTo: ["admin"] },
   { href: "/dashboard/security",             label: "لوحة الأمان",        icon: "🛡", section: "settings", visibleTo: ["admin"] },
   { href: "/dashboard/settings/holidays",         label: "العطلات الرسمية",    icon: "📅", section: "settings", visibleTo: ["admin"] },
+  { href: "/dashboard/settings/linkedin",         label: "ربط لينكد إن",        icon: "💼", section: "settings", visibleTo: ["admin"] },
   { href: "/dashboard/settings/api-keys",         label: "مفاتيح API",          icon: "🔑", section: "settings", visibleTo: ["admin"] },
   { href: "/api-docs",                            label: "توثيق API",           icon: "📖", section: "settings" },
   { href: "/dashboard/academy",                   label: "الأكاديمية",          icon: "🎓", section: "settings" },
