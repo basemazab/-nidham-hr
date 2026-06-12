@@ -95,6 +95,112 @@ export async function fetchUserInfo(accessToken: string): Promise<
   }
 }
 
+// Publish a post WITH an image on the member's profile. Three-step official
+// flow: registerUpload (assets API) → PUT the binary → ugcPosts with the asset.
+export async function publishLinkedInImagePost(input: {
+  accessToken: string;
+  memberUrn: string;
+  text: string;
+  imageUrl: string; // publicly fetchable PNG/JPG (e.g. our /api/og/linkedin-post)
+}): Promise<
+  | { ok: true; postUrn: string; postUrl: string }
+  | { ok: false; error: string }
+> {
+  try {
+    // 1) Fetch the image bytes server-side
+    const imgRes = await fetch(input.imageUrl);
+    if (!imgRes.ok) {
+      return { ok: false, error: `image fetch failed (${imgRes.status})` };
+    }
+    const bytes = await imgRes.arrayBuffer();
+
+    // 2) Register the upload
+    const reg = await fetch(`${API_BASE}/assets?action=registerUpload`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${input.accessToken}`,
+        "Content-Type": "application/json",
+        "X-Restli-Protocol-Version": "2.0.0",
+      },
+      body: JSON.stringify({
+        registerUploadRequest: {
+          recipes: ["urn:li:digitalmediaRecipe:feedshare-image"],
+          owner: input.memberUrn,
+          serviceRelationships: [
+            { relationshipType: "OWNER", identifier: "urn:li:userGeneratedContent" },
+          ],
+        },
+      }),
+    });
+    const regData = (await reg.json()) as {
+      value?: {
+        asset?: string;
+        uploadMechanism?: Record<string, { uploadUrl?: string }>;
+      };
+      message?: string;
+    };
+    const uploadUrl =
+      regData.value?.uploadMechanism?.[
+        "com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest"
+      ]?.uploadUrl;
+    const asset = regData.value?.asset;
+    if (!reg.ok || !uploadUrl || !asset) {
+      return { ok: false, error: regData.message || "registerUpload failed" };
+    }
+
+    // 3) Upload the binary
+    const up = await fetch(uploadUrl, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${input.accessToken}` },
+      body: bytes,
+    });
+    if (!up.ok && up.status !== 201) {
+      return { ok: false, error: `image upload failed (${up.status})` };
+    }
+
+    // 4) Create the post with the uploaded asset
+    const res = await fetch(`${API_BASE}/ugcPosts`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${input.accessToken}`,
+        "Content-Type": "application/json",
+        "X-Restli-Protocol-Version": "2.0.0",
+      },
+      body: JSON.stringify({
+        author: input.memberUrn,
+        lifecycleState: "PUBLISHED",
+        specificContent: {
+          "com.linkedin.ugc.ShareContent": {
+            shareCommentary: { text: input.text.slice(0, 2900) },
+            shareMediaCategory: "IMAGE",
+            media: [{ status: "READY", media: asset }],
+          },
+        },
+        visibility: { "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC" },
+      }),
+    });
+    const restliId = res.headers.get("x-restli-id");
+    let bodyId: string | undefined;
+    try {
+      const data = (await res.json()) as { id?: string; message?: string };
+      bodyId = data.id;
+      if (!res.ok) return { ok: false, error: data.message || `HTTP ${res.status}` };
+    } catch {
+      if (!res.ok) return { ok: false, error: `HTTP ${res.status}` };
+    }
+    const urn = restliId || bodyId || "";
+    return {
+      ok: true,
+      postUrn: urn,
+      postUrl: urn
+        ? `https://www.linkedin.com/feed/update/${encodeURIComponent(urn)}/`
+        : "https://www.linkedin.com/feed/",
+    };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
 // Publish a text post (optionally with a link card) on the member's profile.
 export async function publishLinkedInPost(input: {
   accessToken: string;

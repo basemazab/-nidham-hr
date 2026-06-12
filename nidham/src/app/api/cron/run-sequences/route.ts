@@ -163,6 +163,21 @@ export async function GET(req: Request) {
     }
   }
 
+  // Piggyback: publish due LinkedIn scheduled posts in the same daily run
+  // (Vercel Hobby caps cron jobs at 2, so no separate slot). Best-effort.
+  let linkedin: { due: number; posted: number; failed: number } | null = null;
+  try {
+    const { runScheduledLinkedInPosts } = await import(
+      "@/lib/linkedin-scheduler"
+    );
+    linkedin = await runScheduledLinkedInPosts(supabase);
+  } catch (err) {
+    console.error(
+      "[cron] linkedin scheduler failed:",
+      err instanceof Error ? err.message : err,
+    );
+  }
+
   return NextResponse.json({
     ok: true,
     due: due.length,
@@ -170,6 +185,7 @@ export async function GET(req: Request) {
     failed,
     advanced,
     done,
+    linkedin,
     ranAt: nowIso,
   });
 }

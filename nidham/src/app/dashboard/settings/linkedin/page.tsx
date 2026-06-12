@@ -15,6 +15,22 @@ type ConnRow = {
   member_name: string | null;
 };
 
+type ScheduledRow = {
+  id: string;
+  post_text: string;
+  scheduled_at: string;
+  status: string;
+  post_url: string | null;
+  error: string | null;
+};
+
+const STATUS_UI: Record<string, { label: string; cls: string }> = {
+  pending: { label: "⏳ في الانتظار", cls: "bg-amber-50 text-amber-700 border-amber-200" },
+  posted: { label: "✅ اتنشر", cls: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  failed: { label: "❌ فشل", cls: "bg-rose-50 text-rose-700 border-rose-200" },
+  cancelled: { label: "ملغي", cls: "bg-slate-50 text-slate-500 border-slate-200" },
+};
+
 export default async function LinkedInSettingsPage({
   searchParams,
 }: {
@@ -33,6 +49,14 @@ export default async function LinkedInSettingsPage({
     .select("client_id, access_token, token_expires_at, member_name")
     .eq("company_id", profile.company_id)
     .maybeSingle<ConnRow>();
+
+  const { data: scheduled } = await supabase
+    .from("linkedin_scheduled_posts")
+    .select("id, post_text, scheduled_at, status, post_url, error")
+    .eq("company_id", profile.company_id)
+    .order("scheduled_at", { ascending: true })
+    .limit(20)
+    .returns<ScheduledRow[]>();
 
   const SITE = (
     process.env.NEXT_PUBLIC_SITE_URL || "https://www.nidhamhr.com"
@@ -143,6 +167,61 @@ export default async function LinkedInSettingsPage({
           </div>
         )}
       </section>
+
+      {/* Scheduled posts queue */}
+      {scheduled && scheduled.length > 0 && (
+        <section className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 mb-6">
+          <h2 className="font-black text-lg text-slate-900 dark:text-slate-100 font-cairo mb-1">
+            📅 بوستات مجدولة (بتتنشر تلقائيًا)
+          </h2>
+          <p className="text-xs text-slate-500 font-cairo mb-4">
+            البوست بيتنشر على بروفايلك المربوط في معاد كل بوست تلقائيًا — من غير
+            أي تدخل منك. النشر بيتم مع الدورة اليومية حوالي ١٢ الظهر بتوقيت مصر.
+          </p>
+          <div className="space-y-2">
+            {scheduled.map((p) => {
+              const ui = STATUS_UI[p.status] ?? STATUS_UI.pending;
+              return (
+                <div
+                  key={p.id}
+                  className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-800"
+                >
+                  <span
+                    className={`text-[11px] font-bold px-2 py-1 rounded-full border font-cairo shrink-0 ${ui.cls}`}
+                  >
+                    {ui.label}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-slate-700 dark:text-slate-200 font-cairo truncate">
+                      {p.post_text.split("\n")[0]}
+                    </p>
+                    <p className="text-[11px] text-slate-400 font-cairo mt-0.5">
+                      {new Date(p.scheduled_at).toLocaleString("ar-EG", {
+                        weekday: "long",
+                        day: "numeric",
+                        month: "long",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                      {p.error ? ` — ${p.error}` : ""}
+                    </p>
+                  </div>
+                  {p.post_url && (
+                    <a
+                      href={p.post_url}
+                      target="_blank"
+                      rel="noopener"
+                      className="text-xs font-bold text-brand-cyan-dark hover:underline font-cairo shrink-0"
+                    >
+                      شوف البوست ←
+                    </a>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {/* App credentials */}
       <section className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 mb-6">
