@@ -12,6 +12,7 @@
 import Link from "next/link";
 import { PLAN_PRICE_EGP } from "@/lib/pricing";
 import { FAQPageSchema } from "@/components/json-ld";
+import { FounderOfferBanner } from "@/app/sections/founder-offer";
 
 export const metadata = {
   title: { absolute: "أسعار نظام HR ومرتبات مصري — من 0 ج/شهر (مجاني) | نِظام HR" },
@@ -229,6 +230,11 @@ export default function PricingPage() {
           >
             ← الرئيسية
           </Link>
+        </div>
+
+        {/* عرض العميل المؤسس */}
+        <div className="mb-10 -mx-6">
+          <FounderOfferBanner />
         </div>
 
         {/* Header */}

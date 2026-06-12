@@ -278,6 +278,30 @@ export async function signup(formData: FormData) {
     }
   }
 
+  // Sales alert — a brand-new company starting a trial is the hottest lead
+  // there is; email the founder NOW (conversion doubles when contact happens
+  // within the first hour). Awaited because redirect() aborts pending work,
+  // but sendEmail never throws and skips silently without RESEND_API_KEY.
+  try {
+    const { sendEmail } = await import("@/lib/email");
+    const esc = (v: unknown) =>
+      String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    await sendEmail({
+      to: process.env.NIDHAM_SALES_EMAIL || "basemazab640@gmail.com",
+      subject: `🔥 شركة جديدة بدأت تجربة: ${(formData.get("company_name") as string) || "بدون اسم"}`,
+      html: `<div dir="rtl" style="font-family:Tahoma,Arial,sans-serif;line-height:1.8">
+        <h2>🎉 شركة جديدة سجلت في نِظام</h2>
+        <p><b>الشركة:</b> ${esc(formData.get("company_name"))}</p>
+        <p><b>الاسم:</b> ${esc(formData.get("full_name"))}</p>
+        <p><b>الإيميل:</b> ${esc(formData.get("email"))}</p>
+        <p><b>الباقة اللي اختارها:</b> ${esc(planSignal || "غير محددة")}</p>
+        <p style="color:#b45309"><b>⚡ اتواصل معاهم في أول ساعة — نسبة التحويل بتتضاعف.</b></p>
+      </div>`,
+    });
+  } catch {
+    // never block signup on the alert
+  }
+
   // Redirect to dashboard with welcome + plan hint so the dashboard can
   // render a first-run UX (welcome modal + "we noticed you picked Pro,
   // your trial expires in 14 days — upgrade anytime").

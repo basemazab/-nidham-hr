@@ -3,6 +3,7 @@ import dynamic from "next/dynamic";
 import { SectionHeader } from "./sections/section-helpers";
 import { DeferredJsonLd } from "@/components/deferred-json-ld";
 import { HeroSection } from "./sections/hero";
+import { FounderOfferBanner } from "./sections/founder-offer";
 import { DesktopAppSection } from "./sections/desktop-app";
 import { Reveal, CountUp, ScrollProgress } from "./sections/reveal";
 
@@ -72,6 +73,7 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
         </div>
       )}
       <HeroSection />
+      <FounderOfferBanner />
       <ProofStrip />
       <Reveal><ComplianceShieldHighlight /></Reveal>
       <CoreModulesSection />
