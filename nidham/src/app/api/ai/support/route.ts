@@ -13,7 +13,7 @@ import { streamText, stepCountIs, tool } from "ai";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { pickAgentModelLargeContext } from "@/lib/ai-models";
+import { pickAgentModel, pickAgentModelLargeContext } from "@/lib/ai-models";
 import { runSystemHealth } from "@/lib/system-health";
 import { SUPPORT_KB } from "@/lib/support-kb";
 
@@ -170,7 +170,13 @@ ${SUPPORT_KB}`;
     }),
   };
 
-  const picked = pickAgentModelLargeContext();
+  // Groq-first: the support payload is small (KB ≈3k tokens + short chat), and
+  // Groq is far less prone to the 503 overloads Gemini hits at peak times —
+  // a hung/erroring support bot is worse than no bot. Falls back to the
+  // Gemini-first picker only when Groq has no key.
+  const picked = process.env.GROQ_API_KEY
+    ? pickAgentModel()
+    : pickAgentModelLargeContext();
   const result = streamText({
     model: picked.model,
     system: systemPrompt,
