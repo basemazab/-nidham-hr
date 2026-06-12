@@ -9,11 +9,11 @@
 // Open to ALL roles (employees ask "إزاي أسجل حضور؟" too); the diagnostics
 // tool itself is admin/manager-gated since it reads tenant settings.
 
-import { streamText, stepCountIs, tool } from "ai";
+import { generateText, stepCountIs, tool } from "ai";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { pickAgentModel, pickAgentModelLargeContext } from "@/lib/ai-models";
+import { callWithFallback } from "@/lib/ai-models";
 import { runSystemHealth } from "@/lib/system-health";
 import { SUPPORT_KB } from "@/lib/support-kb";
 
@@ -170,28 +170,41 @@ ${SUPPORT_KB}`;
     }),
   };
 
-  // Groq-first: the support payload is small (KB ≈3k tokens + short chat), and
-  // Groq is far less prone to the 503 overloads Gemini hits at peak times —
-  // a hung/erroring support bot is worse than no bot. Falls back to the
-  // Gemini-first picker only when Groq has no key.
-  const picked = process.env.GROQ_API_KEY
-    ? pickAgentModel()
-    : pickAgentModelLargeContext();
-  const result = streamText({
-    model: picked.model,
-    system: systemPrompt,
-    messages,
-    tools,
-    stopWhen: stepCountIs(5),
-    temperature: 0.3,
-    maxRetries: 1,
-    onError: ({ error }) => {
-      console.error(
-        "[support-agent] stream error:",
-        error instanceof Error ? error.message : error,
-      );
-    },
-  });
-
-  return result.toUIMessageStreamResponse();
+  // NON-streaming on purpose: streamText pins one model with no fallback, so
+  // when that provider is overloaded (Gemini 503 storms / Groq daily caps)
+  // the request HANGS with no headers and the widget spins forever.
+  // callWithFallback + generateText walks the whole 4-model chain instead —
+  // the same battle-tested path that keeps the inbox auto-reply alive.
+  // Support answers are short; a 3-8s full reply beats a dead stream.
+  try {
+    const { text } = await callWithFallback((picked) =>
+      generateText({
+        model: picked.model,
+        system: systemPrompt,
+        messages,
+        tools,
+        stopWhen: stepCountIs(5),
+        temperature: 0.3,
+        maxRetries: 0, // callWithFallback owns the retry chain
+      }),
+    );
+    const reply = (text ?? "").trim();
+    return Response.json({
+      ok: true,
+      reply:
+        reply ||
+        "تمام — نفذت المطلوب. لو محتاج توضيح أكتر اسألني تاني 🙌",
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[support-agent] failed:", msg);
+    return Response.json(
+      {
+        ok: false,
+        error:
+          "الخدمة عليها ضغط شديد دلوقتي — جرّب تاني بعد دقيقة، ولو المشكلة مستعجلة سجّلها من صفحة مهندس النظام.",
+      },
+      { status: 503 },
+    );
+  }
 }

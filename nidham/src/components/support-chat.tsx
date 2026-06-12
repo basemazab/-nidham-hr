@@ -3,10 +3,14 @@
 // المساعد الفني الفوري — floating help widget on every dashboard page.
 // Users solve their own problems (live diagnostics + step-by-step guides)
 // instead of going back to the vendor. Escalates to a dev ticket when needed.
+//
+// Plain request/response on purpose (no streaming): the server walks the
+// resilient 4-model fallback chain and returns one complete reply — a dead
+// stream spinner is worse UX than a 3-8s full answer.
 
 import { useEffect, useRef, useState } from "react";
-import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport } from "ai";
+
+type ChatMsg = { role: "user" | "assistant"; text: string };
 
 const SUGGESTIONS = [
   "إزاي أربط صفحة الفيسبوك بالرد الآلي؟",
@@ -17,22 +21,47 @@ const SUGGESTIONS = [
 
 export function SupportChat() {
   const [open, setOpen] = useState(false);
-  const { messages, sendMessage, status, error } = useChat({
-    transport: new DefaultChatTransport({ api: "/api/ai/support" }),
-  });
+  const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [input, setInput] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
-  const busy = status === "submitted" || status === "streaming";
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, busy]);
 
-  function send(text: string) {
+  async function send(text: string) {
     const t = text.trim();
     if (!t || busy) return;
-    sendMessage({ text: t });
+    setError("");
     setInput("");
+    const next: ChatMsg[] = [...messages, { role: "user", text: t }];
+    setMessages(next);
+    setBusy(true);
+    try {
+      const res = await fetch("/api/ai/support", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: next.slice(-10).map((m) => ({ role: m.role, content: m.text })),
+        }),
+      });
+      const json = (await res.json()) as {
+        ok?: boolean;
+        reply?: string;
+        error?: string;
+      };
+      if (res.ok && json.ok && json.reply) {
+        setMessages((cur) => [...cur, { role: "assistant", text: json.reply! }]);
+      } else {
+        setError(json.error || "حصلت مشكلة مؤقتة — جرّب تاني.");
+      }
+    } catch {
+      setError("مشكلة في الاتصال — جرّب تاني.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -79,47 +108,33 @@ export function SupportChat() {
               </div>
             )}
 
-            {messages.map((m) => {
-              const isUser = m.role === "user";
-              const text = m.parts
-                .filter(
-                  (p): p is { type: "text"; text: string } =>
-                    p.type === "text" && typeof (p as { text?: string }).text === "string",
-                )
-                .map((p) => p.text)
-                .join("");
-              const toolRan = m.parts.some((p) => p.type.startsWith("tool-"));
-              if (!text && !toolRan) return null;
-              return (
-                <div key={m.id} className={isUser ? "flex justify-start flex-row-reverse" : "flex justify-start"}>
-                  <div
-                    className={`max-w-[88%] rounded-2xl px-3 py-2 text-sm font-cairo whitespace-pre-wrap leading-relaxed ${
-                      isUser
-                        ? "bg-brand-cyan-dark text-white rounded-tr-sm"
-                        : "bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 rounded-tl-sm"
-                    }`}
-                  >
-                    {toolRan && !isUser && (
-                      <div className="text-[10px] text-brand-cyan-dark dark:text-brand-cyan font-bold mb-1">
-                        🩺 فحصت نظامك…
-                      </div>
-                    )}
-                    {text}
-                  </div>
+            {messages.map((m, i) => (
+              <div
+                key={i}
+                className={m.role === "user" ? "flex justify-start flex-row-reverse" : "flex justify-start"}
+              >
+                <div
+                  className={`max-w-[88%] rounded-2xl px-3 py-2 text-sm font-cairo whitespace-pre-wrap leading-relaxed ${
+                    m.role === "user"
+                      ? "bg-brand-cyan-dark text-white rounded-tr-sm"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 rounded-tl-sm"
+                  }`}
+                >
+                  {m.text}
                 </div>
-              );
-            })}
+              </div>
+            ))}
 
             {busy && (
               <div className="flex">
                 <div className="bg-slate-100 dark:bg-slate-800 rounded-2xl px-3 py-2 text-sm font-cairo text-slate-500 animate-pulse">
-                  بكتب…
+                  🩺 بفحص وبجهّز الحل…
                 </div>
               </div>
             )}
             {error && (
               <div className="text-xs text-rose-600 font-cairo bg-rose-50 border border-rose-200 rounded-lg p-2">
-                ⚠️ حصلت مشكلة مؤقتة — جرّب تاني.
+                ⚠️ {error}
               </div>
             )}
             <div ref={bottomRef} />
