@@ -43,6 +43,23 @@ export async function saveLinkedInApp(form: FormData): Promise<void> {
   redirect("/dashboard/settings/linkedin?saved=1");
 }
 
+// Cancel a pending scheduled post (e.g. it was posted manually instead).
+export async function cancelScheduledPost(form: FormData): Promise<void> {
+  const { supabase, profile } = await requireHR();
+  const id = String(form.get("id") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(id)) {
+    redirect("/dashboard/settings/linkedin");
+  }
+  await supabase
+    .from("linkedin_scheduled_posts")
+    .update({ status: "cancelled", error: "أُلغي يدويًا" })
+    .eq("id", id)
+    .eq("company_id", profile.company_id)
+    .eq("status", "pending");
+  revalidatePath("/dashboard/settings/linkedin");
+  redirect("/dashboard/settings/linkedin");
+}
+
 // Remove the stored token (keeps the app credentials).
 export async function disconnectLinkedIn(): Promise<void> {
   const { supabase, profile } = await requireHR();

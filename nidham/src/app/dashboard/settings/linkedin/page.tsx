@@ -1,6 +1,10 @@
 import Link from "next/link";
 import { requireHRPage } from "@/lib/permissions";
-import { saveLinkedInApp, disconnectLinkedIn } from "./actions";
+import {
+  saveLinkedInApp,
+  disconnectLinkedIn,
+  cancelScheduledPost,
+} from "./actions";
 
 export const metadata = {
   title: "ربط لينكد إن | الإعدادات",
@@ -216,6 +220,18 @@ export default async function LinkedInSettingsPage({
                     >
                       شوف البوست ←
                     </a>
+                  )}
+                  {p.status === "pending" && (
+                    <form action={cancelScheduledPost} className="shrink-0">
+                      <input type="hidden" name="id" value={p.id} />
+                      <button
+                        type="submit"
+                        className="text-xs font-bold text-rose-500 hover:text-rose-700 font-cairo"
+                        title="إلغاء البوست ده (مش هيتنشر)"
+                      >
+                        إلغاء
+                      </button>
+                    </form>
                   )}
                 </div>
               );
