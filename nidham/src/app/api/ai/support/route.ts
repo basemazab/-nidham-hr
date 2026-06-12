@@ -186,6 +186,11 @@ ${SUPPORT_KB}`;
         stopWhen: stepCountIs(5),
         temperature: 0.3,
         maxRetries: 0, // callWithFallback owns the retry chain
+        // Overloaded providers HANG instead of failing — without a per-tier
+        // timeout one dead provider blocks the whole chain. The abort error
+        // message contains "aborted", which isRetryableError treats as
+        // retryable, so the chain walks on to the next model.
+        abortSignal: AbortSignal.timeout(14_000),
       }),
     );
     const reply = (text ?? "").trim();
