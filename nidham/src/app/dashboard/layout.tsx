@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
+import { SupportChat } from "@/components/support-chat";
 import { getMyFeatureOverrides } from "@/lib/subscriptions-server";
 import type { Plan } from "@/lib/subscriptions";
 
@@ -124,6 +125,9 @@ export default async function DashboardLayout({
       {/* min-w-0 prevents flex children from forcing horizontal scroll
           when they contain wide content like tables or pre tags. */}
       <div className="flex-1 min-w-0">{children}</div>
+      {/* المساعد الفني الفوري — floating on every dashboard page so users
+          solve setup/usage problems themselves instead of contacting us. */}
+      <SupportChat />
     </div>
   );
 }
