@@ -108,7 +108,14 @@ ${SUPPORT_KB}`;
           run_diagnostics: tool({
             description:
               "افحص نظام شركة المستخدم فحص حي شامل (قاعدة البيانات، AI، توكن فيسبوك، لينكد إن، الإيميل، الكرون، الصندوق). استخدمها أول ما المستخدم يشتكي إن حاجة مش شغالة — النتيجة بتحدد مكان العطل بالظبط.",
-            inputSchema: z.object({}),
+            // NOTE: Gemini rejects function declarations whose OBJECT schema
+            // has zero properties — keep at least one (optional) field.
+            inputSchema: z.object({
+              reason: z
+                .string()
+                .optional()
+                .describe("سبب الفحص باختصار (اختياري)"),
+            }),
             execute: async () => {
               try {
                 const checks = await runSystemHealth(supabase, profile.company_id);
@@ -171,6 +178,13 @@ ${SUPPORT_KB}`;
     tools,
     stopWhen: stepCountIs(5),
     temperature: 0.3,
+    maxRetries: 1,
+    onError: ({ error }) => {
+      console.error(
+        "[support-agent] stream error:",
+        error instanceof Error ? error.message : error,
+      );
+    },
   });
 
   return result.toUIMessageStreamResponse();
