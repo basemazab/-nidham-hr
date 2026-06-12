@@ -202,6 +202,7 @@ export default async function LinkedInSettingsPage({
                         month: "long",
                         hour: "2-digit",
                         minute: "2-digit",
+                        timeZone: "Africa/Cairo",
                       })}
                       {p.error ? ` — ${p.error}` : ""}
                     </p>
