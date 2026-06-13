@@ -12,11 +12,14 @@
 # Note: this file is OR'd with .gitignore — anything matched here is
 # additionally excluded on top of git-ignored items.
 
-# Build outputs (also covered by .gitignore but stated explicitly)
-.next/
-out/
-build/
-dist/
+# Build outputs (also covered by .gitignore but stated explicitly).
+# Anchored with a leading slash so they match ONLY the app-root artifact dirs —
+# a bare `build/`/`out/`/`dist/` matches every nested segment of that name and
+# would drop source routes like src/app/api/cv-maker/build.
+/.next/
+/out/
+/build/
+/dist/
 
 # Companion packages — Vercel only builds the Next.js root
 desktop/
