@@ -178,6 +178,18 @@ export async function GET(req: Request) {
     );
   }
 
+  // Piggyback: publish due Social-Suite scheduled posts (Facebook page etc.).
+  let social: { due: number; published: number; failed: number } | null = null;
+  try {
+    const { publishDueSocialPosts } = await import("@/lib/social-scheduler");
+    social = await publishDueSocialPosts(supabase);
+  } catch (err) {
+    console.error(
+      "[cron] social scheduler failed:",
+      err instanceof Error ? err.message : err,
+    );
+  }
+
   return NextResponse.json({
     ok: true,
     due: due.length,
@@ -186,6 +198,7 @@ export async function GET(req: Request) {
     advanced,
     done,
     linkedin,
+    social,
     ranAt: nowIso,
   });
 }

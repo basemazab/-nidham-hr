@@ -411,6 +411,117 @@ export async function generateAndDraftPosts(formData: FormData) {
   redirect(`/admin/social/composer?generated=${inserted?.length ?? 0}`);
 }
 
+// ----------------------------------------------------------------------------
+// MONTHLY CAMPAIGN — schedule a full month of Nidham posts that publish
+// automatically to the connected Facebook page(s). One post every 2 days at
+// ~11:00 Cairo, each with a branded product image. Fully hands-free: the
+// daily cron (publishDueSocialPosts) does the publishing.
+// ----------------------------------------------------------------------------
+const NIDHAM_CAMPAIGN: { title: string; body: string; img: { t: string; s: string; b: string } }[] = [
+  { title: "إكسل المرتبات", body: "لسه بتقفل مرتبات الشركة على إكسل؟ 😮‍💨\n\nنِظام بيحسبلك التأمينات (11% على الموظف) وضريبة كسب العمل بالشرائح والبدلات والسلف — تلقائي وبقانون العمل المصري. اللي كان بياخد يومين بقى مراجعة ساعة.\n\n👉 جرّب مجانًا 14 يوم: https://www.nidhamhr.com\n\n#مرتبات #HR #مصر #محاسبة", img: { t: "مرتبات بقانون العمل المصري", s: "تأمينات وضرايب وبدلات تلقائيًا بدون إكسل", b: "مرتبات 💰" } },
+  { title: "نبض نظام", body: "تخيل تفتح شغلك الصبح تلاقي تقرير جاهز عن شركتك كلها ⚡\n\n«نبض نِظام» بيمسح الحضور والإجازات والعملاء السخنين والمستندات اللي قربت تنتهي — ويرتّبلك أولوياتك بخطوة عملية لكل بند.\n\n👉 شوفه شغال: https://www.nidhamhr.com\n\n#إدارة_أعمال #AI #مصر", img: { t: "⚡ نبض نظام", s: "بريفينج يومي تنفيذي عن شركتك كلها", b: "ميزة جديدة" } },
+  { title: "التوظيف بجملة", body: "عايز توظّف محاسب؟ اكتب جملة واحدة 🎯\n\nقول للمساعد الذكي «عايز أوظف محاسب خبرة 3 سنين» — يكتب الإعلان، ينشره، يجمع الـ CVs، ويفرزها بالـ AI، ويديك أرقام المتقدمين. إنت بس تكلّمهم.\n\n👉 https://www.nidhamhr.com\n\n#توظيف #Recruitment #مصر #وظايف", img: { t: "وظّف بجملة واحدة", s: "المساعد ينشر الوظيفة ويجمع ويفرز الـ CVs", b: "توظيف ذكي 🎯" } },
+  { title: "درع الامتثال", body: "غرامة مكتب العمل بتيجي فجأة — إلا لو حد بينبّهك قبلها 🛡️\n\n«درع الامتثال» في نِظام بيراقب بياناتك وينبّهك قبل أي مخالفة، بالقيمة بالجنيه والمادة القانونية. كل نظام بينظّم؛ نِظام بيحميك.\n\n👉 https://www.nidhamhr.com\n\n#امتثال #قانون_العمل #مصر", img: { t: "🛡️ درع الامتثال", s: "ينبّهك قبل أي غرامة — بالمادة والقيمة", b: "حماية" } },
+  { title: "حضور GPS", body: "«نسيت أبصم» — جملة اختفت من الشركات اللي بتستخدم نِظام ⏰\n\nحضور بالـ GPS من موبايل الموظف + ربط مباشر بأجهزة البصمة، والتأخير بيتحسب في المرتب لوحده. تقارير لحظية لكل فروعك بدون ورق.\n\n👉 https://www.nidhamhr.com\n\n#حضور_وانصراف #HR #بصمة #مصر", img: { t: "حضور GPS وبصمة", s: "تقارير لحظية لكل فروعك بدون ورق", b: "حضور ⏰" } },
+  { title: "المستشار القانوني", body: "موظف عمل مشكلة وإنت مش عارف الإجراء الصح؟ ⚖️\n\n«المستشار القانوني» في نِظام بيجهّزلك محضر تحقيق رسمي، يسجّل أقوال الموظف، ويطلّع رأي قانوني بقانون العمل 12/2003 — بالجزاء الصح والمستندات جاهزة للطباعة.\n\n👉 https://www.nidhamhr.com\n\n#قانون_العمل #HR #مصر", img: { t: "⚖️ المستشار القانوني", s: "تحقيق + رأي قانوني بقانون 12/2003 + مستندات", b: "جديد" } },
+  { title: "الرد الآلي", body: "عميل بيسأل على ماسنجر الساعة 11 بالليل: «بكام؟» 💬\n\nلو مفيش رد، راح للمنافس. نِظام بيرد فورًا بمعلوماتك الحقيقية، بكلام طبيعي، يبعت الكتالوج، ويسجّل العميل في الـ CRM.\n\n👉 https://www.nidhamhr.com\n\n#تسويق #CRM #مبيعات #مصر", img: { t: "رد آلي على عملائك", s: "بيرد بمعلوماتك ويبعت الكتالوج ويسجّل العميل", b: "تسويق ذكي 💬" } },
+  { title: "مترجم السيرة", body: "وصلك CV بالإنجليزي ومش فاضي تترجمه؟ 🌐\n\nنِظام بيترجم السيرة كاملة عربي ⇄ إنجليزي + تحليل HR شامل (مهارات، نقاط قوة، علامات إنذار) + أسئلة مقابلة مخصصة — وتطبعها بضغطة.\n\n👉 https://www.nidhamhr.com\n\n#توظيف #CV #HR #مصر", img: { t: "🌐 مترجم السيرة الذاتية", s: "ترجمة كاملة + تحليل HR + طباعة في دقيقة", b: "أداة ذكية" } },
+  { title: "طلبات الموظفين", body: "«ممكن سلفة؟» — السؤال اللي بيقطع شغلك كل أسبوع 💵\n\nفي نِظام الموظف بيقدّم طلب الإجازة أو السلفة من موبايله، وإنت توافق بضغطة — والموافقة بتتحسب في المرتب والرصيد فورًا.\n\n👉 https://www.nidhamhr.com\n\n#HR #إجازات #مصر", img: { t: "طلبات الموظفين بضغطة", s: "إجازات وسلف من الموبايل وموافقتك تتحسب فورًا", b: "خدمة ذاتية" } },
+  { title: "مراجعة المرتبات AI", body: "قفلت المرتبات؟ بس متأكد إنها صح؟ 🔍\n\nمراجعة المرتبات بالـ AI في نِظام بتفحص الكشف قبل الصرف وتلقط أي رقم شاذ (مرتب اتضاعف؟ خصم غريب؟) وتقارن بالشهور اللي فاتت.\n\n👉 https://www.nidhamhr.com\n\n#مرتبات #Payroll #محاسبة #مصر", img: { t: "🔍 مراجعة AI للمرتبات", s: "بتلقط أي رقم شاذ قبل الصرف", b: "دقة" } },
+  { title: "النماذج والتوقيع", body: "كل موظف جديد = كومة ورق 📋\n\nنِظام بيحوّلها لملف إلكتروني: نماذج HR مصرية جاهزة (عقود، إنذارات، إخلاء طرف) + توقيع إلكتروني من الموبايل + ملف رقمي لكل موظف تلاقيه في ثانية.\n\n👉 https://www.nidhamhr.com\n\n#HR #عقود #مصر", img: { t: "📋 وداعًا لكومة الورق", s: "نماذج مصرية + توقيع إلكتروني + ملف رقمي", b: "مستندات" } },
+  { title: "أسعار بالجنيه", body: "جرّبت الأنظمة الأجنبية ولقيتها مش فاهمة السوق المصري؟ 🇪🇬\n\nنِظام اتبني مخصوص لمصر: أسعار بالجنيه من 750 ج/شهر للشركة كلها، قانون العمل والتأمينات مدمجة، ودعم بالعربي.\n\n👉 جرّب 14 يوم مجانًا: https://www.nidhamhr.com\n\n#SaaS #مصر #شركات", img: { t: "أسعار بالجنيه المصري", s: "من 750 ج/شهر للشركة كلها — مش للمستخدم", b: "عرض" } },
+  { title: "وكالة تسويق", body: "بتدفع لوكالة تسويق آلاف في الشهر؟ ✦\n\nاستوديو التسويق في نِظام: 6 أدوات AI بتكتب إعلاناتك، تبني صفحات هبوط، وتجمع leads — وكله بالعربي المصري.\n\n👉 https://www.nidhamhr.com\n\n#تسويق #AI #مصر", img: { t: "وكالة تسويق جواه نظامك", s: "إعلانات + صفحات هبوط + leads بالعربي", b: "تسويق" } },
+  { title: "تحليلات الجسر", body: "HR ومبيعات شغّالين في جزيرتين منفصلين؟ 📊\n\nنِظام بيربط التزام الموظفين بأداء المبيعات في تقرير واحد — تعرف مين الفريق اللي بيلتزم وبيبيع فعلًا.\n\n👉 https://www.nidhamhr.com\n\n#تحليلات #HR #مبيعات #مصر", img: { t: "تحليلات تربط HR بالمبيعات", s: "الالتزام × الإنتاجية في تقرير واحد", b: "تقارير 📊" } },
+  { title: "خلاصة الشهر", body: "إدارة شركتك كلها في منصة واحدة 🇪🇬\n\nموظفين + حضور + مرتبات + توظيف + عملاء + تسويق — ومساعد ذكي بالعامية بينفّذ كل ده بجملة. أسعار بالجنيه وتجربة 14 يوم مجانًا.\n\n👉 ابدأ دلوقتي: https://www.nidhamhr.com\n\nعندك سؤال؟ اكتبه في الكومنتات 👇\n\n#مصر #SaaS #HR", img: { t: "كل إدارة شركتك في منصة واحدة", s: "HR + مرتبات + توظيف + CRM + تسويق", b: "جرّب مجانًا 🎁" } },
+];
+
+export async function scheduleNidhamMonthlyCampaign() {
+  const { supabase } = await ensureSuperAdmin();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const { data: accounts } = await supabase
+    .from("social_accounts")
+    .select("id")
+    .eq("platform", "facebook")
+    .eq("is_active", true);
+
+  if (!accounts || accounts.length === 0) {
+    redirect(
+      "/admin/social/composer?error=" +
+        encodeURIComponent("اربط صفحة فيسبوك واحدة نشطة الأول من تبويب الحسابات"),
+    );
+  }
+
+  // Don't double-schedule: bail if a campaign is already queued ahead.
+  const { count: pending } = await supabase
+    .from("social_posts")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "scheduled")
+    .contains("tags", ["nidham-campaign"]);
+  if ((pending ?? 0) > 0) {
+    redirect(
+      "/admin/social/composer?error=" +
+        encodeURIComponent("فيه حملة مجدولة بالفعل — ألغِ القديمة الأول أو استناها تخلص"),
+    );
+  }
+
+  const site = (process.env.NEXT_PUBLIC_SITE_URL || "https://www.nidhamhr.com").replace(/\/$/, "");
+  const base = new Date();
+  base.setHours(0, 0, 0, 0);
+
+  let scheduled = 0;
+  for (let i = 0; i < NIDHAM_CAMPAIGN.length; i++) {
+    const c = NIDHAM_CAMPAIGN[i];
+    const when = new Date(base);
+    when.setDate(base.getDate() + 1 + i * 2); // start tomorrow, every 2 days
+    when.setHours(9, 0, 0, 0); // 09:00 UTC ≈ 11:00 Cairo
+
+    const imgUrl = `${site}/api/og/linkedin-post?title=${encodeURIComponent(c.img.t)}&sub=${encodeURIComponent(c.img.s)}&badge=${encodeURIComponent(c.img.b)}`;
+
+    const { data: postRow, error: postErr } = await supabase
+      .from("social_posts")
+      .insert({
+        title: c.title,
+        body: c.body,
+        source: "campaign",
+        status: "scheduled",
+        scheduled_for: when.toISOString(),
+        media_urls: [imgUrl],
+        tags: ["nidham-campaign"],
+        created_by: user?.id ?? null,
+      })
+      .select("id")
+      .single<{ id: string }>();
+
+    if (postErr || !postRow) {
+      redirect(
+        "/admin/social/composer?error=" +
+          encodeURIComponent(
+            /relation .* does not exist|column .* does not exist|PGRST/i.test(postErr?.message ?? "")
+              ? "طبّق migrations 043 و 110 في Supabase الأول"
+              : postErr?.message || "فشل جدولة الحملة",
+          ),
+      );
+    }
+
+    await supabase.from("social_post_targets").upsert(
+      accounts.map((a: { id: string }) => ({
+        post_id: postRow.id,
+        account_id: a.id,
+        status: "queued",
+      })),
+      { onConflict: "post_id,account_id" },
+    );
+    scheduled++;
+  }
+
+  revalidatePath("/admin/social");
+  revalidatePath("/admin/social/composer");
+  redirect(`/admin/social/composer?campaign_scheduled=${scheduled}`);
+}
+
 function composeFullBody(v: {
   hook: string;
   body: string;

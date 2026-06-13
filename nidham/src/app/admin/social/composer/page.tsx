@@ -11,6 +11,7 @@ import {
   archiveSocialPost,
   generateImageForPost,
   removeImageFromPost,
+  scheduleNidhamMonthlyCampaign,
 } from "../actions";
 
 // Extends Vercel's 10s default to the Hobby-plan ceiling (60s) so:
@@ -124,6 +125,30 @@ export default async function SocialComposer({
           اكتب الموضوع → AI يولّد بوست لكل منصة → راجع → اضغط نشر.
         </p>
       </header>
+
+      {/* HANDS-FREE MONTHLY CAMPAIGN */}
+      <section className="bg-gradient-to-l from-amber-400 to-yellow-300 rounded-2xl p-[2px] mb-8">
+        <div className="bg-slate-900 rounded-2xl px-6 py-5 flex flex-col md:flex-row md:items-center gap-4">
+          <div className="flex-1">
+            <h2 className="text-base font-black font-cairo text-amber-300 mb-1">
+              🤖 حملة شهر كامل — تنشر أوتوماتيك بدون تدخل
+            </h2>
+            <p className="text-sm text-slate-300 font-cairo leading-relaxed">
+              15 بوست احترافي عن نِظام (بكل مميزاته الحقيقية) بصور بهوية البراند،
+              بوست كل يومين الساعة 11 الصبح على صفحة الفيسبوك المربوطة — والكرون
+              اليومي بينشرها لوحده. تقدر تراجع أو تعدّل أي بوست قبل معاده.
+            </p>
+          </div>
+          <form action={scheduleNidhamMonthlyCampaign}>
+            <button
+              type="submit"
+              className="px-6 py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-900 font-black font-cairo text-sm whitespace-nowrap transition"
+            >
+              📅 جدول الحملة دلوقتي
+            </button>
+          </form>
+        </div>
+      </section>
 
       {/* GENERATOR FORM */}
       <section className="bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-900/30 dark:to-pink-900/30 border-2 border-rose-200 dark:border-rose-800 rounded-2xl p-6 mb-8">
