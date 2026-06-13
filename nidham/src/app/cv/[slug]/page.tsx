@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { createPublicClient } from "@/lib/supabase/public";
-import { CvDocument, type CvTemplate } from "@/app/dashboard/cv-builder/cv-document";
+import { CvDocument, type CvTemplate, type CvColor } from "@/app/dashboard/cv-builder/cv-document";
 import type { CvData } from "@/lib/cv-builder";
 import { CvPrintButton } from "./print-button";
 
@@ -42,7 +42,7 @@ export default async function PublicCvPage({ params }: Props) {
         <CvPrintButton />
       </div>
       <div className="max-w-3xl mx-auto bg-white shadow-xl rounded-lg overflow-hidden">
-        <CvDocument cv={data.data} template={(data.data as { _template?: CvTemplate })._template ?? "classic"} />
+        <CvDocument cv={data.data} template={(data.data as { _template?: CvTemplate })._template ?? "classic"} color={(data.data as { _color?: CvColor })._color ?? "navy"} />
       </div>
       <div className="max-w-3xl mx-auto mt-4 text-center text-xs text-slate-400 font-cairo print:hidden">
         تم إنشاؤها بواسطة{" "}

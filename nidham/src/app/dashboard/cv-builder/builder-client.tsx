@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { buildCvFromText, scoreCv, saveCv, publishCv } from "./actions";
 import type { CvData, AtsReview } from "@/lib/cv-builder";
-import { CvDocument, buildCvWordHtml, EMPTY_CV, CV_TEMPLATES, type CvTemplate } from "./cv-document";
+import { CvDocument, buildCvWordHtml, EMPTY_CV, CV_TEMPLATES, CV_COLORS, type CvTemplate, type CvColor } from "./cv-document";
 
 export function CvBuilderClient() {
   const [cv, setCv] = useState<CvData>(EMPTY_CV);
@@ -17,6 +17,7 @@ export function CvBuilderClient() {
   const [error, setError] = useState("");
   const [started, setStarted] = useState(false);
   const [template, setTemplate] = useState<CvTemplate>("classic");
+  const [color, setColor] = useState<CvColor>("navy");
 
   const set = (patch: Partial<CvData>) => setCv((c) => ({ ...c, ...patch }));
 
@@ -58,7 +59,7 @@ export function CvBuilderClient() {
   async function persistAndPublish() {
     setError(""); setBusy("publish");
     try {
-      const s = await saveCv({ id: id ?? undefined, title: title || cv.full_name, targetRole, cv: { ...cv, _template: template } as CvData, atsScore: review?.score ?? null, atsReview: review ?? null });
+      const s = await saveCv({ id: id ?? undefined, title: title || cv.full_name, targetRole, cv: { ...cv, _template: template, _color: color } as CvData, atsScore: review?.score ?? null, atsReview: review ?? null });
       if (!s.ok) { setError(s.error); return; }
       setId(s.id);
       const p = await publishCv({ id: s.id });
@@ -67,7 +68,7 @@ export function CvBuilderClient() {
   }
 
   function exportWord() {
-    const html = buildCvWordHtml(cv);
+    const html = buildCvWordHtml(cv, color);
     const blob = new Blob(["﻿", html], { type: "application/msword" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
@@ -108,15 +109,26 @@ export function CvBuilderClient() {
 
       {started && (
         <>
-          {/* Template picker */}
-          <div className="print:hidden flex flex-wrap items-center gap-2">
-            <span className="text-xs font-bold text-slate-500 font-cairo">🎨 القالب:</span>
-            {CV_TEMPLATES.map((t) => (
-              <button key={t.key} type="button" onClick={() => setTemplate(t.key)} title={t.hint}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold font-cairo border transition ${template === t.key ? "bg-brand-cyan-dark text-white border-brand-cyan-dark" : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:border-brand-cyan"}`}>
-                {t.label}
-              </button>
-            ))}
+          {/* Template + color pickers */}
+          <div className="print:hidden bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-3 space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-bold text-slate-500 font-cairo">🎨 التصميم:</span>
+              {CV_TEMPLATES.map((t) => (
+                <button key={t.key} type="button" onClick={() => setTemplate(t.key)} title={t.hint}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold font-cairo border transition ${template === t.key ? "bg-brand-cyan-dark text-white border-brand-cyan-dark" : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:border-brand-cyan"}`}>
+                  {t.label}
+                </button>
+              ))}
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-bold text-slate-500 font-cairo">اللون:</span>
+              {CV_COLORS.map((col) => (
+                <button key={col.key} type="button" onClick={() => setColor(col.key)} title={col.label}
+                  aria-label={col.label}
+                  className={`w-6 h-6 rounded-full transition ${color === col.key ? "ring-2 ring-offset-2 ring-slate-900 dark:ring-offset-slate-900" : ""}`}
+                  style={{ background: col.swatch }} />
+              ))}
+            </div>
           </div>
 
           {/* Toolbar */}
@@ -148,12 +160,12 @@ export function CvBuilderClient() {
           <div className="grid lg:grid-cols-2 gap-5 print:hidden">
             <CvEditor cv={cv} set={set} setCv={setCv} title={title} setTitle={setTitle} />
             <div className="bg-slate-100 dark:bg-slate-800 rounded-2xl p-4 overflow-auto">
-              <div className="bg-white shadow-lg mx-auto" style={{ maxWidth: 720 }}><CvDocument cv={cv} template={template} /></div>
+              <div className="bg-white shadow-lg mx-auto overflow-hidden rounded" style={{ maxWidth: 720 }}><CvDocument cv={cv} template={template} color={color} /></div>
             </div>
           </div>
 
           {/* Print-only clean document */}
-          <div className="hidden print:block"><CvDocument cv={cv} template={template} print /></div>
+          <div className="hidden print:block"><CvDocument cv={cv} template={template} color={color} print /></div>
         </>
       )}
     </div>

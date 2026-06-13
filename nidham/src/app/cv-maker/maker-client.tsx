@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { CvData } from "@/lib/cv-builder";
-import { CvDocument, buildCvWordHtml, CV_TEMPLATES, type CvTemplate } from "@/app/dashboard/cv-builder/cv-document";
+import { CvDocument, buildCvWordHtml, CV_TEMPLATES, CV_COLORS, type CvTemplate, type CvColor } from "@/app/dashboard/cv-builder/cv-document";
 
 type Review = { score: number; verdict: string; missing_keywords: string[]; fixes: string[] } | null;
 
@@ -18,6 +18,7 @@ export function CvMakerClient() {
   const [shareUrl, setShareUrl] = useState("");
   const [showGate, setShowGate] = useState(false);
   const [template, setTemplate] = useState<CvTemplate>("classic");
+  const [color, setColor] = useState<CvColor>("navy");
 
   async function onFile(file: File | null) {
     if (!file) return;
@@ -55,7 +56,7 @@ export function CvMakerClient() {
     try {
       const r = await fetch("/api/cv-maker/save", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cv: { ...cv, _template: template }, email: email.trim() }),
+        body: JSON.stringify({ cv: { ...cv, _template: template, _color: color }, email: email.trim() }),
       });
       const j = await r.json();
       if (r.ok && j.ok) { setUnlocked(true); setShareUrl(j.url); setShowGate(false); }
@@ -65,7 +66,7 @@ export function CvMakerClient() {
 
   function exportWord() {
     if (!cv) return;
-    const blob = new Blob(["﻿", buildCvWordHtml(cv)], { type: "application/msword" });
+    const blob = new Blob(["﻿", buildCvWordHtml(cv, color)], { type: "application/msword" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = `${(cv.full_name || "CV").replace(/\s+/g, "_")}.doc`;
@@ -112,15 +113,26 @@ export function CvMakerClient() {
             </div>
           )}
 
-          <div className="print:hidden bg-white rounded-2xl border border-slate-200 p-3 shadow-sm">
-            <div className="text-xs font-bold text-slate-500 font-cairo mb-2">🎨 اختر القالب</div>
-            <div className="flex flex-wrap gap-2">
-              {CV_TEMPLATES.map((t) => (
-                <button key={t.key} type="button" onClick={() => setTemplate(t.key)} title={t.hint}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold font-cairo border transition ${template === t.key ? "bg-brand-cyan-dark text-white border-brand-cyan-dark" : "bg-white text-slate-600 border-slate-300 hover:border-brand-cyan"}`}>
-                  {t.label}
-                </button>
-              ))}
+          <div className="print:hidden bg-white rounded-2xl border border-slate-200 p-3 shadow-sm space-y-2">
+            <div>
+              <div className="text-xs font-bold text-slate-500 font-cairo mb-2">🎨 اختر التصميم</div>
+              <div className="flex flex-wrap gap-2">
+                {CV_TEMPLATES.map((t) => (
+                  <button key={t.key} type="button" onClick={() => setTemplate(t.key)} title={t.hint}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold font-cairo border transition ${template === t.key ? "bg-brand-cyan-dark text-white border-brand-cyan-dark" : "bg-white text-slate-600 border-slate-300 hover:border-brand-cyan"}`}>
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs font-bold text-slate-500 font-cairo mb-2">اللون</div>
+              <div className="flex flex-wrap gap-2">
+                {CV_COLORS.map((col) => (
+                  <button key={col.key} type="button" onClick={() => setColor(col.key)} title={col.label} aria-label={col.label}
+                    className={`w-7 h-7 rounded-full transition ${color === col.key ? "ring-2 ring-offset-2 ring-slate-900" : ""}`} style={{ background: col.swatch }} />
+                ))}
+              </div>
             </div>
           </div>
 
@@ -150,11 +162,11 @@ export function CvMakerClient() {
           )}
 
           <div className="bg-slate-100 rounded-2xl p-4 print:p-0 print:bg-white">
-            <div className="bg-white shadow-lg mx-auto print:shadow-none" style={{ maxWidth: 760 }}>
-              <CvDocument cv={cv} template={template} />
+            <div className="bg-white shadow-lg mx-auto print:shadow-none overflow-hidden rounded" style={{ maxWidth: 760 }}>
+              <CvDocument cv={cv} template={template} color={color} />
             </div>
           </div>
-          <div className="hidden print:block"><CvDocument cv={cv} template={template} print /></div>
+          <div className="hidden print:block"><CvDocument cv={cv} template={template} color={color} print /></div>
         </>
       )}
     </div>
