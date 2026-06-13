@@ -485,7 +485,7 @@ export async function scheduleNidhamMonthlyCampaign() {
       .insert({
         title: c.title,
         body: c.body,
-        source: "campaign",
+        source: "ai_generated",
         status: "scheduled",
         scheduled_for: when.toISOString(),
         media_urls: [imgUrl],
