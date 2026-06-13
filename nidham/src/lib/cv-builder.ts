@@ -105,6 +105,9 @@ ${input.rawText.slice(0, 16000)}
         prompt,
         temperature: 0.3,
         maxRetries: 0,
+        // Cap each provider attempt — a hung/overloaded model aborts and the
+        // fallback chain moves on instead of holding the request to timeout.
+        abortSignal: AbortSignal.timeout(22_000),
       }).then((r) => r.object),
     pickAgentModelLargeContext,
   );
@@ -133,6 +136,7 @@ ${JSON.stringify(input.cv).slice(0, 12000)}
         prompt,
         temperature: 0.2,
         maxRetries: 0,
+        abortSignal: AbortSignal.timeout(18_000),
       }).then((r) => r.object),
     pickAgentModelLargeContext,
   );
