@@ -149,6 +149,7 @@ const NAV_ITEMS: readonly NavItem[] = [
   { href: "/dashboard/jobs",       label: "التوظيف الذكي",        icon: "🎯", section: "ai", feature: "recruitment" },
   { href: "/dashboard/jobs/cv-analyzer", label: "محلّل السيرة الذاتية", icon: "🔍", section: "ai", feature: "recruitment" },
   { href: "/dashboard/jobs/cv-translator", label: "مترجم السيرة الذاتية", icon: "🌐", section: "ai", feature: "recruitment" },
+  { href: "/dashboard/cv-builder",       label: "بانية السيرة الذاتية",  icon: "📄", section: "ai", feature: "recruitment" },
   { href: "/dashboard/jobs/job-description", label: "مولّد التوصيف الوظيفي", icon: "📝", section: "ai", feature: "recruitment" },
   { href: "/dashboard/retention",  label: "احتفاظ بالموظفين",     icon: "🛡", section: "ai", feature: "retention_insights" },
   { href: "/dashboard/nidham-ai", label: "محرك نيدهام AI",        icon: "🧠", section: "ai", feature: "retention_insights" },
