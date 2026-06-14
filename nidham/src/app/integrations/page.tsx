@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: { absolute: "تكاملات نظام HR — ZKTeco، Excel، بنوك، Meta، وAPI | نِظام HR" },
   description:
-    "التكاملات المتاحة في نِظام HR: أجهزة ZKTeco/Hikvision، استيراد Excel/CSV، تصدير ملفات بنكية، تكامل إعلانات Meta، و REST API مفتوح. نظام HR يشتغل مع أدواتك.",
+    "التكاملات المتاحة في نِظام HR: ربط لحظي لأجهزة ZKTeco (Cloud-Push) + استيراد ملفات، استيراد Excel/CSV، تصدير ملفات بنكية، تكامل إعلانات Meta، و REST API موثّق (OpenAPI). نظام HR يشتغل مع أدواتك.",
   alternates: { canonical: "/integrations" },
   openGraph: {
     images: [{ url: "/api/og?title=" + encodeURIComponent("تكاملات نِظام HR"), width: 1200, height: 630, alt: "تكاملات نِظام HR" }],
@@ -22,8 +22,9 @@ export const metadata: Metadata = {
 // Closes "does this play nice with my existing tools?" — a CFO question
 // that kills deals when unanswered.
 //
-// Status as of 2026-05-25:
-//   ✅ ZKTeco (file import)
+// Status as of 2026-06-14:
+//   ✅ ZKTeco real-time ADMS Cloud-Push (/iclock) + ATTLOG file import fallback
+//   ✅ REST API — OpenAPI 3.1, API-key auth, employees + payroll (LIVE, not roadmap)
 //   ✅ Excel/CSV import (employees + payroll + attendance)
 //   ✅ WhatsApp Business (notifications)
 //   ✅ Egyptian banks (payroll transfer file format)
@@ -47,11 +48,11 @@ type Integration = {
 const INTEGRATIONS: Integration[] = [
   // ─── LIVE ─────────────────────────────────────────────────────────────
   {
-    name: "ZKTeco",
+    name: "ZKTeco — ربط لحظي (Cloud-Push)",
     category: "أجهزة الحضور",
     status: "live",
     description:
-      "استيراد ملف الحضور من ZKTeco devices مباشرة. النظام بيـ parse الملف + يحسب overtime + يطبّق على المرتبات تلقائي.",
+      "أجهزة ZKTeco اللي بتدعم Cloud Server بتبعت البصمات لحظيًا للنظام أول ما الموظف يبصم (بروتوكول ADMS) — تظهر تلقائي للمراجعة وتتحسب فيها الورديات والتأخير وتتطبّق على المرتبات، من غير أي تصدير يدوي. سجّل الجهاز بالرقم التسلسلي مرة واحدة من الإعدادات ← الأجهزة وخلاص. وللأجهزة الأقدم: استيراد ملف ATTLOG بالـ AI برضه متاح.",
     emoji: "🕐",
   },
   {
@@ -85,6 +86,14 @@ const INTEGRATIONS: Integration[] = [
     description:
       "تطبيق Nidham Mobile للـ check-in بالـ GPS + طلب إجازة + شوف قسيمة الراتب. Native على Android 8+ و iOS 14+.",
     emoji: "📱",
+  },
+  {
+    name: "REST API — موثّق (OpenAPI 3.1)",
+    category: "تطوير / ERP",
+    status: "live",
+    description:
+      "REST API رسمي بمواصفة OpenAPI 3.1 — endpoints للموظفين والمرتبات، مصادقة بمفتاح API وصلاحيات منفصلة (read/write). مثالي لربط نِظام بـ ERP زي Odoo أو نظام محاسبة. مفاتيح الـ API من الإعدادات ← مفاتيح API، والتوثيق الكامل في /api-docs.",
+    emoji: "🔌",
   },
   {
     name: "Vercel + Cloudflare",
@@ -136,14 +145,6 @@ const INTEGRATIONS: Integration[] = [
       "إشعارات Nidham داخل Slack أو Teams — مفيد للشركات الـ tech-savvy.",
     emoji: "💼",
   },
-  {
-    name: "Webhooks + REST API",
-    category: "تطوير",
-    status: "roadmap",
-    description:
-      "API كامل للـ developers — مفيد للشركات الـ enterprise اللي عندهم نظام محاسبة custom. شوف /api-docs للتفاصيل.",
-    emoji: "🔌",
-  },
 ];
 
 const LIVE = INTEGRATIONS.filter((i) => i.status === "live");
@@ -162,7 +163,7 @@ export default function IntegrationsPage() {
 
         <header className="mb-10 text-center">
           <div className="inline-block px-3 py-1 rounded-full bg-cyan-50 border border-cyan-300 text-cyan-700 text-xs font-bold mb-3 font-cairo">
-            🔌 6 تكاملات live · 6 على الـ roadmap
+            🔌 7 تكاملات live · 5 على الـ roadmap
           </div>
           <h1 className="text-4xl md:text-5xl font-black font-cairo text-slate-900 mb-3">
             التكاملات
@@ -225,7 +226,7 @@ export default function IntegrationsPage() {
 
         <footer className="mt-12 text-center">
           <p className="text-xs text-slate-500 font-cairo">
-            Last updated: 25 مايو 2026 · بنحدّث الصفحة دي شهرياً
+            Last updated: 14 يونيو 2026 · بنحدّث الصفحة دي شهرياً
           </p>
         </footer>
       </div>

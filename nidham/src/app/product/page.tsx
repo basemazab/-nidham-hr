@@ -117,14 +117,14 @@ const FEATURES: Feature[] = [
   {
     emoji: "⏱",
     title: "حضور وانصراف ذكي",
-    subtitle: "ZKTeco + GPS + Pattern detection",
+    subtitle: "ZKTeco لحظي + GPS + Pattern detection",
     description:
-      "استيراد من ZKTeco devices تلقائي + Check-in بالـ GPS للـ remote workers + كشف الـ patterns غير الطبيعية.",
+      "أجهزة ZKTeco بتبعت البصمات لحظيًا للنظام (Cloud-Push) أول ما الموظف يبصم + Check-in بالـ GPS للـ remote workers + كشف الـ patterns غير الطبيعية.",
     bullets: [
-      "ZKTeco file import — صفر شغل يدوي",
+      "ربط ZKTeco لحظي (Cloud-Push) — البصمة تظهر فورًا بدون تصدير",
+      "استيراد ملف ATTLOG بالـ AI للأجهزة الأقدم",
       "Geofencing — منع fake check-ins",
-      "Tardiness reports تلقائياً",
-      "Shifts management (نهاري + ليلي)",
+      "Tardiness reports + Shifts (نهاري + ليلي) تلقائياً",
     ],
     screenshot: "04-attendance-gps",
     href: "/dashboard/attendance",

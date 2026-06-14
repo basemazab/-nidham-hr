@@ -200,7 +200,7 @@ const FAQ = [
   },
   {
     question: "بنشتغل ZKTeco — هتقدروا تستوردوا منه؟",
-    answer: "أيوه، استيراد Excel من جهاز ZKTeco مدمج بـ AI بيقرا الأعمدة العربية تلقائياً ومش بيخسر بصمة. متوسط الاستيراد: 30 ثانية لـ ملف 50 موظف لـ شهر كامل.",
+    answer: "أيوه — وبأكتر من طريقة. أجهزة ZKTeco اللي بتدعم Cloud Server بتبعت البصمات لحظيًا للنظام أول ما الموظف يبصم (بروتوكول ADMS)، فتظهر فورًا بدون أي تصدير يدوي — تسجّل الجهاز بالرقم التسلسلي مرة واحدة وخلاص. وللأجهزة الأقدم: استيراد ملف بالـ AI بيقرا الأعمدة العربية تلقائياً (متوسط 30 ثانية لملف 50 موظف لشهر كامل).",
   },
   {
     question: "في support بالعربي؟",
@@ -365,7 +365,7 @@ export default function PricingPage() {
                 <CompareRow label="PII Encryption" cells={["✅", "Enterprise", "Enterprise", "Enterprise"]} />
                 <CompareRow label="Audit Hash Chain" cells={["✅", "❌", "❌", "❌"]} />
                 <CompareRow label="Marketing Studio مدمج" cells={["✅", "❌", "❌", "❌"]} />
-                <CompareRow label="ZKTeco import بـ AI" cells={["✅", "manual", "manual", "❌"]} />
+                <CompareRow label="ربط ZKTeco لحظي (Cloud-Push)" cells={["✅", "manual", "manual", "❌"]} />
               </tbody>
             </table>
           </div>

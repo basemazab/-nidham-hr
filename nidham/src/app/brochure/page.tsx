@@ -92,7 +92,7 @@ export default function BrochurePage() {
             <BenefitCard
               icon="⚡"
               title="وفّر 20+ ساعة HR شهرياً"
-              body="استيراد ZKTeco بـ AI، payroll في 5 دقايق، نماذج تأمينات بنقرة"
+              body="ربط ZKTeco لحظي، payroll في 5 دقايق، نماذج تأمينات بنقرة"
               color="cyan"
             />
             <BenefitCard
@@ -171,7 +171,7 @@ export default function BrochurePage() {
               <ul className="space-y-3 font-cairo text-slate-700">
                 <li className="flex items-start gap-3">
                   <span className="text-2xl shrink-0">⚡</span>
-                  <span>استيراد ZKTeco بـ AI + payroll تلقائي</span>
+                  <span>ربط ZKTeco لحظي (Cloud-Push) + payroll تلقائي</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="text-2xl shrink-0">📋</span>
