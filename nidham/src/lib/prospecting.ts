@@ -1,18 +1,18 @@
 // ============================================================================
-// Prospecting — Google Places (New) business finder + WhatsApp number utils
+// Prospecting — Google Maps business finder (via Apify) + WhatsApp number utils
 // ============================================================================
 //
-// The "find the customer" half of the growth tool. Searches Google Places
-// for businesses by free-text query (e.g. "مصانع بلاستيك في العاشر من رمضان")
-// and returns name + phone + address so the marketer can import them as
-// leads (customers rows) and reach out via WhatsApp through Bot X.
+// The "find the customer" half of the growth tool. Finds businesses by
+// free-text query (e.g. "مصانع بلاستيك في العاشر من رمضان") and returns name +
+// phone + address so the marketer can import them as leads and reach out.
 //
-// We use the LEGIT Places API (New) Text Search — NOT scraping. It needs
-// GOOGLE_PLACES_API_KEY (Google Cloud, billing enabled; $200/mo free credit
-// covers thousands of searches). The phone fields are on the "Pro" field
-// mask tier.
+// Data source: the Apify "compass/crawler-google-places" actor via the
+// run-sync-get-dataset-items endpoint. Needs APIFY_TOKEN only (apify.com →
+// Settings → API tokens) — FREE tier, NO credit card required (chosen because
+// Google Places billing rejected the owner's card). Pay-per-event pricing is
+// covered by Apify's monthly free credit.
 //
-// Phone normalization converts whatever Google returns ("+20 100 …",
+// Phone normalization converts whatever the source returns ("+20 100 …",
 // "010 …") into the bare international form WhatsApp + Bot X expect
 // ("201001234567"). Non-Egyptian numbers are dropped so we never message
 // the wrong country.
@@ -71,20 +71,21 @@ export function isLikelyMobile(wa: string | null): boolean {
 }
 
 // ----------------------------------------------------------------------------
-// searchPlaces — Places API (New) Text Search, Egypt-scoped, Arabic.
+// searchPlaces — Google Maps text search via Apify (free tier, no card).
+// Runs compass/crawler-google-places through run-sync-get-dataset-items so a
+// single HTTP call returns the rows. We cap the actor run (timeout) and abort
+// the fetch a bit later to stay within the serverless limit. Needs APIFY_TOKEN.
 // ----------------------------------------------------------------------------
 export async function searchPlaces(
   textQuery: string,
   opts: { max?: number } = {},
 ): Promise<SearchOutcome> {
-  const key =
-    process.env.GOOGLE_PLACES_API_KEY || process.env.GOOGLE_MAPS_API_KEY;
-  if (!key) {
+  const token = process.env.APIFY_TOKEN || process.env.APIFY_API_TOKEN;
+  if (!token) {
     return {
       ok: false,
       needKey: true,
-      error:
-        "محتاج تضيف GOOGLE_PLACES_API_KEY من Google Cloud (Places API). مجاني لحد 200$ شهريًا.",
+      error: "محتاج تضيف APIFY_TOKEN (مجاني تمامًا، بدون كارت) عشان البحث يشتغل.",
     };
   }
 
@@ -94,101 +95,90 @@ export async function searchPlaces(
   }
 
   const max = Math.min(Math.max(opts.max ?? 20, 1), 20);
+  const actor = "compass~crawler-google-places";
+  const url =
+    `https://api.apify.com/v2/acts/${actor}/run-sync-get-dataset-items` +
+    `?token=${encodeURIComponent(token)}&timeout=55`;
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 15000);
   try {
-    const res = await fetch(
-      "https://places.googleapis.com/v1/places:searchText",
-      {
-        method: "POST",
-        signal: controller.signal,
-        headers: {
-          "Content-Type": "application/json",
-          "X-Goog-Api-Key": key,
-          // Pro field mask — phone fields are billed at the Pro tier.
-          "X-Goog-FieldMask": [
-            "places.displayName",
-            "places.nationalPhoneNumber",
-            "places.internationalPhoneNumber",
-            "places.formattedAddress",
-            "places.rating",
-            "places.userRatingCount",
-            "places.websiteUri",
-            "places.primaryTypeDisplayName",
-          ].join(","),
-        },
-        body: JSON.stringify({
-          textQuery: q,
-          languageCode: "ar",
-          regionCode: "EG",
-          pageSize: max,
-        }),
-      },
-    );
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      // Cap the wait just above the actor timeout so a hung run can't exceed
+      // the serverless function budget.
+      signal: AbortSignal.timeout(58000),
+      body: JSON.stringify({
+        searchStringsArray: [q],
+        maxCrawledPlacesPerSearch: max,
+        language: "ar",
+        countryCode: "eg",
+        skipClosedPlaces: false,
+        maxImages: 0,
+      }),
+    });
 
     if (!res.ok) {
       let detail = `HTTP ${res.status}`;
       try {
-        const body = (await res.json()) as {
-          error?: { message?: string; status?: string };
-        };
+        const body = (await res.json()) as { error?: { message?: string } };
         if (body?.error?.message) detail = body.error.message;
       } catch {
         // ignore — keep the HTTP status
       }
-      // Most common operator errors → friendly Arabic.
-      if (res.status === 403 || /API key|permission|denied|not authorized|enable/i.test(detail)) {
+      if (res.status === 401 || res.status === 403) {
         return {
           ok: false,
-          error:
-            "مفتاح Google مرفوض أو Places API (New) مش مفعّل. فعّل Places API في Google Cloud وتأكد إن المفتاح مسموح له. التفاصيل: " +
-            detail,
+          needKey: true,
+          error: "توكن Apify غير صالح أو ناقص — راجع APIFY_TOKEN في Vercel.",
         };
       }
-      return { ok: false, error: "Google رفض الطلب: " + detail };
+      if (res.status === 402) {
+        return { ok: false, error: "رصيد Apify المجاني خلص الشهر ده — جرّب الشهر الجاي أو رقّي خطة Apify." };
+      }
+      if (res.status === 408) {
+        return { ok: false, error: "البحث أخذ وقت طويل — جرّب نتائج أقل أو كلمة أوضح وحاول تاني." };
+      }
+      return { ok: false, error: "تعذّر البحث عبر Apify: " + detail.slice(0, 160) };
     }
 
-    const data = (await res.json()) as {
-      places?: Array<{
-        displayName?: { text?: string };
-        nationalPhoneNumber?: string;
-        internationalPhoneNumber?: string;
-        formattedAddress?: string;
-        rating?: number;
-        userRatingCount?: number;
-        websiteUri?: string;
-        primaryTypeDisplayName?: { text?: string };
-      }>;
-    };
+    const items = (await res.json()) as Array<{
+      title?: string;
+      phone?: string;
+      phoneUnformatted?: string;
+      address?: string;
+      street?: string;
+      website?: string;
+      totalScore?: number;
+      reviewsCount?: number;
+      categoryName?: string;
+    }>;
 
-    const results: ProspectResult[] = (data.places ?? []).map((p) => {
-      const phoneRaw =
-        p.internationalPhoneNumber || p.nationalPhoneNumber || null;
-      const phone = toWhatsAppNumber(phoneRaw);
-      return {
-        name: (p.displayName?.text || "بدون اسم").trim(),
-        phone,
-        phoneRaw,
-        isMobile: isLikelyMobile(phone),
-        address: p.formattedAddress?.trim() || null,
-        rating: typeof p.rating === "number" ? p.rating : null,
-        ratingCount:
-          typeof p.userRatingCount === "number" ? p.userRatingCount : null,
-        website: p.websiteUri?.trim() || null,
-        category: p.primaryTypeDisplayName?.text?.trim() || null,
-      };
-    });
+    const results: ProspectResult[] = (items ?? [])
+      .filter((p) => p && p.title)
+      .map((p) => {
+        const phoneRaw = p.phone || p.phoneUnformatted || null;
+        const phone = toWhatsAppNumber(phoneRaw);
+        const address = (p.address || p.street || "").trim() || null;
+        return {
+          name: (p.title || "بدون اسم").trim(),
+          phone,
+          phoneRaw,
+          isMobile: isLikelyMobile(phone),
+          address,
+          rating: typeof p.totalScore === "number" ? p.totalScore : null,
+          ratingCount: typeof p.reviewsCount === "number" ? p.reviewsCount : null,
+          website: p.website?.trim() || null,
+          category: p.categoryName?.trim() || null,
+        };
+      });
 
     return { ok: true, results };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    if (/abort/i.test(msg)) {
-      return { ok: false, error: "بحث Google استغرق وقت طويل، جرّب تاني" };
+    if (/abort|timeout/i.test(msg)) {
+      return { ok: false, error: "البحث أخذ وقت طويل — جرّب نتائج أقل أو كلمة أوضح." };
     }
-    return { ok: false, error: "تعذّر الاتصال بـ Google: " + msg.slice(0, 120) };
-  } finally {
-    clearTimeout(timer);
+    return { ok: false, error: "تعذّر الاتصال بـ Apify: " + msg.slice(0, 120) };
   }
 }
 

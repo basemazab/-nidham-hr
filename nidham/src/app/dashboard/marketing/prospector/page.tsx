@@ -19,6 +19,9 @@ import { UpgradeRequired } from "@/components/upgrade-required";
 import { ProspectorClient } from "./prospector-client";
 
 export const dynamic = "force-dynamic";
+// The prospector search runs an Apify actor (run-sync) which can take ~30-50s;
+// give the server action room so it isn't killed at the default limit.
+export const maxDuration = 60;
 
 export default async function ProspectorPage() {
   const supabase = await createClient();

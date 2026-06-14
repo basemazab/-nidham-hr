@@ -138,12 +138,13 @@ function SearchSection() {
           {err}
           {needKey && (
             <div className="mt-2 text-rose-600">
-              خطوات التفعيل: افتح Google Cloud Console → فعّل <b>Places API (New)</b> → أنشئ API
-              key → ضيفه في Vercel باسم{" "}
+              خطوات التفعيل (مجاني · بدون كارت): افتح <b>console.apify.com</b> → سجّل مجانًا →
+              Settings → API &amp; Integrations → انسخ الـ <b>Personal API token</b> → ضيفه في
+              Vercel باسم{" "}
               <code className="bg-rose-100 px-1 rounded font-mono" dir="ltr">
-                GOOGLE_PLACES_API_KEY
-              </code>
-              .
+                APIFY_TOKEN
+              </code>{" "}
+              ← اعمل Redeploy.
             </div>
           )}
         </div>
