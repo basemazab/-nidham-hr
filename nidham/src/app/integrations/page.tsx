@@ -187,6 +187,24 @@ export default function IntegrationsPage() {
           </div>
         </section>
 
+        {/* Odoo deep-dive link */}
+        <Link
+          href="/integrations/odoo"
+          className="block mb-12 p-5 rounded-2xl bg-white border border-brand-cyan/30 shadow-sm hover:shadow-md hover:border-brand-cyan transition group"
+        >
+          <div className="flex items-center gap-4">
+            <div className="text-4xl shrink-0">🔌</div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-black text-slate-900 font-cairo group-hover:text-brand-cyan-dark transition">
+                عندك Odoo؟ شوف إزاي تربطه بـ نِظام
+              </h3>
+              <p className="text-sm text-slate-600 font-cairo">
+                دليل عملي: مزامنة الموظفين والحضور والمرتبات عبر REST API + مثال Python ←
+              </p>
+            </div>
+          </div>
+        </Link>
+
         {/* ROADMAP integrations */}
         <section className="mb-12">
           <h2 className="text-2xl font-black font-cairo text-slate-900 mb-5 flex items-center gap-3">
