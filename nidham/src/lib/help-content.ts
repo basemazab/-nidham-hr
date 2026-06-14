@@ -96,6 +96,13 @@ export const HELP_CATEGORIES: HelpCategory[] = [
     color: "cyan",
   },
   {
+    slug: "integrations",
+    title: "التكاملات و API",
+    icon: "🔌",
+    description: "ربط نِظام بـ Odoo والأنظمة الأخرى عبر REST API",
+    color: "blue",
+  },
+  {
     slug: "law",
     title: "قانون العمل المصري",
     icon: "⚖",
@@ -362,9 +369,91 @@ Dashboard → الموظفين → استيراد → **رفع PDF**
 - Suprema (بفلتر يدوي للأعمدة)
 - أي جهاز بيدّي CSV/XLS فيه: \`employee_id\`, \`date\`, \`time_in\`, \`time_out\``,
     tags: ["attendance", "biometric", "ZKTeco"],
-    estimatedReadMin: 4,
-    relatedSlugs: ["office-gps-location"],
-    lastUpdated: "2026-05-17",
+    estimatedReadMin: 5,
+    relatedSlugs: ["office-gps-location", "odoo-integration"],
+    lastUpdated: "2026-06-14",
+  },
+
+  // ==========================================================================
+  // Integrations & API
+  // ==========================================================================
+  {
+    slug: "odoo-integration",
+    category: "integrations",
+    title: "ربط نِظام بـ Odoo (وأي ERP) عبر REST API",
+    excerpt: "اسحب الموظفين والحضور والمرتبات من نِظام لـ Odoo تلقائيًا بمفتاح API.",
+    body: `نِظام بيوفّر **REST API رسمي موثّق** (OpenAPI 3.1) تقدر تربط بيه أي نظام خارجي زي Odoo. فيه ٣ طرق حسب احتياجك:
+
+## نظرة سريعة
+| الطريقة | لمين | الصعوبة |
+|---|---|---|
+| REST API | عندك مبرمج / IT | متوسطة |
+| استيراد/تصدير CSV | أي مستخدم | سهلة |
+| تكامل مخصص (Enterprise) | فريق نِظام يبنيه | جاهز بدعم |
+
+## الطريقة ١: REST API (الموصى بها)
+
+### خطوة ١ — اطلع مفتاح API
+**Dashboard ← الإعدادات ← مفاتيح API ← + مفتاح جديد**
+اختار الصلاحيات اللي محتاجها (مثلاً \`employees:read\` و \`attendance:read\` و \`payroll:read\`) وانسخ المفتاح — بيظهر مرة واحدة بس.
+
+### خطوة ٢ — الـ Endpoints المتاحة
+الأساس: \`https://www.nidhamhr.com/api/v1\` — والمصادقة بـ Bearer token.
+
+| Endpoint | الوصف | الصلاحية |
+|---|---|---|
+| \`GET /employees\` | قائمة الموظفين (ترقيم + تصفية) | employees:read |
+| \`GET /attendance\` | سجلات الحضور (from / to / employee_id / status) | attendance:read |
+| \`GET /payroll\` | بيانات المرتبات | payroll:read |
+
+التوثيق التفاعلي الكامل (Swagger): **/api-docs**
+
+### مثال — اسحب حضور فترة
+\`\`\`bash
+curl -H "Authorization: Bearer nidham_pro_xxx" \\
+  "https://www.nidhamhr.com/api/v1/attendance?from=2026-06-01&to=2026-06-30&limit=100"
+\`\`\`
+
+### خطوة ٣ — في Odoo: Scheduled Action تسحب الحضور
+أنشئ **Server Action** نوعها Python من *Settings ← Technical ← Scheduled Actions* وشغّلها يوميًا:
+\`\`\`python
+import requests
+BASE = "https://www.nidhamhr.com/api/v1"
+HEADERS = {"Authorization": "Bearer nidham_pro_xxx"}
+
+# اسحب حضور اليوم من نِظام
+r = requests.get(f"{BASE}/attendance", headers=HEADERS,
+                 params={"from": "2026-06-14", "to": "2026-06-14", "limit": 100})
+for rec in r.json()["data"]:
+    code = rec["employees"]["employee_code"]
+    emp = env["hr.employee"].search([("barcode", "=", code)], limit=1)
+    if emp and rec["check_in"]:
+        env["hr.attendance"].create({
+            "employee_id": emp.id,
+            "check_in": f"{rec['date']} {rec['check_in']}",
+            "check_out": (f"{rec['date']} {rec['check_out']}"
+                          if rec["check_out"] else False),
+        })
+\`\`\`
+> اربط **كود الموظف في نِظام** بحقل \`barcode\` (أو أي حقل) في Odoo عشان المطابقة تشتغل صح.
+
+## الطريقة ٢: استيراد/تصدير CSV (بدون برمجة)
+- من نِظام: صدّر الموظفين/الحضور/المرتبات كـ Excel/CSV.
+- في Odoo: **Import** ← ارفع الملف ← اعمل mapping للأعمدة.
+
+مناسبة للمزامنة الدورية اليدوية لو مش عندك مبرمج.
+
+## الطريقة ٣: تكامل مخصص (Enterprise)
+لو محتاج ربط ثنائي الاتجاه أو on-prem، فريق نِظام بيبني الموصل على سيرفرك — كلّمنا من صفحة التكاملات.
+
+## ملاحظات مهمة
+- كل مفتاح API مربوط بشركتك بس (multi-tenant آمن) وله صلاحيات محددة — استخدم \`:read\` للسحب فقط.
+- الـ API حاليًا بيغطي **الموظفين + الحضور + المرتبات** (قراءة) وإنشاء/تعديل الموظفين (كتابة).
+- مفيش موصل Odoo جاهز في الـ App Store — الربط بالطرق اللي فوق (ده الوضع الحالي بصراحة).`,
+    tags: ["odoo", "api", "integration", "erp", "rest"],
+    estimatedReadMin: 6,
+    relatedSlugs: ["zkteco-import"],
+    lastUpdated: "2026-06-14",
   },
 
   // ==========================================================================

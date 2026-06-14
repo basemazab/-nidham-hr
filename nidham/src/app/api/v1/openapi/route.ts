@@ -58,6 +58,24 @@ const OPENAPI_SPEC = {
           total_deductions: { type: "number" },
         },
       },
+      AttendanceRecord: {
+        type: "object",
+        properties: {
+          id: { type: "string", format: "uuid" },
+          employee_id: { type: "string", format: "uuid" },
+          date: { type: "string", format: "date" },
+          status: {
+            type: "string",
+            enum: ["present", "absent", "half_day", "leave", "holiday", "weekend"],
+          },
+          check_in: { type: "string", example: "09:02:00", nullable: true },
+          check_out: { type: "string", example: "17:15:00", nullable: true },
+          hours_worked: { type: "number", nullable: true },
+          tardiness_minutes: { type: "integer" },
+          notes: { type: "string", nullable: true },
+          employees: { $ref: "#/components/schemas/Employee" },
+        },
+      },
       Error: {
         type: "object",
         properties: {
@@ -190,10 +208,90 @@ const OPENAPI_SPEC = {
         },
       },
     },
+    "/attendance": {
+      get: {
+        tags: ["الحضور"],
+        summary: "سجلات الحضور",
+        description:
+          "جلب سجلات الحضور مع تصفية بالتاريخ والموظف والحالة وترقيم. الأنسب لمزامنة الحضور مع ERP/المرتبات (مثل Odoo).",
+        security: [{ bearerAuth: ["attendance:read"] }],
+        parameters: [
+          {
+            name: "from",
+            in: "query",
+            schema: { type: "string", format: "date" },
+            description: "من تاريخ (شامل) — YYYY-MM-DD",
+          },
+          {
+            name: "to",
+            in: "query",
+            schema: { type: "string", format: "date" },
+            description: "إلى تاريخ (شامل) — YYYY-MM-DD",
+          },
+          {
+            name: "employee_id",
+            in: "query",
+            schema: { type: "string", format: "uuid" },
+            description: "تصفية حسب موظف",
+          },
+          {
+            name: "status",
+            in: "query",
+            schema: {
+              type: "string",
+              enum: ["present", "absent", "half_day", "leave", "holiday", "weekend"],
+            },
+            description: "تصفية حسب حالة الحضور",
+          },
+          {
+            name: "page",
+            in: "query",
+            schema: { type: "integer", default: 1 },
+            description: "رقم الصفحة",
+          },
+          {
+            name: "limit",
+            in: "query",
+            schema: { type: "integer", default: 50, maximum: 100 },
+            description: "عدد النتائج في الصفحة",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "قائمة سجلات الحضور",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: {
+                      type: "array",
+                      items: { $ref: "#/components/schemas/AttendanceRecord" },
+                    },
+                    pagination: {
+                      type: "object",
+                      properties: {
+                        page: { type: "integer" },
+                        limit: { type: "integer" },
+                        total: { type: "integer" },
+                        total_pages: { type: "integer" },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "401": { description: "غير مصرح - مفتاح API غير صالح" },
+          "403": { description: "صلاحية غير كافية" },
+        },
+      },
+    },
   },
   tags: [
     { name: "الموظفين", description: "إدارة الموظفين" },
     { name: "المرتبات", description: "بيانات المرتبات والتأمينات" },
+    { name: "الحضور", description: "سجلات الحضور والانصراف" },
   ],
 };
 
