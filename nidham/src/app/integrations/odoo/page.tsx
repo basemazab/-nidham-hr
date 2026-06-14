@@ -111,6 +111,7 @@ for rec in r.json()["data"]:
 const ENDPOINTS = [
   { m: "GET", path: "/employees", desc: "قائمة الموظفين (ترقيم + تصفية)", scope: "employees:read" },
   { m: "GET", path: "/attendance", desc: "سجلات الحضور (from/to/employee/status)", scope: "attendance:read" },
+  { m: "POST", path: "/attendance", desc: "تسجيل/تحديث حضور دفعة (Odoo يبعت لنِظام)", scope: "attendance:write" },
   { m: "GET", path: "/payroll", desc: "بيانات المرتبات والتأمينات", scope: "payroll:read" },
 ];
 

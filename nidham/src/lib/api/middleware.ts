@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { hashApiKey, validateApiKeyFormat } from "./keys";
 
 export interface ApiAuthResult {
@@ -33,11 +33,15 @@ export async function authenticateApiRequest(
   }
 
   const keyHash = hashApiKey(rawKey);
-  const supabase = await createClient();
+  // Service client: API requests carry no Supabase session, so the anon client
+  // can't see api_keys (RLS keys on current_company_id() → null). We auth by the
+  // key hash here and every data route scopes its queries by the returned
+  // companyId explicitly, which is what enforces tenant isolation.
+  const supabase = createServiceClient();
 
   const { data: key, error } = await supabase
     .from("api_keys")
-    .select("*, companies!inner(id)")
+    .select("*")
     .eq("key_hash", keyHash)
     .eq("is_active", true)
     .single();

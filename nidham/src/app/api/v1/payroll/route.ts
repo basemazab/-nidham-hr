@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import {
   authenticateApiRequest,
   jsonResponse,
@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
     return errorResponse(auth.error!, auth.status!);
   }
 
-  const supabase = await createClient();
+  const supabase = createServiceClient();
   const { searchParams } = new URL(req.url);
   const periodId = searchParams.get("period_id");
   const year = searchParams.get("year");

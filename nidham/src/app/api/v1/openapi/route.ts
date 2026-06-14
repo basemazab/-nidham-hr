@@ -286,6 +286,76 @@ const OPENAPI_SPEC = {
           "403": { description: "صلاحية غير كافية" },
         },
       },
+      post: {
+        tags: ["الحضور"],
+        summary: "تسجيل/تحديث حضور (دفعة)",
+        description:
+          "إنشاء أو تحديث سجلات حضور (مزامنة ثنائية الاتجاه — مثل Odoo يبعت بصمات لنِظام). يقبل سجل واحد أو { records: [...] }. كل سجل بيحدّد الموظف بـ employee_id أو employee_code (الاتنين بيتأكدوا داخل شركتك). Upsert على (employee_id, date).",
+        security: [{ bearerAuth: ["attendance:write"] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  records: {
+                    type: "array",
+                    maxItems: 500,
+                    items: {
+                      type: "object",
+                      required: ["date"],
+                      properties: {
+                        employee_id: { type: "string", format: "uuid" },
+                        employee_code: { type: "string" },
+                        date: { type: "string", format: "date" },
+                        status: {
+                          type: "string",
+                          enum: ["present", "absent", "half_day", "leave", "holiday", "weekend"],
+                        },
+                        check_in: { type: "string", example: "09:02:00" },
+                        check_out: { type: "string", example: "17:15:00" },
+                        hours_worked: { type: "number" },
+                        tardiness_minutes: { type: "integer" },
+                        notes: { type: "string" },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "201": {
+            description: "تم الحفظ",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    ok: { type: "boolean" },
+                    upserted: { type: "integer" },
+                    skipped: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          index: { type: "integer" },
+                          reason: { type: "string" },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": { description: "بيانات غير صالحة" },
+          "401": { description: "غير مصرح - مفتاح API غير صالح" },
+          "403": { description: "صلاحية غير كافية" },
+        },
+      },
     },
   },
   tags: [
