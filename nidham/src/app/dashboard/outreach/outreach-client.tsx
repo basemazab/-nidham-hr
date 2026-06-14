@@ -8,7 +8,6 @@ import {
   statusMeta,
   fillTemplate,
   toWhatsAppLink,
-  isMobile,
   type OutreachLead,
   type LeadStatus,
 } from "@/lib/outreach";
@@ -34,6 +33,20 @@ import {
 
 const DAILY_CAP = 15;
 
+// Stable per-lead hash so each lead consistently gets one message variant, but
+// different leads get different ones (less "copy-paste blast" look → safer).
+function hashIdx(id: string, n: number): number {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+  return n > 0 ? h % n : 0;
+}
+
+// "auto" → rotate templates per lead; otherwise force the chosen one for all.
+function templateForLead(tplKey: string, leadId: string) {
+  if (tplKey === "auto") return OUTREACH_TEMPLATES[hashIdx(leadId, OUTREACH_TEMPLATES.length)];
+  return OUTREACH_TEMPLATES.find((t) => t.key === tplKey) ?? OUTREACH_TEMPLATES[0];
+}
+
 function isToday(iso: string | null): boolean {
   if (!iso) return false;
   const d = new Date(iso);
@@ -48,7 +61,7 @@ function isToday(iso: string | null): boolean {
 export function OutreachClient({ leads }: { leads: OutreachLead[] }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const [tplKey, setTplKey] = useState(OUTREACH_TEMPLATES[0].key);
+  const [tplKey, setTplKey] = useState("auto");
   const [filter, setFilter] = useState<LeadStatus | "all">("all");
   const [q, setQ] = useState("");
   const [showImport, setShowImport] = useState(false);
@@ -186,8 +199,9 @@ export function OutreachClient({ leads }: { leads: OutreachLead[] }) {
         <div className="min-w-[260px] flex-1">
           <label className="mb-1 block text-xs font-bold text-slate-500">الرسالة اللي هتتبعت (بتتعبّى باسم الشركة)</label>
           <select value={tplKey} onChange={(e) => setTplKey(e.target.value)} className={inp}>
+            <option value="auto">🔀 تلقائي — رسالة مختلفة لكل عميل (موصى به)</option>
             {OUTREACH_TEMPLATES.map((t) => (
-              <option key={t.key} value={t.key}>{t.label}</option>
+              <option key={t.key} value={t.key}>{t.label} (ثابتة للكل)</option>
             ))}
           </select>
         </div>
@@ -200,7 +214,8 @@ export function OutreachClient({ leads }: { leads: OutreachLead[] }) {
       </div>
 
       <p className="-mt-2 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500 dark:bg-slate-800/40" dir="rtl">
-        معاينة: {fillTemplate(tpl.text, "شركة النور").split("\n")[0]}…
+        {tplKey === "auto" ? "بتتنوّع تلقائيًا بين 3 صيغ — مثال: " : "معاينة: "}
+        {fillTemplate(tpl.text, "شركة النور").split("\n")[0]}…
       </p>
 
       {/* Status filter chips */}
@@ -232,7 +247,12 @@ export function OutreachClient({ leads }: { leads: OutreachLead[] }) {
       {/* Leads */}
       <div className="space-y-2">
         {shown.map((lead) => (
-          <LeadRow key={lead.id} lead={lead} message={fillTemplate(tpl.text, lead.name)} onChange={refresh} />
+          <LeadRow
+            key={lead.id}
+            lead={lead}
+            message={fillTemplate(templateForLead(tplKey, lead.id).text, lead.name)}
+            onChange={refresh}
+          />
         ))}
       </div>
     </div>
@@ -257,7 +277,9 @@ function LeadRow({ lead, message, onChange }: { lead: OutreachLead; message: str
   const [notes, setNotes] = useState(lead.notes ?? "");
   const [openNotes, setOpenNotes] = useState(false);
   const meta = statusMeta(lead.status);
-  const waLink = isMobile(lead.phone) ? toWhatsAppLink(lead.phone, message) : null;
+  // Show WhatsApp for ANY usable number (normalizes +20 / 0 / spaces). Falls
+  // back to a call link only when no number can form a wa.me link at all.
+  const waLink = toWhatsAppLink(lead.phone, message);
 
   function act(fn: () => Promise<unknown>) {
     startTransition(async () => {
