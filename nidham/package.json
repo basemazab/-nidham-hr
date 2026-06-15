@@ -36,6 +36,8 @@
     "@tanstack/react-table": "^8.21.3",
     "@types/leaflet": "^1.9.21",
     "@types/swagger-ui-react": "^5.18.0",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.38.0",
     "@vercel/og": "^0.11.1",
     "ai": "^6.0.180",
     "framer-motion": "^12.40.0",

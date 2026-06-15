@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { cacheGet, cacheSet, cacheKey } from "@/lib/cache";
 
 export async function GET(request: Request) {
   try {
@@ -22,6 +23,10 @@ export async function GET(request: Request) {
     const limit = parseInt(searchParams.get("limit") ?? "20", 10);
     const offset = (page - 1) * limit;
 
+    const ck = cacheKey(["apps", profile.company_id, jobId ?? "all", status ?? "all", String(page), String(limit)]);
+    const cached = await cacheGet<{ applications: unknown; total: number }>(ck);
+    if (cached) return NextResponse.json({ ...cached, page, limit, cached: true });
+
     let query = supabase
       .from("applications")
       .select("*, candidates(full_name, email, phone, current_title, current_company, location, skills, avatar), jobs(title)", { count: "exact" })
@@ -35,6 +40,7 @@ export async function GET(request: Request) {
     const { data: applications, count, error } = await query;
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
+    await cacheSet(ck, { applications, total: count ?? 0 }, 30);
     return NextResponse.json({ applications, total: count ?? 0, page, limit });
   } catch (err) {
     return NextResponse.json(

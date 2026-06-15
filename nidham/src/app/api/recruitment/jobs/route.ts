@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { cacheGet, cacheSet, cacheDelete, cacheKey } from "@/lib/cache";
 
 export async function GET(request: Request) {
   try {
@@ -22,6 +23,10 @@ export async function GET(request: Request) {
 
     if (!profile) return NextResponse.json({ error: "لا يوجد حساب" }, { status: 403 });
 
+    const ck = cacheKey(["jobs", profile.company_id, status ?? "all", department ?? "all", String(page), String(limit)]);
+    const cached = await cacheGet<{ jobs: unknown; total: number }>(ck);
+    if (cached) return NextResponse.json({ ...cached, page, limit, cached: true });
+
     let query = supabase
       .from("jobs")
       .select("*", { count: "exact" })
@@ -35,6 +40,7 @@ export async function GET(request: Request) {
     const { data: jobs, count, error } = await query;
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
+    await cacheSet(ck, { jobs, total: count ?? 0 }, 30);
     return NextResponse.json({ jobs, total: count ?? 0, page, limit });
   } catch (err) {
     return NextResponse.json(
@@ -84,6 +90,7 @@ export async function POST(request: Request) {
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
+    await cacheDelete(cacheKey(["jobs", profile.company_id]));
     return NextResponse.json({ job }, { status: 201 });
   } catch (err) {
     return NextResponse.json(
