@@ -72,6 +72,8 @@ type NavItem = {
   section: NavSectionKey;
   visibleTo?: Role[];
   feature?: Feature;
+  /** Platform-owner-only item — hidden from every tenant. */
+  superAdminOnly?: boolean;
 };
 
 // Ordered list of [key, header label] — drives the render order.
@@ -126,7 +128,7 @@ const NAV_ITEMS: readonly NavItem[] = [
   { href: "/dashboard/eos-calculator",   label: "مكافأة نهاية الخدمة",     icon: "⚖", section: "payroll", feature: "payroll" },
 
   // ── CRM (العملاء) ──
-  { href: "/dashboard/outreach",            label: "العملاء المحتملين", icon: "🎯", section: "crm", visibleTo: ["admin"] },
+  { href: "/dashboard/outreach",            label: "العملاء المحتملين", icon: "🎯", section: "crm", superAdminOnly: true },
   { href: "/dashboard/customers",           label: "العملاء",        icon: "💼", section: "crm", feature: "crm" },
   { href: "/dashboard/interactions",        label: "التفاعلات",      icon: "💬", section: "crm", feature: "crm" },
   { href: "/dashboard/contracts",           label: "العقود",         icon: "📋", section: "crm", feature: "crm" },
@@ -232,6 +234,10 @@ export function DashboardSidebar({
   };
 
   const canSee = (item: NavItem) => {
+    // Owner-only gate — hide platform-owner tools from every tenant.
+    if (item.superAdminOnly && !isSuperAdmin) {
+      return false;
+    }
     // Role gate
     if (item.visibleTo && (role === undefined || !item.visibleTo.includes(role))) {
       return false;

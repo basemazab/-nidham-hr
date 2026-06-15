@@ -1,4 +1,4 @@
-import { requireAdmin } from "@/lib/permissions";
+import { requireSuperAdmin } from "@/lib/permissions";
 import { OutreachClient } from "./outreach-client";
 import type { OutreachLead } from "@/lib/outreach";
 
@@ -6,7 +6,8 @@ export const metadata = { title: "العملاء المحتملين" };
 export const dynamic = "force-dynamic";
 
 export default async function OutreachPage() {
-  const { supabase } = await requireAdmin();
+  // Owner-only tool — must never be exposed to tenants.
+  const { supabase } = await requireSuperAdmin();
   const { data } = await supabase
     .from("outreach_leads")
     .select(

@@ -121,6 +121,36 @@ export async function requireAdmin(): Promise<{
 }
 
 /**
+ * Platform-owner guard — only users in the `super_admins` table pass. Used for
+ * features that must NOT be exposed to tenants (e.g. the owner's private
+ * prospecting board). Redirects everyone else away.
+ */
+export async function requireSuperAdmin(): Promise<{
+  supabase: SupabaseClient;
+  profile: MyProfile;
+}> {
+  const { supabase, profile } = await getMyProfile();
+
+  if (!profile) {
+    redirect("/login");
+  }
+
+  const { data: sa } = await supabase
+    .from("super_admins")
+    .select("user_id")
+    .eq("user_id", profile.id)
+    .maybeSingle();
+
+  if (!sa) {
+    redirect(
+      "/dashboard?error=" + encodeURIComponent("الصفحة دي للمالك فقط"),
+    );
+  }
+
+  return { supabase, profile };
+}
+
+/**
  * Convenience: true if the caller is HR. Used inside server components
  * that conditionally render admin/manager-only UI elements.
  */

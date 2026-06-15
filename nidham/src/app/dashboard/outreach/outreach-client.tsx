@@ -14,6 +14,8 @@ import {
 import {
   seedStarterLeads,
   importLeadsFromText,
+  importFromCustomers,
+  repairLeadNames,
   setLeadStatus,
   markContacted,
   updateLeadNotes,
@@ -29,6 +31,7 @@ import {
   Info,
   MessageCircle,
   StickyNote,
+  Download,
 } from "lucide-react";
 
 const DAILY_CAP = 15;
@@ -78,6 +81,12 @@ export function OutreachClient({ leads }: { leads: OutreachLead[] }) {
     return m;
   }, [leads]);
 
+  // Rows whose name came through as a bare serial number (mis-parsed import).
+  const badCount = useMemo(
+    () => leads.filter((l) => /^\d{1,4}$/.test((l.name ?? "").trim())).length,
+    [leads],
+  );
+
   const shown = useMemo(() => {
     const needle = q.trim();
     return leads.filter((l) => {
@@ -96,6 +105,24 @@ export function OutreachClient({ leads }: { leads: OutreachLead[] }) {
     setNotice("");
     const r = await seedStarterLeads();
     setNotice(r.added > 0 ? `تمت إضافة ${r.added} عميل جديد ✅` : "كل العملاء الجاهزين مضافين بالفعل");
+    refresh();
+  }
+
+  async function onImportCustomers() {
+    setNotice("");
+    const r = await importFromCustomers();
+    setNotice(
+      r.added > 0
+        ? `تمت إضافة ${r.added} من العملاء ✅${r.withoutPhone ? ` (${r.withoutPhone} بدون رقم اتجاهلوا)` : ""}`
+        : "كل العملاء اللي ليهم رقم مضافين بالفعل",
+    );
+    refresh();
+  }
+
+  async function onRepair() {
+    setNotice("");
+    const r = await repairLeadNames();
+    setNotice(r.fixed > 0 ? `تم إصلاح ${r.fixed} اسم ✅` : "مفيش أسماء محتاجة إصلاح");
     refresh();
   }
 
@@ -129,6 +156,13 @@ export function OutreachClient({ leads }: { leads: OutreachLead[] }) {
         </div>
         <div className="flex items-center gap-2">
           <button
+            onClick={onImportCustomers}
+            disabled={pending}
+            className="flex items-center gap-1.5 rounded-lg border border-cyan-300 bg-cyan-50 px-3 py-2 text-sm font-bold text-cyan-700 hover:bg-cyan-100 disabled:opacity-50 dark:border-cyan-800 dark:bg-cyan-900/20 dark:text-cyan-300"
+          >
+            <Download className="h-4 w-4" /> استورد من العملاء
+          </button>
+          <button
             onClick={() => setShowImport((s) => !s)}
             className="flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-2 text-sm font-bold text-slate-600 hover:border-cyan-400 dark:border-slate-700 dark:text-slate-300"
           >
@@ -158,6 +192,21 @@ export function OutreachClient({ leads }: { leads: OutreachLead[] }) {
       {notice && (
         <div className="rounded-lg bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300">
           {notice}
+        </div>
+      )}
+
+      {badCount > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm dark:border-amber-800 dark:bg-amber-900/20">
+          <span className="text-amber-900 dark:text-amber-300">
+            🛠 في {badCount} صف ظهر فيه رقم بدل اسم الشركة (استيراد قديم اتفهم غلط).
+          </span>
+          <button
+            onClick={onRepair}
+            disabled={pending}
+            className="shrink-0 rounded-lg bg-amber-600 px-4 py-1.5 text-xs font-bold text-white hover:bg-amber-700 disabled:opacity-50"
+          >
+            إصلاح الأسماء تلقائيًا
+          </button>
         </div>
       )}
 
