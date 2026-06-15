@@ -223,7 +223,12 @@ export default async function CustomersPage() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {list.map((customer) => {
-                  const status = statusLabel[customer.status];
+                  // Fallback so one unexpected status value (e.g. from an Excel
+                  // import) can't crash the whole list with "reading 'classes'".
+                  const status = statusLabel[customer.status] ?? {
+                    text: customer.status || "—",
+                    classes: "bg-slate-100 text-slate-600 border-slate-200",
+                  };
                   const typeIcon = customer.type === "company" ? "🏢" : "👤";
                   return (
                     <tr key={customer.id} className="hover:bg-slate-50 transition">
