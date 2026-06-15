@@ -60,3 +60,14 @@ export async function cacheGetOrSet<T>(
 export function cacheKey(parts: string[]): string {
   return `nidham:${parts.join(":")}`;
 }
+
+export async function bustDashboardCache(): Promise<void> {
+  const redis = getRedis();
+  if (!redis) return;
+  try {
+    const keys = await redis.keys("nidham:dashboard:*");
+    if (keys.length > 0) await redis.del(...keys);
+  } catch {
+    // silent
+  }
+}
