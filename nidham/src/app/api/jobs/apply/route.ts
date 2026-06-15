@@ -113,7 +113,7 @@ async function screenApplicationInline(applicationId: string) {
       responsibilities: r.job_responsibilities,
       experience_years_min: r.job_experience_years_min,
       location: r.job_location,
-      job_type: r.job_type,
+      job_type: r.job_type ?? "full_time",
     },
     {
       full_name: r.candidate_full_name,

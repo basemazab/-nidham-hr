@@ -1,0 +1,246 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String           @id @default(cuid())
+  name          String?
+  email         String           @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          UserRole         @default(CANDIDATE)
+  accounts      Account[]
+  sessions      Session[]
+  candidate     CandidateProfile?
+  company       CompanyProfile?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+}
+
+enum UserRole {
+  CANDIDATE
+  COMPANY
+  ADMIN
+}
+
+model CandidateProfile {
+  id                String         @id @default(cuid())
+  userId            String         @unique
+  user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  phone             String?
+  location          String?
+  title             String?
+  summary           String?        @db.Text
+  experience        Int?
+  salaryExpectation Int?
+  resumeUrl         String?
+  resumeText        String?        @db.Text
+  aiScore           Int?           @default(0)
+  aiAnalysis        String?        @db.Text
+  educations        Education[]
+  experiences       WorkExperience[]
+  skills            Skill[]
+  applications      Application[]
+  savedJobs         SavedJob[]
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+}
+
+model Education {
+  id           String           @id @default(cuid())
+  candidateId  String
+  candidate    CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  institution  String
+  degree       String
+  fieldOfStudy String
+  startDate    DateTime
+  endDate      DateTime?
+  isCurrent    Boolean          @default(false)
+}
+
+model WorkExperience {
+  id          String           @id @default(cuid())
+  candidateId String
+  candidate   CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  company     String
+  title       String
+  description String?          @db.Text
+  startDate   DateTime
+  endDate     DateTime?
+  isCurrent   Boolean          @default(false)
+}
+
+model Skill {
+  id         String             @id @default(cuid())
+  name       String             @unique
+  candidates CandidateProfile[]
+  jobs       Job[]
+}
+
+model CompanyProfile {
+  id            String            @id @default(cuid())
+  userId        String            @unique
+  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name          String
+  slug          String            @unique
+  logo          String?
+  coverImage    String?
+  description   String?           @db.Text
+  website       String?
+  size          CompanySize?
+  industry      String?
+  location      String?
+  foundedYear   Int?
+  isVerified    Boolean           @default(false)
+  plan          Plan              @default(FREE)
+  planExpiry    DateTime?
+  jobs          Job[]
+  applications  Application[]
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+}
+
+enum CompanySize {
+  STARTUP
+  SMALL
+  MEDIUM
+  LARGE
+  ENTERPRISE
+}
+
+enum Plan {
+  FREE
+  BASIC
+  PRO
+  ENTERPRISE
+}
+
+model Job {
+  id               String        @id @default(cuid())
+  companyId        String
+  company          CompanyProfile @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  title            String
+  slug             String        @unique
+  description      String        @db.Text
+  requirements     String        @db.Text
+  benefits         String?       @db.Text
+  type             JobType
+  category         String
+  level            JobLevel
+  location         String
+  isRemote         Boolean       @default(false)
+  salaryMin        Int?
+  salaryMax        Int?
+  salaryCurrency   String        @default("EGP")
+  isSalaryVisible  Boolean       @default(false)
+  status           JobStatus     @default(ACTIVE)
+  viewsCount       Int           @default(0)
+  applicationsCount Int          @default(0)
+  skills           Skill[]
+  applications     Application[]
+  savedBy          SavedJob[]
+  aiSummary        String?       @db.Text
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  expiresAt        DateTime?
+}
+
+enum JobType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  FREELANCE
+  INTERNSHIP
+}
+
+enum JobLevel {
+  ENTRY
+  MID
+  SENIOR
+  LEAD
+  MANAGER
+  DIRECTOR
+  EXECUTIVE
+}
+
+enum JobStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  CLOSED
+  EXPIRED
+}
+
+model Application {
+  id          String            @id @default(cuid())
+  jobId       String
+  job         Job               @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  candidateId String
+  candidate   CandidateProfile  @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  companyId   String
+  company     CompanyProfile    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  coverLetter String?           @db.Text
+  resumeUrl   String
+  resumeText  String?           @db.Text
+  status      ApplicationStatus @default(PENDING)
+  aiScore     Int?
+  aiFeedback  String?           @db.Text
+  aiQuestions String?           @db.Text
+  viewedAt    DateTime?
+  respondedAt DateTime?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  @@unique([jobId, candidateId])
+}
+
+enum ApplicationStatus {
+  PENDING
+  REVIEWING
+  SHORTLISTED
+  INTERVIEW
+  OFFERED
+  HIRED
+  REJECTED
+  WITHDRAWN
+}
+
+model SavedJob {
+  id          String           @id @default(cuid())
+  candidateId String
+  candidate   CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  jobId       String
+  job         Job              @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  createdAt   DateTime         @default(now())
+  @@unique([candidateId, jobId])
+}

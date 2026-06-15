@@ -58,6 +58,7 @@ type NavSectionKey =
   | "time"
   | "payroll"
   | "crm"
+  | "hire"
   | "docs"
   | "ai"
   | "automation"
@@ -84,6 +85,7 @@ const SECTION_ORDER: ReadonlyArray<{ key: NavSectionKey; label: string }> = [
   { key: "time", label: "⏰ الوقت والحضور" },
   { key: "payroll", label: "💰 المرتبات" },
   { key: "crm", label: "💼 العملاء والمبيعات" },
+  { key: "hire", label: "🎯 التوظيف" },
   { key: "docs", label: "📄 المستندات والامتثال" },
   { key: "ai", label: "🤖 ذكاء HR" },
   { key: "automation", label: "⚡ الأتمتة" },
@@ -144,9 +146,12 @@ const NAV_ITEMS: readonly NavItem[] = [
   { href: "/dashboard/ai/knowledge",    label: "قاعدة المعرفة",          icon: "📚", section: "ai", feature: "ai_assistant" },
   { href: "/dashboard/ai/audit",        label: "سجل نشاط AI",           icon: "📋", section: "ai", visibleTo: ["admin"] },
   { href: "/dashboard/whatsapp-test",   label: "اختبار بوت الواتساب",   icon: "💬", section: "ai", visibleTo: ["admin"] },
-  { href: "/dashboard/jobs",       label: "التوظيف الذكي",        icon: "🎯", section: "ai", feature: "recruitment" },
-  { href: "/dashboard/jobs/cv-analyzer", label: "محلّل السيرة الذاتية", icon: "🔍", section: "ai", feature: "recruitment" },
-  { href: "/dashboard/jobs/job-description", label: "مولّد التوصيف الوظيفي", icon: "📝", section: "ai", feature: "recruitment" },
+  // ── Recruitment (التوظيف) ──
+  { href: "/dashboard/recruitment",             label: "لوحة التحكم",          icon: "📊", section: "hire", feature: "recruitment" },
+  { href: "/dashboard/recruitment/jobs",        label: "الوظائف",              icon: "📄", section: "hire", feature: "recruitment" },
+  { href: "/dashboard/recruitment/applicants",  label: "المتقدمين",            icon: "👥", section: "hire", feature: "recruitment" },
+  { href: "/dashboard/jobs/cv-analyzer",        label: "فحص CV بالـ AI",       icon: "🔍", section: "hire", feature: "recruitment" },
+  { href: "/dashboard/jobs/job-description",    label: "مولّد التوصيف الوظيفي",icon: "📝", section: "hire", feature: "recruitment" },
   { href: "/dashboard/retention",  label: "احتفاظ بالموظفين",     icon: "🛡", section: "ai", feature: "retention_insights" },
   { href: "/dashboard/nidham-ai", label: "محرك نيدهام AI",        icon: "🧠", section: "ai", feature: "retention_insights" },
 
