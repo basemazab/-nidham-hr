@@ -61,7 +61,13 @@ function isToday(iso: string | null): boolean {
   );
 }
 
-export function OutreachClient({ leads }: { leads: OutreachLead[] }) {
+export function OutreachClient({
+  leads,
+  isSuperAdmin,
+}: {
+  leads: OutreachLead[];
+  isSuperAdmin: boolean;
+}) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [tplKey, setTplKey] = useState("auto");
@@ -168,7 +174,7 @@ export function OutreachClient({ leads }: { leads: OutreachLead[] }) {
           >
             <Upload className="h-4 w-4" /> استيراد
           </button>
-          {leads.length === 0 && (
+          {leads.length === 0 && isSuperAdmin && (
             <button
               onClick={onSeed}
               disabled={pending}
@@ -217,7 +223,7 @@ export function OutreachClient({ leads }: { leads: OutreachLead[] }) {
             <label className="text-sm font-bold text-slate-700 dark:text-slate-300">
               الصق عملاء (كل سطر: الاسم، التليفون، المجال)
             </label>
-            {leads.length > 0 && (
+            {leads.length > 0 && isSuperAdmin && (
               <button type="button" onClick={onSeed} disabled={pending} className="text-xs font-bold text-cyan-600 hover:underline">
                 + حمّل الـ 63 الجاهزين
               </button>
@@ -285,11 +291,22 @@ export function OutreachClient({ leads }: { leads: OutreachLead[] }) {
       {leads.length === 0 && (
         <div className="rounded-2xl border border-dashed border-slate-300 p-12 text-center dark:border-slate-700">
           <MessageCircle className="mx-auto mb-4 h-8 w-8 text-slate-300" />
-          <p className="mb-1 font-bold text-slate-600 dark:text-slate-300">لسه مفيش عملاء</p>
-          <p className="mb-4 text-sm text-slate-400">حمّل الـ 63 عميل الجاهزين أو استورد قائمتك.</p>
-          <button onClick={onSeed} disabled={pending} className="inline-flex items-center gap-1.5 rounded-lg bg-cyan-600 px-4 py-2 text-sm font-bold text-white hover:bg-cyan-700 disabled:opacity-50">
-            <Plus className="h-4 w-4" /> حمّل الـ 63 عميل
-          </button>
+          <p className="mb-1 font-bold text-slate-600 dark:text-slate-300">لسه مفيش عملاء محتملين</p>
+          {isSuperAdmin ? (
+            <>
+              <p className="mb-4 text-sm text-slate-400">حمّل الـ 63 عميل الجاهزين أو استورد قائمتك.</p>
+              <button onClick={onSeed} disabled={pending} className="inline-flex items-center gap-1.5 rounded-lg bg-cyan-600 px-4 py-2 text-sm font-bold text-white hover:bg-cyan-700 disabled:opacity-50">
+                <Plus className="h-4 w-4" /> حمّل الـ 63 عميل
+              </button>
+            </>
+          ) : (
+            <>
+              <p className="mb-4 text-sm text-slate-400">استورد عملاءك من زر «استورد من العملاء» فوق، أو «استيراد» لقائمتك (اسم، تليفون).</p>
+              <button onClick={() => setShowImport(true)} className="inline-flex items-center gap-1.5 rounded-lg bg-cyan-600 px-4 py-2 text-sm font-bold text-white hover:bg-cyan-700">
+                <Upload className="h-4 w-4" /> استيراد قائمتك
+              </button>
+            </>
+          )}
         </div>
       )}
 

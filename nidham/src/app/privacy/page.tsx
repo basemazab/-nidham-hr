@@ -278,7 +278,7 @@ export default function PrivacyPage() {
               <br />
               📧 <a href="mailto:privacy@nidham.app" className="text-brand-cyan-dark hover:underline">privacy@nidham.app</a>
               <br />
-              📱 +20 100 000 0000
+              📱 <a href="tel:+201055356622" className="text-brand-cyan-dark hover:underline" dir="ltr">+20 10 5535 6622</a>
               <br />
               📍 القاهرة، مصر
             </p>

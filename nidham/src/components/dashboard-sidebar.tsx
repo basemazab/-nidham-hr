@@ -128,7 +128,7 @@ const NAV_ITEMS: readonly NavItem[] = [
   { href: "/dashboard/eos-calculator",   label: "مكافأة نهاية الخدمة",     icon: "⚖", section: "payroll", feature: "payroll" },
 
   // ── CRM (العملاء) ──
-  { href: "/dashboard/outreach",            label: "العملاء المحتملين", icon: "🎯", section: "crm", superAdminOnly: true },
+  { href: "/dashboard/outreach",            label: "العملاء المحتملين", icon: "🎯", section: "crm", visibleTo: ["admin"] },
   { href: "/dashboard/customers",           label: "العملاء",        icon: "💼", section: "crm", feature: "crm" },
   { href: "/dashboard/interactions",        label: "التفاعلات",      icon: "💬", section: "crm", feature: "crm" },
   { href: "/dashboard/contracts",           label: "العقود",         icon: "📋", section: "crm", feature: "crm" },

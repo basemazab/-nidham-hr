@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireSuperAdmin } from "@/lib/permissions";
+import { requireAdmin, requireSuperAdmin } from "@/lib/permissions";
 import { STARTER_LEADS } from "@/lib/outreach-seed";
 import type { LeadStatus } from "@/lib/outreach";
 
@@ -42,6 +42,8 @@ function smartParseLine(t: string): { name: string; phone: string; sector: strin
 
 // One-click import of the 63 starter leads — skips any phone already present so
 // it's safe to click twice.
+// Owner-only: loads the platform owner's private 63 starter leads. Gated to
+// super-admin so a tenant can never pull the owner's prospect list.
 export async function seedStarterLeads() {
   const { supabase, profile } = await requireSuperAdmin();
 
@@ -71,7 +73,7 @@ export async function seedStarterLeads() {
 
 // Import pasted lines: "name, phone, sector" (sector optional). One per line.
 export async function importLeadsFromText(formData: FormData) {
-  const { supabase, profile } = await requireSuperAdmin();
+  const { supabase, profile } = await requireAdmin();
   const raw = String(formData.get("text") ?? "");
 
   const { data: existing } = await supabase
@@ -108,7 +110,7 @@ export async function importLeadsFromText(formData: FormData) {
 }
 
 export async function setLeadStatus(id: string, status: LeadStatus) {
-  const { supabase, profile } = await requireSuperAdmin();
+  const { supabase, profile } = await requireAdmin();
   if (!VALID.includes(status)) return;
   await supabase
     .from("outreach_leads")
@@ -121,7 +123,7 @@ export async function setLeadStatus(id: string, status: LeadStatus) {
 // Called when the user taps the WhatsApp button: stamp the contact time and
 // auto-advance "new" → "messaged" (he can correct it after).
 export async function markContacted(id: string) {
-  const { supabase, profile } = await requireSuperAdmin();
+  const { supabase, profile } = await requireAdmin();
   const { data: lead } = await supabase
     .from("outreach_leads")
     .select("status")
@@ -141,7 +143,7 @@ export async function markContacted(id: string) {
 }
 
 export async function updateLeadNotes(id: string, notes: string) {
-  const { supabase, profile } = await requireSuperAdmin();
+  const { supabase, profile } = await requireAdmin();
   await supabase
     .from("outreach_leads")
     .update({ notes })
@@ -151,7 +153,7 @@ export async function updateLeadNotes(id: string, notes: string) {
 }
 
 export async function deleteLead(id: string) {
-  const { supabase, profile } = await requireSuperAdmin();
+  const { supabase, profile } = await requireAdmin();
   await supabase
     .from("outreach_leads")
     .delete()
@@ -170,7 +172,7 @@ const CRM_STATUS_MAP: Record<string, LeadStatus> = {
 };
 
 export async function importFromCustomers() {
-  const { supabase, profile } = await requireSuperAdmin();
+  const { supabase, profile } = await requireAdmin();
 
   const { data: existing } = await supabase
     .from("outreach_leads")
@@ -222,7 +224,7 @@ export async function importFromCustomers() {
 // row we re-pick the phone (the field with 7+ digits) and the name (the field
 // with letters), regardless of which column they were stored in.
 export async function repairLeadNames() {
-  const { supabase, profile } = await requireSuperAdmin();
+  const { supabase, profile } = await requireAdmin();
   const { data: leads, error } = await supabase
     .from("outreach_leads")
     .select("id, name, phone, sector")
