@@ -2,11 +2,11 @@ import type { ReactNode } from "react";
 
 export function SectionHeader({ eyebrow, title, subtitle }: { eyebrow: string; title: string; subtitle?: string }) {
   return (
-    <div className="text-center mb-12">
-      <div className="text-sm text-brand-cyan-dark font-bold tracking-wider uppercase mb-3 font-cairo">
+    <div className="text-center mb-14">
+      <span className="inline-block rounded-full bg-cyan-50 border border-cyan-100 px-4 py-1.5 text-xs font-bold tracking-wider text-brand-cyan-dark mb-4 font-cairo">
         {eyebrow}
-      </div>
-      <h2 className="text-3xl md:text-4xl font-black text-slate-800 font-cairo mb-3 leading-tight">
+      </span>
+      <h2 className="text-3xl md:text-[2.5rem] font-black text-slate-800 font-cairo mb-4 leading-tight">
         {title}
       </h2>
       {subtitle && (
@@ -20,7 +20,7 @@ export function SectionHeader({ eyebrow, title, subtitle }: { eyebrow: string; t
 
 export function MockupCard({ caption, children }: { caption: string; children: ReactNode }) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition overflow-hidden">
+    <div className="bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-lg transition overflow-hidden">
       <div className="p-4 bg-gradient-to-br from-slate-50 to-white border-b border-slate-100">
         {children}
       </div>
@@ -56,7 +56,7 @@ export function TableRow({ name, attendance, interactions, status, good, warn, b
 
 export function AICard({ icon, title, desc, cta }: { icon: string; title: string; desc: string; cta: string }) {
   return (
-    <div className="bg-white border border-slate-200 rounded-2xl p-6 hover:border-amber-300 hover:shadow-lg transition-all">
+    <div className="bg-white border border-slate-200 rounded-3xl p-6 hover:border-amber-300 hover:shadow-lg transition-all">
       <div className="flex items-start gap-3 mb-3">
         <div className="text-3xl">{icon}</div>
         <h3 className="text-lg font-black text-slate-800 font-cairo flex-1">{title}</h3>
