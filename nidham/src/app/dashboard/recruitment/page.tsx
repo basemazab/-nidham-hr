@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getMyProfile } from "@/lib/permissions";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+
 
 export const dynamic = "force-dynamic";
 
@@ -106,16 +106,21 @@ export default async function RecruitmentDashboard() {
           <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200/60 shadow-sm p-5">
             <h2 className="text-base font-bold font-cairo text-slate-800 mb-4">الوظائف النشطة</h2>
             {appsByJob.length > 0 ? (
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={appsByJob.map(j => ({ name: j.title, عدد: j.applications_count ?? 0 }))} margin={{ top: 5, right: 20, bottom: 50, left: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                    <XAxis dataKey="name" tick={{ fontSize: 11 }} angle={-30} textAnchor="end" height={60} />
-                    <YAxis tick={{ fontSize: 12 }} />
-                    <Tooltip contentStyle={{ borderRadius: 12, border: "1px solid #e2e8f0", fontSize: 13 }} />
-                    <Bar dataKey="عدد" fill="#0891b2" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+              <div className="space-y-2">
+                {appsByJob.map((j) => {
+                  const count = j.applications_count ?? 0;
+                  const max = Math.max(...appsByJob.map(x => x.applications_count ?? 0), 1);
+                  const pct = (count / max) * 100;
+                  return (
+                    <div key={j.title} className="flex items-center gap-3">
+                      <span className="text-xs text-slate-600 font-cairo w-1/3 truncate shrink-0">{j.title}</span>
+                      <div className="flex-1 h-6 bg-slate-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-gradient-to-l from-brand-cyan to-brand-cyan-dark rounded-full transition-all" style={{ width: pct + "%" }} />
+                      </div>
+                      <span className="text-xs font-bold text-slate-500 font-mono w-6 text-left">{count}</span>
+                    </div>
+                  );
+                })}
               </div>
             ) : (
               <div className="text-center py-12 text-slate-400">
