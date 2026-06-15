@@ -4,6 +4,7 @@ import { SectionHeader } from "./sections/section-helpers";
 import { DeferredJsonLd } from "@/components/deferred-json-ld";
 import { HeroSection } from "./sections/hero";
 import { FounderOfferBanner } from "./sections/founder-offer";
+import { FounderNote } from "./sections/founder-trust";
 import { DesktopAppSection } from "./sections/desktop-app";
 import { Reveal, CountUp, ScrollProgress } from "./sections/reveal";
 
@@ -76,6 +77,7 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
       <FounderOfferBanner />
       <ProofStrip />
       <Reveal><ComplianceShieldHighlight /></Reveal>
+      <Reveal><FounderNote /></Reveal>
       <CoreModulesSection />
       <Reveal><DynamicLiveScreenshots /></Reveal>
       <Reveal><DynamicBridgeAnalytics /></Reveal>

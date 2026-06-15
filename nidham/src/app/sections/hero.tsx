@@ -128,17 +128,17 @@ export function HeroSection() {
             variants={item}
             className="text-3xl md:text-4xl lg:text-[2.6rem] font-black text-slate-800 mb-5 font-cairo leading-tight"
           >
-            نظام واحد بدل خمس أنظمة منفصلة.
+            مرتبات وحضور وتأمينات — مظبوطة بقانون العمل المصري.
             <br />
-            <span className="text-brand-cyan-dark">HR + CRM + استوديو تسويق</span> — كله بالعربي + AI.
+            <span className="text-brand-cyan-dark">وكمان CRM وتسويق و AI</span> — كله في نظام واحد.
           </motion.h1>
 
           <motion.p
             variants={item}
             className="text-lg text-slate-600 mb-8 leading-relaxed max-w-xl mx-auto lg:mx-0 font-cairo"
           >
-            من الحضور بالـ GPS لحد قسائم الرواتب، ومن الـ CRM لحد فحص الـ CVs بالـ AI — متوافق مع قانون
-            العمل المصري 12/2003 وقانون التأمينات 148/2019.
+            من الحضور بالبصمة والـ GPS لحد قسائم الرواتب — التأمينات والضرايب والأوفر تايم محسوبة صح
+            وأوتوماتيك، متوافقة مع قانون العمل 12/2003 والتأمينات 148/2019.
           </motion.p>
 
           <motion.div
