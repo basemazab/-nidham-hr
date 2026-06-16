@@ -1,11 +1,9 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useOptimistic, startTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AiScoreBadge } from "./ai-score-badge";
-import {
-  appStatusLabel, type PipelineStage, type ApplicationWithCandidate,
-} from "@/lib/recruitment";
+import { appStatusLabel, type PipelineStage, type AppStatus, type ApplicationWithCandidate } from "@/lib/recruitment";
 
 interface Props {
   stages: PipelineStage[];
@@ -19,70 +17,36 @@ const stageKeyMap: Record<string, string> = {
   "new": "new", "reviewing": "reviewing", "shortlisted": "shortlisted", "interview": "interview", "offer": "offer", "hired": "hired", "rejected": "rejected", "withdrawn": "withdrawn",
 };
 
-const stageColors = [
-  "from-blue-500 to-blue-600", "from-amber-500 to-amber-600",
-  "from-purple-500 to-purple-600", "from-emerald-500 to-emerald-600",
-  "from-green-600 to-green-700",
-];
+const reverseStageMap: Record<string, string> = {
+  new: "جديد", reviewing: "فحص أولي", shortlisted: "مقبول", interview: "مقابلة", offer: "عرض عمل", hired: "تم التعيين", rejected: "مرفوض", withdrawn: "منسحب",
+};
 
 export function KanbanBoard({ stages, applicationsByStage, jobId, onMove }: Props) {
   const router = useRouter();
   const [movingId, setMovingId] = useState<string | null>(null);
-  const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
-  const dragAppRef = useRef<string | null>(null);
-  const dragStageRef = useRef<string | null>(null);
+  const [notes, setNotes] = useState("");
+
+  async function handleMove(appId: string, toStage: string, currentStage: string) {
+    setMovingId(appId);
+    const result = await onMove(appId, stageKeyMap[toStage] ?? toStage, stageKeyMap[currentStage] ?? currentStage, notes || undefined);
+    setMovingId(null);
+    setNotes("");
+    if (result.ok) router.refresh();
+  }
 
   function getStageApplications(stageName: string): ApplicationWithCandidate[] {
     const key = stageKeyMap[stageName] ?? stageName;
     return applicationsByStage[key] ?? [];
   }
 
-  async function handleMove(appId: string, toStage: string, currentStage: string) {
-    setMovingId(appId);
-    const result = await onMove(appId, stageKeyMap[toStage] ?? toStage, stageKeyMap[currentStage] ?? currentStage);
-    setMovingId(null);
-    if (result.ok) router.refresh();
-  }
-
-  const handleDragStart = useCallback((appId: string, stageName: string) => {
-    dragAppRef.current = appId;
-    dragStageRef.current = stageName;
-  }, []);
-
-  const handleDragOver = useCallback((e: React.DragEvent, stageName: string) => {
-    e.preventDefault();
-    setDragOverColumn(stageName);
-  }, []);
-
-  const handleDragLeave = useCallback(() => {
-    setDragOverColumn(null);
-  }, []);
-
-  const handleDrop = useCallback((e: React.DragEvent, toStage: string) => {
-    e.preventDefault();
-    setDragOverColumn(null);
-    const appId = dragAppRef.current;
-    const fromStage = dragStageRef.current;
-    if (appId && fromStage && fromStage !== toStage) {
-      handleMove(appId, toStage, fromStage);
-    }
-    dragAppRef.current = null;
-    dragStageRef.current = null;
-  }, []);
+  const stageColors = ["from-blue-500 to-blue-600", "from-amber-500 to-amber-600", "from-purple-500 to-purple-600", "from-emerald-500 to-emerald-600", "from-green-600 to-green-700"];
 
   return (
     <div className="flex gap-4 overflow-x-auto pb-4 min-h-[400px]">
       {stages.map((stage, si) => {
         const apps = getStageApplications(stage.name);
-        const isDragOver = dragOverColumn === stage.name;
         return (
-          <div
-            key={stage.id}
-            onDragOver={(e) => handleDragOver(e, stage.name)}
-            onDragLeave={handleDragLeave}
-            onDrop={(e) => handleDrop(e, stage.name)}
-            className={"flex-shrink-0 w-72 transition-shadow " + (isDragOver ? "shadow-lg ring-2 ring-brand-cyan/40 rounded-xl" : "")}
-          >
+          <div key={stage.id} className="flex-shrink-0 w-72">
             <div className={"bg-gradient-to-r " + (stageColors[si] ?? "from-gray-500 to-gray-600") + " rounded-t-xl px-4 py-3"}>
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-bold text-white font-cairo">{stage.name}</h3>
@@ -95,12 +59,7 @@ export function KanbanBoard({ stages, applicationsByStage, jobId, onMove }: Prop
               ) : apps.map((app) => {
                 const candidate = app.candidates;
                 return (
-                  <div
-                    key={app.id}
-                    draggable
-                    onDragStart={() => handleDragStart(app.id, stage.name)}
-                    className={"bg-white rounded-lg p-4 border border-gray-200 shadow-sm hover:shadow-md transition-all cursor-grab active:cursor-grabbing " + (movingId === app.id ? "opacity-50" : "")}
-                  >
+                  <div key={app.id} className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm hover:shadow-md transition-all">
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center gap-2 min-w-0">
                         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-cyan to-brand-cyan-dark flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
