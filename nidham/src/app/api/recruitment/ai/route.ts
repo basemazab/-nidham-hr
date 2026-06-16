@@ -4,7 +4,6 @@ import { generateObject } from "ai";
 import { google } from "@ai-sdk/google";
 import { groq } from "@ai-sdk/groq";
 import { z } from "zod";
-import { checkRateLimitRedis } from "@/lib/rate-limit";
 
 const AnalyzeSchema = z.object({
   resumeText: z.string().min(30, "النص قصير جداً"),
@@ -33,14 +32,6 @@ export async function POST(request: Request) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
-
-    const rl = await checkRateLimitRedis(`ai:${user.id}`, 15, 10 * 60_000);
-    if (!rl.ok) {
-      return NextResponse.json(
-        { error: `استخدمت الكوتا بتاعتك — حاول بعد ${Math.ceil(rl.retryAfterSeconds / 60)} دقيقة` },
-        { status: 429 },
-      );
-    }
 
     const body = await request.json();
     const parsed = AnalyzeSchema.safeParse(body);
