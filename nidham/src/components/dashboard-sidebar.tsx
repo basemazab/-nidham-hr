@@ -170,6 +170,9 @@ const NAV_ITEMS: readonly NavItem[] = [
   { href: "/dashboard/marketing/leads",          label: "Leads Inbox",       icon: "📥", section: "marketing", feature: "marketing_studio" },
   { href: "/dashboard/marketing/landing-pages",  label: "صفحات الهبوط",      icon: "🏠", section: "marketing", feature: "marketing_studio" },
   { href: "/dashboard/marketing/analytics",      label: "تحليل التسويق",     icon: "📊", section: "marketing", feature: "marketing_studio" },
+  { href: "/dashboard/marketing/ad-copy",        label: "مولد الإعلانات AI", icon: "✍",  section: "marketing", feature: "marketing_studio" },
+  { href: "/dashboard/marketing/ai-cmo",         label: "المدير التسويقي AI", icon: "🧠", section: "marketing", feature: "marketing_studio" },
+  { href: "/dashboard/marketing/integrations",   label: "التكاملات",         icon: "🔌", section: "marketing", feature: "marketing_studio" },
 
   // ── Reports ──
   { href: "/dashboard/intelligence",      label: "ذكاء الأعمال",    icon: "🧠", section: "reports", feature: "employees" },
