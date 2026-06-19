@@ -22,21 +22,58 @@ type Variants = {
   whatsapp: { caption: string; hashtags: string };
 };
 
+// Robust copy: the async Clipboard API needs a secure context AND a focused
+// document, so it silently fails in some browsers/embeds. Fall back to a
+// hidden textarea + execCommand, and report whether the copy actually
+// succeeded so the UI can offer a manual copy as a last resort.
+async function copyToClipboard(text: string): Promise<boolean> {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch {
+    /* fall through to the legacy path below */
+  }
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    ta.setAttribute("readonly", "");
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    return ok;
+  } catch {
+    return false;
+  }
+}
+
 export function SharePanel({ jobTitle, department, location, jobType, salaryMin, salaryMax, description, requirements, publicUrl }: Props) {
   const [copied, setCopied] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [variants, setVariants] = useState<Variants | null>(null);
   const [copyVariant, setCopyVariant] = useState<string | null>(null);
+  const [hint, setHint] = useState<string | null>(null);
 
   const url = publicUrl ?? "";
 
   const copyLink = async () => {
-    if (!url) return;
-    try {
-      await navigator.clipboard.writeText(url);
+    if (!url) {
+      setHint("لازم تنشر الوظيفة الأول (خليها «عامة» وحالتها «مفتوحة») عشان يبقى ليها رابط تقديم تنسخه.");
+      setTimeout(() => setHint(null), 6000);
+      return;
+    }
+    const ok = await copyToClipboard(url);
+    if (ok) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch { /* fallback */ }
+    } else {
+      setHint("المتصفح منع النسخ التلقائي — انسخ الرابط يدويًا:\n" + url);
+      setTimeout(() => setHint(null), 9000);
+    }
   };
 
   const shareFacebook = () => {
@@ -67,11 +104,11 @@ export function SharePanel({ jobTitle, department, location, jobType, salaryMin,
   };
 
   const copyVariantText = async (key: string, text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
+    const ok = await copyToClipboard(text);
+    if (ok) {
       setCopyVariant(key);
       setTimeout(() => setCopyVariant(null), 2000);
-    } catch { /* ignore */ }
+    }
   };
 
   return (
@@ -125,6 +162,12 @@ export function SharePanel({ jobTitle, department, location, jobType, salaryMin,
           {generating ? "جاري التوليد..." : "توليد منشور سوشيال ميديا"}
         </button>
       </div>
+
+      {hint && (
+        <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 font-cairo whitespace-pre-line break-all">
+          {hint}
+        </p>
+      )}
 
       {variants && (
         <div className="space-y-3 pt-3 border-t border-slate-100">
