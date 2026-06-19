@@ -39,6 +39,7 @@
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.38.0",
     "@vercel/og": "^0.11.1",
+    "@vercel/speed-insights": "^2.0.0",
     "ai": "^6.0.180",
     "framer-motion": "^12.40.0",
     "html2canvas-pro": "^2.0.2",
