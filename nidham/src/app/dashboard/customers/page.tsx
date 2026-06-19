@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getMyProfile } from "@/lib/permissions";
 import { formatEGP } from "@/lib/format";
 import { ensureSelfEmployee } from "@/lib/ensure-self-employee";
 import { QuickLogModal } from "./quick-log-modal";
@@ -53,41 +52,42 @@ export default async function CustomersPage() {
   if (!user) redirect("/login");
 
   // Scope to the caller's company — super-admin sessions (mig 038) can
-  // SELECT customers across every tenant otherwise.
-  const { profile } = await getMyProfile();
+  // SELECT customers across every tenant otherwise. One direct profiles query
+  // (reusing `user` above) instead of getMyProfile()'s extra getUser round-trip.
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("company_id, full_name")
+    .eq("id", user.id)
+    .maybeSingle<{ company_id: string; full_name: string | null }>();
   const callerCompanyId = profile?.company_id ?? "";
 
-  // For the QuickLogModal — we need the current user's employee_id to
-  // satisfy interactions.employee_id NOT NULL. CRM-only customers may
-  // not have an employee record yet; ensureSelfEmployee creates one if
-  // needed (uses service-role to bypass RLS).
-  const { data: { user: currentUser } } = await supabase.auth.getUser();
-  let currentEmployeeId = "";
-  if (currentUser && callerCompanyId) {
-    try {
-      currentEmployeeId = await ensureSelfEmployee(
-        supabase,
-        currentUser.id,
-        callerCompanyId,
-        profile?.full_name ?? undefined,
-        currentUser.email ?? undefined,
-      );
-    } catch (err) {
-      // Logging is enough — the button just won't render
-      console.warn("[customers] ensureSelfEmployee failed:", err);
-    }
-  }
+  // QuickLogModal needs the caller's employee_id (ensureSelfEmployee creates it
+  // if missing). It's independent of the customers list, so fetch both in
+  // parallel instead of sequentially.
+  const [currentEmployeeId, customersRes] = await Promise.all([
+    callerCompanyId
+      ? ensureSelfEmployee(
+          supabase,
+          user.id,
+          callerCompanyId,
+          profile?.full_name ?? undefined,
+          user.email ?? undefined,
+        ).catch((err) => {
+          console.warn("[customers] ensureSelfEmployee failed:", err);
+          return "";
+        })
+      : Promise.resolve(""),
+    supabase
+      .from("customers")
+      .select(
+        "id, full_name, contact_name, type, phone, status, estimated_value, assigned_to, employees:assigned_to(full_name)",
+      )
+      .eq("company_id", callerCompanyId)
+      .order("created_at", { ascending: false })
+      .returns<Customer[]>(),
+  ]);
 
-  const { data: customers } = await supabase
-    .from("customers")
-    .select(
-      "id, full_name, contact_name, type, phone, status, estimated_value, assigned_to, employees:assigned_to(full_name)",
-    )
-    .eq("company_id", callerCompanyId)
-    .order("created_at", { ascending: false })
-    .returns<Customer[]>();
-
-  const list = customers ?? [];
+  const list = customersRes.data ?? [];
 
   // M1 follow-up: last-contact tracking — the customer specifically asked
   // for "هل تم التواصل معاه ولا لا". Pull the most recent interaction

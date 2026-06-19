@@ -49,7 +49,7 @@ export default async function DashboardLayout({
     }
   }
 
-  const [profileRes, superAdminRes, companyForSubRes] = await Promise.all([
+  const [profileRes, superAdminRes] = await Promise.all([
     supabase
       .from("profiles")
       .select("full_name, role, company_id, companies(name)")
@@ -60,29 +60,27 @@ export default async function DashboardLayout({
       .select("user_id")
       .eq("user_id", user.id)
       .maybeSingle(),
-    // For super_admin the RLS bypass returns rows from every tenant;
-    // explicit company_id filter is the safe way to fetch THE
-    // calling tenant's subscription. profile.company_id is fetched
-    // alongside so this stays a single round-trip.
-    supabase
-      .from("profiles")
-      .select("company_id")
-      .eq("id", user.id)
-      .maybeSingle<{ company_id: string }>(),
   ]);
 
   const profile = profileRes.data;
-  const callerCompanyId = companyForSubRes.data?.company_id;
+  // Reuse company_id from the profile row above — no extra profiles query.
+  const callerCompanyId = profile?.company_id;
 
-  // Subscription fetched separately so we can scope by company_id
-  // (defends against super_admin RLS bypass returning multi-tenant rows).
-  const { data: subscription } = callerCompanyId
-    ? await supabase
-        .from("subscriptions")
-        .select("plan, ends_at")
-        .eq("company_id", callerCompanyId)
-        .maybeSingle<SubscriptionLite>()
-    : { data: null };
+  // Subscription + feature overrides are independent, so fetch them in
+  // parallel (one round-trip instead of two on EVERY dashboard page).
+  // Subscription stays company-scoped to defend against the super_admin
+  // RLS bypass returning multi-tenant rows.
+  const [subRes, featureOverrides] = await Promise.all([
+    callerCompanyId
+      ? supabase
+          .from("subscriptions")
+          .select("plan, ends_at")
+          .eq("company_id", callerCompanyId)
+          .maybeSingle<SubscriptionLite>()
+      : Promise.resolve({ data: null }),
+    getMyFeatureOverrides(),
+  ]);
+  const subscription = subRes.data;
   // eslint-disable-next-line react-hooks/purity
   const nowMs = Date.now();
   const daysLeft = subscription
@@ -103,12 +101,9 @@ export default async function DashboardLayout({
   const companyName = profile?.companies?.name ?? "—";
   const isSuperAdmin = !!superAdminRes.data;
 
-  // Per-tenant feature overrides (mig 041). When the super-admin has
-  // disabled a module for this tenant (e.g. they bought "Marketing-only"
-  // and don't need HR), the override map carries enabled=false and the
-  // sidebar hides those nav items entirely. Tenants with no overrides
-  // see the standard tier-based defaults.
-  const featureOverrides = await getMyFeatureOverrides();
+  // featureOverrides is fetched above (in parallel with the subscription).
+  // Per-tenant overrides (mig 041): an enabled=false entry hides that module's
+  // nav items; tenants with no overrides see tier-based defaults.
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-slate-50 dark:bg-slate-950">
