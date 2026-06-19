@@ -60,8 +60,16 @@ export async function getMyFeatureOverrides(): Promise<FeatureOverrides> {
   } = await supabase.auth.getUser();
   if (!user) return {};
 
-  // System owner — full access to all features
-  if (user.email === "basemazab640@gmail.com") {
+  // System owner / ANY super-admin — full access to all features, never gated
+  // by trial expiry or plan tier. Checks the super_admins table so it works
+  // for every owner account, not just one hardcoded email (which broke access
+  // when the owner used a different admin account after the trial ended).
+  const { data: sa } = await supabase
+    .from("super_admins")
+    .select("user_id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (sa || user.email === "basemazab640@gmail.com") {
     const { ALL_FEATURES } = await import("./subscriptions");
     const map: FeatureOverrides = {};
     for (const f of ALL_FEATURES) {

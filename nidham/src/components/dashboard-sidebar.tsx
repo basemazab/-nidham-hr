@@ -234,8 +234,12 @@ export function DashboardSidebar({
   };
 
   const canSee = (item: NavItem) => {
+    // Platform owner (super-admin) sees EVERY tool — never gated by trial
+    // expiry, plan tier, role, or feature overrides. This is what restores
+    // full access for the owner after the trial ends.
+    if (isSuperAdmin) return true;
     // Owner-only gate — hide platform-owner tools from every tenant.
-    if (item.superAdminOnly && !isSuperAdmin) {
+    if (item.superAdminOnly) {
       return false;
     }
     // Role gate
@@ -393,6 +397,7 @@ export function DashboardSidebar({
                 isActive={isActive}
                 plan={plan}
                 featureOverrides={featureOverrides}
+                isSuperAdmin={isSuperAdmin}
                 collapsible={!!s.label}
                 open={sectionOpen(s.key)}
                 onToggle={() => toggleSection(s.key)}
@@ -493,6 +498,7 @@ function NavSection({
   isActive,
   plan,
   featureOverrides,
+  isSuperAdmin = false,
   collapsible = false,
   open = true,
   onToggle,
@@ -502,6 +508,7 @@ function NavSection({
   isActive: (href: string) => boolean;
   plan?: Plan | null;
   featureOverrides?: Partial<Record<Feature, boolean>>;
+  isSuperAdmin?: boolean;
   collapsible?: boolean;
   open?: boolean;
   onToggle?: () => void;
@@ -547,6 +554,7 @@ function NavSection({
           // filtered out by canSee() above; override=true items pass
           // through here as "unlocked" via hasFeature's overrides arg.
           const locked =
+            !isSuperAdmin &&
             !!item.feature &&
             !hasFeature(plan, item.feature, featureOverrides);
           return (
