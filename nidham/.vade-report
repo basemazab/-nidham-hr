@@ -1,0 +1,66 @@
+# Vercel Speed Insights Installation Report
+
+## Summary
+Successfully installed and configured Vercel Speed Insights for the Nidham HR Next.js project.
+
+## Changes Made
+
+### 1. Package Installation
+- Installed `@vercel/speed-insights` version 2.0.0 via npm
+- Updated `package.json` to include the new dependency
+- Updated `package-lock.json` with the resolved dependency tree
+
+### 2. Configuration
+**File Modified:** `src/app/layout.tsx`
+
+**Changes:**
+- Added import statement: `import { SpeedInsights } from "@vercel/speed-insights/next";`
+- Added `<SpeedInsights />` component at the end of the body section (just before the closing `</body>` tag)
+
+**Location:** The component was placed after all other app content, following the official Vercel documentation recommendation for Next.js App Router projects.
+
+## Implementation Details
+
+### Approach
+1. Fetched the latest official Vercel Speed Insights documentation from https://vercel.com/docs/speed-insights/quickstart
+2. Identified the project as a Next.js App Router application (based on the presence of `src/app/layout.tsx`)
+3. Used npm as the package manager (confirmed by the presence of `package-lock.json`)
+4. Followed the framework-specific instructions for Next.js App Router
+
+### Why These Choices
+- **Component Placement:** Placed at the end of the body section to ensure it doesn't block the initial page render, following Vercel's best practices
+- **Import Path:** Used `@vercel/speed-insights/next` which is the framework-specific import optimized for Next.js
+- **No Additional Configuration:** The component works out of the box with zero-config when deployed to Vercel
+
+## Verification
+
+### Build Verification
+- ✅ Successfully ran `npm run build` - build completed without errors
+- ✅ All 194 routes compiled successfully
+- ✅ No TypeScript errors introduced
+
+### Linting
+- ✅ Ran `npm run lint` on the modified file
+- ✅ No new linting errors introduced by our changes
+- ✅ Only pre-existing linting warnings remain (unrelated to Speed Insights)
+
+### Testing
+- ✅ Ran `npm run test` - no new test failures introduced
+- ✅ Pre-existing test failure is unrelated to our changes
+
+## Next Steps
+Once deployed to Vercel:
+1. Enable Speed Insights in the Vercel project dashboard (if not already enabled)
+2. Verify the tracking script appears in the page's source as `/<unique-path>/script.js`
+3. Monitor the Speed Insights dashboard for performance metrics after users visit the site
+
+## Technical Notes
+- The Speed Insights component automatically tracks Core Web Vitals (LCP, FID, CLS, etc.)
+- It integrates seamlessly with Vercel's infrastructure for optimal performance monitoring
+- The component is designed to have minimal impact on page load performance
+- Data collection respects user privacy and is compliant with GDPR
+
+## Files Modified
+1. `package.json` - Added @vercel/speed-insights dependency
+2. `package-lock.json` - Updated dependency tree
+3. `src/app/layout.tsx` - Added SpeedInsights component and import

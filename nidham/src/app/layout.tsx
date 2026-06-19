@@ -15,6 +15,7 @@ import {
   LocalBusinessSchema,
   VideoObjectSchema,
 } from "@/components/json-ld";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const tajawal = Tajawal({
   variable: "--font-tajawal",
@@ -245,6 +246,7 @@ export default function RootLayout({
           </a>
           </AppProviders>
         </ThemeProvider>
+        <SpeedInsights />
       </body>
     </html>
   );
