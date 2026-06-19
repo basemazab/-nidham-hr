@@ -155,7 +155,10 @@ export default async function JobsPage() {
                 shortlisted: 0,
                 topScore: null,
               };
-              const status = STATUS_LABELS[j.status];
+              const status = STATUS_LABELS[j.status] ?? {
+                text: j.status || "—",
+                classes: "bg-slate-100 text-slate-600 border-slate-200",
+              };
               return (
                 <Link
                   key={j.id}

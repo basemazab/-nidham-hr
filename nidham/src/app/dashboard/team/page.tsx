@@ -260,7 +260,7 @@ export default async function TeamPage({
             </div>
             <div className="divide-y divide-slate-100">
               {invitations.map((inv) => {
-                const status = STATUS_LABELS[inv.status];
+                const status = STATUS_LABELS[inv.status] ?? { text: inv.status || "—", classes: "bg-slate-100 text-slate-600 border-slate-200" };
                 return (
                   <div key={inv.id} className="px-5 py-4 flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-500">

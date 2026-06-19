@@ -130,7 +130,10 @@ export default async function SubscriptionPage() {
   const isTrial = subscription.status === "trial";
   const isExpired = daysLeft < 0;
   const isUrgent = daysLeft <= 7 && daysLeft >= 0;
-  const statusBadge = STATUS_LABELS[subscription.status];
+  const statusBadge = STATUS_LABELS[subscription.status] ?? {
+    text: subscription.status || "—",
+    classes: "bg-slate-100 text-slate-600 border-slate-200",
+  };
 
   const whatsappMessage = encodeURIComponent(
     `السلام عليكم، أنا [اسمك] من شركة [اسم الشركة].

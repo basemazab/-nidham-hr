@@ -215,7 +215,10 @@ export default async function ContractsPage() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {enriched.map((c) => {
-                  const status = statusLabel[c.status];
+                  const status = statusLabel[c.status] ?? {
+                    text: c.status || "—",
+                    classes: "bg-slate-100 text-slate-600 border-slate-200",
+                  };
                   const daysClass =
                     c.urgency === "expired" ? "text-red-700 font-black"
                     : c.urgency === "urgent" ? "text-red-600 font-bold"

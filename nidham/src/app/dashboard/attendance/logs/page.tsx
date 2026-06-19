@@ -433,7 +433,7 @@ export default async function AttendanceLogsPage({
                     const tardyDed = tardyMins * pmw;
                     const earlyDed = earlyMins * pmw;
                     const totalDed = tardyDed + earlyDed;
-                    const status = STATUS_META[r.status];
+                    const status = STATUS_META[r.status] ?? { label: r.status || "—", cls: "bg-slate-100 text-slate-600 border-slate-200" };
 
                     return (
                       <tr

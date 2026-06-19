@@ -382,7 +382,7 @@ function CardGridView({ employees }: { employees: EmployeeRow[] }) {
 }
 
 function EmployeeCard({ employee }: { employee: EmployeeRow }) {
-  const status = STATUS_LABELS[employee.status];
+  const status = STATUS_LABELS[employee.status] ?? { text: employee.status || "—", classes: "bg-slate-100 text-slate-600 border-slate-200" };
   const comp = totalComp(employee);
   const dotColor =
     employee.status === "active"
@@ -665,7 +665,7 @@ function DepartmentSection({
 // EmployeeRowItem — compact one-line row used inside dept sections
 // ----------------------------------------------------------------------------
 function EmployeeRowItem({ employee }: { employee: EmployeeRow }) {
-  const status = STATUS_LABELS[employee.status];
+  const status = STATUS_LABELS[employee.status] ?? { text: employee.status || "—", classes: "bg-slate-100 text-slate-600 border-slate-200" };
   const isWeekly = employee.pay_frequency === "weekly";
   const comp = totalComp(employee);
 
@@ -759,7 +759,7 @@ function FlatTableView({ employees }: { employees: EmployeeRow[] }) {
         </thead>
         <tbody className="divide-y divide-slate-100">
           {employees.map((employee) => {
-            const status = STATUS_LABELS[employee.status];
+            const status = STATUS_LABELS[employee.status] ?? { text: employee.status || "—", classes: "bg-slate-100 text-slate-600 border-slate-200" };
             const isWeekly = employee.pay_frequency === "weekly";
             const comp = totalComp(employee);
             return (
