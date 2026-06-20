@@ -137,15 +137,19 @@ function parseAttlog(raw: string): Punch[] {
   const out: Punch[] = [];
   const lines = raw.split(/\r?\n/);
   for (const line of lines) {
-    if (!line.trim()) continue;
+    const t = line.trim();
+    if (!t) continue;
     if (out.length >= MAX_PUNCHES) break;
-    // Format: PIN \t YYYY-MM-DD HH:MM:SS \t status \t verify \t workcode ...
-    const f = line.split("\t");
-    const pin = (f[0] ?? "").trim();
-    const ts = (f[1] ?? "").trim();
-    const m = ts.match(/^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}:\d{2})$/);
+    // Standard ZKTeco ATTLOG is tab-separated:
+    //   PIN \t YYYY-MM-DD HH:MM:SS \t status \t verify \t workcode ...
+    // but some firmware and ZK-protocol clones emit space-separated columns
+    // and/or drop the seconds. Be tolerant: PIN = first token (tab OR space);
+    // timestamp = the first YYYY-MM-DD HH:MM[:SS] found anywhere on the line.
+    const pin = (t.split(/[\t ]+/)[0] ?? "").trim();
+    const m = t.match(/(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}:\d{2}|\d{2}:\d{2})\b/);
     if (!pin || !m) continue;
-    out.push({ pin, date: m[1], time: m[2] });
+    const time = m[2].length === 5 ? `${m[2]}:00` : m[2];
+    out.push({ pin, date: m[1], time });
   }
   return out;
 }

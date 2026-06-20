@@ -45,10 +45,9 @@ export default async function DevicesPage({
         </div>
 
         <header className="mb-6">
-          <h1 className="text-3xl font-black font-cairo text-slate-800 mb-1">🔌 أجهزة البصمة (ربط تلقائي)</h1>
+          <h1 className="text-3xl font-black font-cairo text-slate-800 mb-1">🔌 ربط أجهزة البصمة</h1>
           <p className="text-sm text-slate-500 font-cairo leading-relaxed">
-            سجّل جهاز البصمة هنا، واضبط فيه «Cloud Server»، والجهاز هيبعت البصمات
-            تلقائيًا للنظام — وتظهرلك في <Link href="/dashboard/attendance/review" className="text-brand-cyan-dark underline">مراجعة واعتماد الحضور</Link>.
+            النظام بيشتغل مع <b>أي جهاز بصمة</b> بطريقتين — اختار اللي يناسب جهازك. البصمات بتظهرلك بعد كده في <Link href="/dashboard/attendance/review" className="text-brand-cyan-dark underline">مراجعة واعتماد الحضور</Link>.
           </p>
         </header>
 
@@ -58,9 +57,37 @@ export default async function DevicesPage({
         {sp.deleted && <Flash tone="amber">✓ تم حذف الجهاز.</Flash>}
         {sp.error && <Flash tone="red">⚠ {decodeURIComponent(sp.error)}</Flash>}
 
-        {/* How-to / device config */}
+        {/* Two ways to connect — pick by device type */}
+        <div className="grid md:grid-cols-2 gap-4 mb-6">
+          <div className="rounded-2xl border-2 border-cyan-200 bg-cyan-50/40 p-5 font-cairo">
+            <div className="text-[11px] font-black text-cyan-700 mb-1">الطريقة ١ — الأفضل ⚡</div>
+            <h2 className="font-black text-slate-800 mb-1">ربط تلقائي لحظي</h2>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              الجهاز يبعت البصمات لوحده أول بأول من غير أي تدخّل يدوي. متاح لأجهزة{" "}
+              <b>ZKTeco / eSSL</b> وأي جهاز بيدعم «Cloud Server / ADMS Push».
+              سجّل الجهاز تحت 👇 واضبط الإعدادات.
+            </p>
+          </div>
+          <div className="rounded-2xl border-2 border-slate-200 bg-white p-5 font-cairo">
+            <div className="text-[11px] font-black text-slate-500 mb-1">الطريقة ٢ — تشتغل مع أي جهاز ✅</div>
+            <h2 className="font-black text-slate-800 mb-1">استيراد ملف الحضور</h2>
+            <p className="text-xs text-slate-600 leading-relaxed mb-3">
+              لأي جهاز تاني (<b>Hikvision، Suprema، Anviz، Realand</b>، أو موديل قديم):
+              صدّر ملف الحضور Excel/CSV من برنامج الجهاز، والنظام بيتعرّف على الأعمدة{" "}
+              <b>تلقائيًا</b> مهما كان تنسيقها.
+            </p>
+            <Link
+              href="/dashboard/attendance/import"
+              className="inline-block px-4 py-2 rounded-lg bg-slate-800 text-white text-xs font-bold hover:bg-slate-700 transition"
+            >
+              استيراد ملف بصمة →
+            </Link>
+          </div>
+        </div>
+
+        {/* How-to / device config (auto-push path) */}
         <div className="mb-6 rounded-2xl border-2 border-cyan-200 bg-cyan-50/50 p-5 font-cairo">
-          <h2 className="font-black text-slate-800 mb-2">⚙ إعدادات الـ Cloud Server في الجهاز</h2>
+          <h2 className="font-black text-slate-800 mb-2">⚙ إعدادات الـ Cloud Server في الجهاز (للربط التلقائي — ZKTeco / eSSL)</h2>
           <p className="text-xs text-slate-600 mb-3 leading-relaxed">
             من قائمة الجهاز: <b>Comm → Cloud Server Setup</b> (أو ADMS) — اكتب القيم دي:
           </p>
@@ -79,7 +106,10 @@ export default async function DevicesPage({
 
         {/* Register form */}
         <form action={registerDevice} className="mb-8 rounded-2xl border-2 border-slate-200 bg-white p-5">
-          <h2 className="font-black text-slate-800 font-cairo mb-3">➕ تسجيل جهاز جديد</h2>
+          <h2 className="font-black text-slate-800 font-cairo mb-1">➕ تسجيل جهاز للربط التلقائي</h2>
+          <p className="text-xs text-slate-500 font-cairo mb-3">
+            للأجهزة اللي بتدعم Cloud Server / ADMS بس (ZKTeco / eSSL). أي جهاز تاني استخدم «استيراد ملف الحضور» فوق.
+          </p>
           <div className="grid sm:grid-cols-2 gap-4">
             <label className="block">
               <span className="block text-sm font-bold text-slate-700 mb-1 font-cairo">اسم الجهاز</span>
