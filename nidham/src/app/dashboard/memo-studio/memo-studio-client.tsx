@@ -57,7 +57,7 @@ function safeName(s: string): string {
 // Build a fully self-contained, print-optimized A4 HTML document and print it
 // in a new window. The browser renders Arabic perfectly (shaping + ligatures),
 // which no client-side PDF library does reliably — this is the robust path.
-function buildPrintHtml(memo: Memo, companyName: string, dates: Dates): string {
+function buildPrintHtml(memo: Memo, companyName: string, dates: Dates, logoUrl: string | null): string {
   const rtl = memo.lang !== "en";
   const dir = rtl ? "rtl" : "ltr";
   const align = rtl ? "right" : "left";
@@ -109,6 +109,8 @@ function buildPrintHtml(memo: Memo, companyName: string, dates: Dates): string {
   .doc { max-width: 178mm; margin: 0 auto; padding: 6mm 0; }
   .head { display: flex; justify-content: space-between; align-items: flex-end;
     border-bottom: 3px double ${NAVY}; padding-bottom: 8px; }
+  .brand { display: flex; align-items: center; gap: 14px; }
+  .logo { max-height: 58px; max-width: 170px; object-fit: contain; }
   .company { font-family: 'Amiri', 'Cairo', serif; font-size: 25px; font-weight: 700; color: ${NAVY}; line-height: 1.2; }
   .accent { height: 3px; width: 70px; background: ${GOLD}; margin-top: 4px; }
   .badge { font-size: 12px; color: #6b7280; border: 1px solid #e5e7eb; border-radius: 6px; padding: 3px 8px; }
@@ -142,9 +144,12 @@ function buildPrintHtml(memo: Memo, companyName: string, dates: Dates): string {
 <body>
   <div class="doc">
     <div class="head">
-      <div>
-        <div class="company">${esc(companyName)}</div>
-        <div class="accent"></div>
+      <div class="brand">
+        ${logoUrl ? `<img src="${logoUrl}" alt="" class="logo" />` : ""}
+        <div>
+          <div class="company">${esc(companyName)}</div>
+          <div class="accent"></div>
+        </div>
       </div>
       <div class="badge">${rtl ? "مستند رسمي" : "Official Document"}</div>
     </div>
@@ -186,8 +191,8 @@ function buildPrintHtml(memo: Memo, companyName: string, dates: Dates): string {
 </html>`;
 }
 
-function printMemo(memo: Memo, companyName: string, dates: Dates) {
-  const html = buildPrintHtml(memo, companyName, dates);
+function printMemo(memo: Memo, companyName: string, dates: Dates, logoUrl: string | null) {
+  const html = buildPrintHtml(memo, companyName, dates, logoUrl);
   const w = window.open("", "_blank", "width=900,height=1000");
   if (!w) {
     alert("المتصفح منع فتح نافذة الطباعة — اسمح بالنوافذ المنبثقة لهذا الموقع وحاول تاني.");
@@ -247,9 +252,11 @@ function exportExcel(memo: Memo, companyName: string, dates: Dates) {
 export function MemoStudioClient({
   companyName,
   signatory,
+  logoUrl,
 }: {
   companyName: string;
   signatory: string;
+  logoUrl: string | null;
 }) {
   const [request, setRequest] = useState("");
   const [loading, setLoading] = useState(false);
@@ -408,7 +415,7 @@ export function MemoStudioClient({
                 <div className="flex flex-wrap gap-2 mb-3">
                   <button
                     type="button"
-                    onClick={() => printMemo(memo, companyName, dates)}
+                    onClick={() => printMemo(memo, companyName, dates, logoUrl)}
                     className="px-4 py-2.5 rounded-xl bg-slate-800 text-white font-bold font-cairo text-sm hover:bg-slate-700 transition shadow-sm"
                   >
                     🖨️ تحميل / طباعة PDF
@@ -441,9 +448,15 @@ export function MemoStudioClient({
                   >
                     {/* head */}
                     <div className="flex items-end justify-between border-b-[3px] border-double pb-2" style={{ borderColor: NAVY }}>
-                      <div>
-                        <div className="text-2xl font-black" style={{ color: NAVY }}>{companyName}</div>
-                        <div className="h-[3px] w-16 mt-1" style={{ background: GOLD }} />
+                      <div className="flex items-center gap-3">
+                        {logoUrl && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={logoUrl} alt="" className="h-12 max-w-[150px] object-contain" />
+                        )}
+                        <div>
+                          <div className="text-2xl font-black" style={{ color: NAVY }}>{companyName}</div>
+                          <div className="h-[3px] w-16 mt-1" style={{ background: GOLD }} />
+                        </div>
                       </div>
                       <span className="text-[11px] text-slate-500 border border-slate-200 rounded px-2 py-0.5">
                         مستند رسمي

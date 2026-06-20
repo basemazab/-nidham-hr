@@ -182,6 +182,7 @@ const NAV_ITEMS: readonly NavItem[] = [
   { href: "/dashboard/audit-log",          label: "سجل النشاط",      icon: "🗂", section: "reports", visibleTo: ["admin"], feature: "audit_log" },
 
   // ── Settings ──
+  { href: "/dashboard/settings/branding",         label: "هوية الشركة (الشعار)", icon: "🎨", section: "settings", visibleTo: ["admin"] },
   { href: "/dashboard/settings/office-location",  label: "موقع المكتب",         icon: "📍", section: "settings", visibleTo: ["admin"] },
   { href: "/dashboard/settings/leave-rollover",   label: "ترحيل الإجازات",     icon: "🗓", section: "settings", visibleTo: ["admin"] },
   { href: "/dashboard/referrals",            label: "ادعُ شركة (شهر مجاني)", icon: "🎁", section: "settings", visibleTo: ["admin"] },

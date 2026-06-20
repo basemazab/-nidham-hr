@@ -23,14 +23,33 @@ export default async function MemoStudioPage() {
   }
 
   let companyName = "الشركة";
+  let logoUrl: string | null = null;
   if (profile.company_id) {
-    const { data: company } = await supabase
+    const { data: company, error } = await supabase
       .from("companies")
-      .select("name")
+      .select("name, logo_url")
       .eq("id", profile.company_id)
-      .maybeSingle<{ name: string }>();
-    if (company?.name) companyName = company.name;
+      .maybeSingle<{ name: string; logo_url: string | null }>();
+    if (!error && company) {
+      if (company.name) companyName = company.name;
+      logoUrl = company.logo_url ?? null;
+    } else {
+      // logo_url column may not exist yet (migration 114 pending) — fall back
+      // to the name-only query so the tool never breaks before the migration.
+      const { data: nameOnly } = await supabase
+        .from("companies")
+        .select("name")
+        .eq("id", profile.company_id)
+        .maybeSingle<{ name: string }>();
+      if (nameOnly?.name) companyName = nameOnly.name;
+    }
   }
 
-  return <MemoStudioClient companyName={companyName} signatory={profile.full_name ?? ""} />;
+  return (
+    <MemoStudioClient
+      companyName={companyName}
+      signatory={profile.full_name ?? ""}
+      logoUrl={logoUrl}
+    />
+  );
 }
