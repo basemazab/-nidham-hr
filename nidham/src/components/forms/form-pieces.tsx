@@ -183,6 +183,53 @@ export function SignatureBlock({
 }
 
 // ----------------------------------------------------------------------------
+// ApprovalBlock — 3-signatory official approval row (the manager sign-off
+// chain). Used on hiring requisitions + the appointment letter so each
+// document carries the internal approvals: direct manager → HR manager →
+// executive director. Each cell has a name line, signature line, and date.
+// ----------------------------------------------------------------------------
+const DEFAULT_APPROVERS = ["المدير المباشر", "مدير الموارد البشرية", "المدير التنفيذي"];
+
+export function ApprovalBlock({
+  title = "اعتماد الطلب",
+  approvers = DEFAULT_APPROVERS,
+}: {
+  title?: string;
+  approvers?: string[];
+}) {
+  return (
+    <div className="mt-8">
+      <SectionTitle title={title} />
+      <div className="grid grid-cols-3 gap-4">
+        {approvers.map((role) => (
+          <div key={role} className="border border-slate-300 rounded-lg overflow-hidden text-center">
+            <div className="bg-amber-50 border-b border-amber-200 px-2 py-2 text-xs font-black text-slate-800 font-cairo">
+              {role}
+            </div>
+            <div className="p-3 space-y-3">
+              <div>
+                <div className="text-[10px] text-slate-500 font-cairo text-right mb-1">الاسم</div>
+                <div className="border-b border-slate-300 h-6" />
+              </div>
+              <div>
+                <div className="text-[10px] text-slate-500 font-cairo text-right mb-1">التوقيع</div>
+                <div className="border-b-2 border-slate-400 h-10 flex items-end justify-center pb-0.5">
+                  <span className="text-[9px] text-slate-300 font-cairo">(التوقيع)</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-slate-500 font-cairo shrink-0">التاريخ</span>
+                <span className="flex-1 border-b border-dotted border-slate-300 h-4" />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ----------------------------------------------------------------------------
 // StampPlaceholder — square "ختم الشركة" area
 // ----------------------------------------------------------------------------
 export function StampPlaceholder({ size = "md" }: { size?: "sm" | "md" | "lg" }) {

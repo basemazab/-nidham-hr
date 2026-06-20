@@ -14,6 +14,7 @@ import { FormShell } from "@/components/forms/form-shell";
 import { FormLetterhead } from "@/components/forms/form-letterhead";
 import {
   SectionTitle,
+  ApprovalBlock,
   FormFooter,
   FieldLine,
   CheckBox,
@@ -229,6 +230,9 @@ export default async function JobAppTradePage() {
             <div className="border-b-2 border-slate-400 h-12" />
           </div>
         </div>
+
+        {/* Internal approval chain — direct manager → HR → executive director */}
+        <ApprovalBlock title="اعتماد الطلب (للاستخدام الداخلي)" />
       </div>
 
       <FormFooter company={ctx.company} />

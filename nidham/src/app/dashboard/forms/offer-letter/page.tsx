@@ -13,6 +13,7 @@ import { FormShell } from "@/components/forms/form-shell";
 import { FormLetterhead } from "@/components/forms/form-letterhead";
 import {
   SignatureBlock,
+  ApprovalBlock,
   SectionTitle,
   FormFooter,
   CheckBox,
@@ -197,10 +198,13 @@ export default async function OfferLetterPage({
           نتطلع لانضمامكم لفريق العمل ولمسيرة مهنية ناجحة معنا،،
         </p>
 
-        {/* Two signatures */}
-        <div className="grid grid-cols-2 gap-12">
-          <SignatureBlock role="المدير / المسؤول" name={null} showStamp />
-          <SignatureBlock role="الموظف (قبول العرض)" name={emp?.full_name ?? null} />
+        {/* Company approval chain — direct manager → HR → executive director */}
+        <ApprovalBlock title="اعتماد جهة العمل" />
+
+        {/* Employee acceptance + company stamp */}
+        <div className="mt-8 grid grid-cols-2 gap-12">
+          <SignatureBlock role="إقرار الموظف بقبول العرض" name={emp?.full_name ?? null} />
+          <SignatureBlock role="ختم واعتماد الشركة" name={null} showStamp />
         </div>
       </div>
 
