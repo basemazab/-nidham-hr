@@ -137,6 +137,7 @@ const NAV_ITEMS: readonly NavItem[] = [
   // ── Documents (المستندات) ──
   { href: "/dashboard/compliance-shield", label: "درع الامتثال",  icon: "🛡️", section: "docs", visibleTo: ["admin", "manager"] },
   { href: "/dashboard/documents",   label: "المستندات والتراخيص", icon: "📁", section: "docs", visibleTo: ["admin", "manager"] },
+  { href: "/dashboard/memo-studio", label: "مولّد المستندات الرسمية", icon: "✒️", section: "docs", visibleTo: ["admin", "manager"] },
   { href: "/dashboard/forms",       label: "النماذج",            icon: "📄", section: "docs" },
   { href: "/dashboard/signatures",  label: "التوقيع الإلكتروني", icon: "✍", section: "docs", feature: "employees" },
   { href: "/dashboard/compliance",  label: "دليل الامتثال",      icon: "🏛", section: "docs" },
