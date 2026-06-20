@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import { SupportChat } from "@/components/support-chat";
+import { GuideCompanion } from "@/components/guide-companion";
 import { getMyFeatureOverrides } from "@/lib/subscriptions-server";
 import type { Plan } from "@/lib/subscriptions";
 
@@ -123,6 +124,9 @@ export default async function DashboardLayout({
       {/* المساعد الفني الفوري — floating on every dashboard page so users
           solve setup/usage problems themselves instead of contacting us. */}
       <SupportChat />
+      {/* نِظّوم — proactive page-by-page onboarding guide (scripted, no keys,
+          never fails). Sits bottom-left so it never collides with SupportChat. */}
+      <GuideCompanion />
     </div>
   );
 }
