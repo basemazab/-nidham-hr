@@ -91,6 +91,16 @@ const TOOL_LABELS: Record<string, { running: string; done: string; icon: string 
     done: "تم قفل المرتبات",
     icon: "💰",
   },
+  create_job_posting: {
+    running: "بينشئ وينشر الوظيفة",
+    done: "تم نشر الوظيفة",
+    icon: "📢",
+  },
+  publish_job_to_facebook_page: {
+    running: "بينشر على فيسبوك",
+    done: "اتنشر على فيسبوك",
+    icon: "📘",
+  },
 };
 
 // AI SDK 6.x ToolUIPart — discriminated by `type: 'tool-<name>'` and
@@ -310,6 +320,63 @@ function ToolOutputSummary({
           اضغط لفتح صفحة التوصيات →
         </div>
       </a>
+    );
+  }
+
+  if (toolName === "create_job_posting" && o.ok === true && !o.preview) {
+    const applyUrl = String(o.apply_url ?? "");
+    const manageUrl = String(o.manage_url ?? "");
+    const share = (o.share_links ?? {}) as {
+      facebook_groups?: string;
+      linkedin?: string;
+      whatsapp?: string;
+    };
+    return (
+      <div className="mt-2 p-3 rounded-xl bg-gradient-to-r from-emerald-50 to-cyan-50 border border-emerald-200 font-cairo">
+        <div className="text-[11px] text-emerald-700 font-bold mb-1">
+          ✅ الوظيفة اتنشرت — جاهزة لاستقبال المتقدمين
+        </div>
+        {applyUrl && (
+          <a
+            href={applyUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block text-xs text-brand-cyan-dark font-bold underline break-all mb-2"
+          >
+            {applyUrl}
+          </a>
+        )}
+        <div className="flex flex-wrap gap-1.5">
+          {share.whatsapp && (
+            <a href={share.whatsapp} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-[11px] font-bold">
+              واتساب
+            </a>
+          )}
+          {share.facebook_groups && (
+            <a href={share.facebook_groups} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 rounded-lg bg-blue-600 text-white text-[11px] font-bold">
+              فيسبوك
+            </a>
+          )}
+          {share.linkedin && (
+            <a href={share.linkedin} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 rounded-lg bg-sky-700 text-white text-[11px] font-bold">
+              لينكدإن
+            </a>
+          )}
+          {manageUrl && (
+            <a href={manageUrl} className="px-2.5 py-1 rounded-lg border border-slate-300 text-slate-700 text-[11px] font-bold">
+              إدارة الوظيفة
+            </a>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (toolName === "publish_job_to_facebook_page" && o.ok === true && !o.preview) {
+    return (
+      <div className="mt-2 text-[11px] text-emerald-700 font-cairo font-bold">
+        ✅ اتنشر بوست على صفحة الفيسبوك المربوطة
+      </div>
     );
   }
 
