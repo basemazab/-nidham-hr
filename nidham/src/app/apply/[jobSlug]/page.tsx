@@ -32,6 +32,15 @@ const JOB_TYPE_LABELS: Record<string, string> = {
   remote: "Remote",
 };
 
+// Page background themes — keyed to the job's ad theme so the apply page
+// matches the colourful share image. Full class strings (literals) so Tailwind
+// compiles them. "light" maps to navy here to keep the dark form readable.
+const PAGE_THEMES: Record<string, { bgClass: string; accent: string }> = {
+  navy: { bgClass: "from-[#0a0f1a] via-[#0d1525] to-[#111b30]", accent: "#c9a84c" },
+  emerald: { bgClass: "from-[#04231b] via-[#06281f] to-[#0a3528]", accent: "#34d399" },
+  royal: { bgClass: "from-[#161338] via-[#1e1b4b] to-[#241f57]", accent: "#a78bfa" },
+};
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { jobSlug } = await params;
   const supabase = createPublicClient();
@@ -124,18 +133,28 @@ export default async function ApplyPage({ params }: PageProps) {
 
   const questions = Array.isArray(job.application_form) ? job.application_form : [];
 
+  // Match the page vibe to the job's ad theme (same deterministic slug hash as
+  // the OG image) — the colourful ad lands on a colour-matched page.
+  const themeKeys = ["navy", "emerald", "royal", "light"];
+  const ogTheme =
+    themeKeys[
+      Array.from(jobSlug).reduce((a, ch) => a + ch.charCodeAt(0), 0) % themeKeys.length
+    ];
+  const theme = PAGE_THEMES[ogTheme] ?? PAGE_THEMES.navy;
+  const patternImage = [30, 150, 30, 150]
+    .map(
+      (deg) =>
+        `linear-gradient(${deg}deg, ${theme.accent} 12%, transparent 12.5%, transparent 87%, ${theme.accent} 87.5%)`,
+    )
+    .join(",");
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0a0f1a] via-[#0d1525] to-[#111b30] relative overflow-hidden">
+    <div className={`min-h-screen bg-gradient-to-br ${theme.bgClass} relative overflow-hidden`}>
       {/* Geometric pattern overlay */}
       <div
         className="absolute inset-0 opacity-[0.03] pointer-events-none"
         style={{
-          backgroundImage: `
-            linear-gradient(30deg, #c9a84c 12%, transparent 12.5%, transparent 87%, #c9a84c 87.5%),
-            linear-gradient(150deg, #c9a84c 12%, transparent 12.5%, transparent 87%, #c9a84c 87.5%),
-            linear-gradient(30deg, #c9a84c 12%, transparent 12.5%, transparent 87%, #c9a84c 87.5%),
-            linear-gradient(150deg, #c9a84c 12%, transparent 12.5%, transparent 87%, #c9a84c 87.5%)
-          `,
+          backgroundImage: patternImage,
           backgroundSize: "80px 140px",
           backgroundPosition: "0 0, 0 0, 40px 70px, 40px 70px",
         }}
@@ -144,8 +163,18 @@ export default async function ApplyPage({ params }: PageProps) {
       <div className="relative z-10 max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         {/* Header */}
         <div className="text-center mb-8 sm:mb-12">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#c9a84c]/30 bg-[#c9a84c]/5 text-[#c9a84c] text-xs font-cairo mb-4">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#c9a84c] animate-pulse" />
+          <div
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border text-xs font-cairo mb-4"
+            style={{
+              borderColor: `${theme.accent}4d`,
+              backgroundColor: `${theme.accent}0d`,
+              color: theme.accent,
+            }}
+          >
+            <span
+              className="w-1.5 h-1.5 rounded-full animate-pulse"
+              style={{ backgroundColor: theme.accent }}
+            />
             Powered by نِظام HR
           </div>
 
@@ -153,7 +182,7 @@ export default async function ApplyPage({ params }: PageProps) {
             {job.title}
           </h1>
 
-          <p className="text-[#c9a84c]/80 text-base sm:text-lg font-cairo mb-4">
+          <p className="text-base sm:text-lg font-cairo mb-4" style={{ color: `${theme.accent}cc` }}>
             {company?.name}
           </p>
 
