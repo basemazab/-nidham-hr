@@ -44,7 +44,8 @@ type Application = {
   interview_at: string | null;
   applied_at: string;
 
-  jobs: { title: string; department: string | null } | null;
+  answers: Record<string, string> | null;
+  jobs: { title: string; department: string | null; application_form: unknown } | null;
   candidates: {
     full_name: string;
     email: string | null;
@@ -82,7 +83,7 @@ export default async function ApplicationDetailPage({ params }: PageProps) {
     .from("applications")
     .select(
       `*,
-       jobs(title, department),
+       jobs(title, department, application_form),
        candidates(full_name, email, phone, linkedin_url, current_title, current_company, years_experience, location, expected_salary)`,
     )
     .eq("id", appId)
@@ -92,6 +93,13 @@ export default async function ApplicationDetailPage({ params }: PageProps) {
 
   const cand = app.candidates;
   const job = app.jobs;
+  // The candidate's answers to the job's custom questions — stored but, until
+  // now, never shown. Map answer keys → question labels via application_form.
+  const appQuestions: { id: string; label: string }[] = Array.isArray(job?.application_form)
+    ? (job!.application_form as { id: string; label: string }[])
+    : [];
+  const candAnswers = app.answers ?? {};
+  const answered = appQuestions.filter((q) => (candAnswers[q.id] ?? "").toString().trim());
   const here = `/dashboard/jobs/${id}/applications/${appId}`;
 
   const rerunAction = async () => {
@@ -197,6 +205,25 @@ export default async function ApplicationDetailPage({ params }: PageProps) {
             </div>
           </div>
         </div>
+
+        {/* Candidate's own answers to the job's custom questions */}
+        {answered.length > 0 && (
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mb-6">
+            <h2 className="text-base font-bold text-slate-800 mb-4 font-cairo flex items-center gap-2">
+              📋 إجابات المتقدم على أسئلة الوظيفة
+            </h2>
+            <div className="space-y-4">
+              {answered.map((q) => (
+                <div key={q.id} className="border-b border-slate-100 pb-3 last:border-0 last:pb-0">
+                  <div className="text-sm font-bold text-slate-700 font-cairo mb-1">{q.label}</div>
+                  <div className="text-sm text-slate-600 font-cairo whitespace-pre-wrap leading-relaxed">
+                    {candAnswers[q.id]}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* AI Error State */}
         {app.ai_error && !app.ai_recommendation && (

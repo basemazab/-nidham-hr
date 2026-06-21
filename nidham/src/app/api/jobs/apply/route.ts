@@ -3,6 +3,19 @@ import type { NextRequest } from "next/server";
 
 export const maxDuration = 60;
 
+// Strip NUL + other C0/DEL control characters (keep tab/LF/CR). PDF text
+// extraction can leak binary noise that Postgres jsonb/text refuse with
+// "unsupported Unicode escape sequence" on insert. Implemented by char code so
+// the source carries no binary escape sequences.
+function stripCtrl(s: string): string {
+  let out = "";
+  for (let i = 0; i < s.length; i += 1) {
+    const c = s.charCodeAt(i);
+    if (c === 9 || c === 10 || c === 13 || (c >= 32 && c !== 127)) out += s[i];
+  }
+  return out;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
@@ -38,22 +51,30 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Clean everything that lands in the DB (jsonb + text columns).
+    const cvClean = cvText ? stripCtrl(cvText).trim() || null : null;
+    const coverClean = coverMessage ? stripCtrl(coverMessage).trim() || null : null;
+    const answersClean: Record<string, string> = {};
+    for (const [k, v] of Object.entries(answers)) {
+      answersClean[k] = stripCtrl(String(v ?? ""));
+    }
+
     const supabase = createPublicClient();
 
     const { data: appId, error: rpcErr } = await supabase.rpc(
       "submit_public_application",
       {
         p_job_slug: jobSlug,
-        p_full_name: fullName,
-        p_email: email,
-        p_phone: phone,
+        p_full_name: stripCtrl(fullName).trim(),
+        p_email: stripCtrl(email).trim(),
+        p_phone: stripCtrl(phone).trim(),
         p_current_title: null,
-        p_location: city || null,
+        p_location: stripCtrl(city).trim() || null,
         p_years_experience: null,
-        p_cv_text: cvText,
+        p_cv_text: cvClean,
         p_cv_pdf_url: null,
-        p_cover_letter: coverMessage || null,
-        p_answers: answers,
+        p_cover_letter: coverClean,
+        p_answers: answersClean,
       },
     );
 
