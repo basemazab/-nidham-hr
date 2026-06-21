@@ -120,6 +120,34 @@ const FORMS: FormCard[] = [
     category: "internal",
   },
   {
+    href: "/dashboard/forms/warning-letter",
+    title: "إنذار / لفت نظر",
+    description: "إنذار رسمي لموظف — نوع المخالفة + الإجراء + توقيعات الاعتماد",
+    icon: "⚠️",
+    category: "internal",
+  },
+  {
+    href: "/dashboard/forms/leave-request",
+    title: "طلب إجازة",
+    description: "النوع، المدة، الرصيد، البديل — مع اعتماد المدير والموارد البشرية",
+    icon: "🌴",
+    category: "internal",
+  },
+  {
+    href: "/dashboard/forms/advance-request",
+    title: "طلب سلفة",
+    description: "المبلغ، الأقساط، وإقرار الخصم — مع اعتمادات المدير والموارد والمالية",
+    icon: "💵",
+    category: "internal",
+  },
+  {
+    href: "/dashboard/forms/custody-receipt",
+    title: "إقرار استلام عهدة",
+    description: "تسليم عهدة للموظف — جدول الأصناف + تعهّد بالمحافظة والرد",
+    icon: "📦",
+    category: "internal",
+  },
+  {
     href: "/dashboard/forms/job-application-admin",
     title: "طلب توظيف — وظائف إدارية",
     description: "للوظائف المكتبية: مؤهلات، خبرات سابقة، مهارات لغات وحاسب",
@@ -228,9 +256,9 @@ export default async function FormsHubPage({
             نماذج الموارد البشرية
           </h1>
           <p className="text-sm text-slate-500 font-cairo leading-relaxed max-w-2xl">
-            ٩ نماذج رسمية احترافية — ٨ جاهزة للطباعة + المولّد الذكي اللي بيكتب
-            المستندات بالذكاء الاصطناعي تلقائياً. اختار نموذج وحمّله PDF أو
-            اطبعه مباشرة.
+            {FORMS.length} نموذج رسمي احترافي — جاهزة للطباعة + المولّد الذكي اللي
+            بيكتب المستندات بالـAI. اختار نموذج، عدّل عليه لو حابب بزر «تعديل»،
+            وحمّله PDF أو اطبعه. شعار شركتك بيظهر في ترويسة الكل.
           </p>
         </header>
 
