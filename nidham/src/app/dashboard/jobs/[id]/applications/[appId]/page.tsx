@@ -99,7 +99,15 @@ export default async function ApplicationDetailPage({ params }: PageProps) {
     ? (job!.application_form as { id: string; label: string }[])
     : [];
   const candAnswers = app.answers ?? {};
-  const answered = appQuestions.filter((q) => (candAnswers[q.id] ?? "").toString().trim());
+  // Show EVERY answer the candidate gave — map to its question label when we
+  // can, otherwise show it anyway (jobs created via the AI agent store no
+  // question list, so we must NOT depend on a label match to display data).
+  const answerEntries = Object.entries(candAnswers)
+    .filter(([, v]) => (v ?? "").toString().trim())
+    .map(([id, v]) => ({
+      label: appQuestions.find((q) => q.id === id)?.label ?? "إجابة إضافية",
+      value: String(v),
+    }));
   const here = `/dashboard/jobs/${id}/applications/${appId}`;
 
   const rerunAction = async () => {
@@ -207,17 +215,17 @@ export default async function ApplicationDetailPage({ params }: PageProps) {
         </div>
 
         {/* Candidate's own answers to the job's custom questions */}
-        {answered.length > 0 && (
+        {answerEntries.length > 0 && (
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mb-6">
             <h2 className="text-base font-bold text-slate-800 mb-4 font-cairo flex items-center gap-2">
               📋 إجابات المتقدم على أسئلة الوظيفة
             </h2>
             <div className="space-y-4">
-              {answered.map((q) => (
-                <div key={q.id} className="border-b border-slate-100 pb-3 last:border-0 last:pb-0">
-                  <div className="text-sm font-bold text-slate-700 font-cairo mb-1">{q.label}</div>
+              {answerEntries.map((a, i) => (
+                <div key={i} className="border-b border-slate-100 pb-3 last:border-0 last:pb-0">
+                  <div className="text-sm font-bold text-slate-700 font-cairo mb-1">{a.label}</div>
                   <div className="text-sm text-slate-600 font-cairo whitespace-pre-wrap leading-relaxed">
-                    {candAnswers[q.id]}
+                    {a.value}
                   </div>
                 </div>
               ))}
@@ -407,23 +415,31 @@ export default async function ApplicationDetailPage({ params }: PageProps) {
         </div>
 
         {/* CV text + cover letter (collapsed) */}
-        <details className="bg-white rounded-2xl shadow-sm border border-slate-100 mb-6">
+        <details open className="bg-white rounded-2xl shadow-sm border border-slate-100 mb-6">
           <summary className="px-6 py-4 cursor-pointer font-bold font-cairo text-slate-800 hover:bg-slate-50 transition">
-            📄 عرض الـ CV الأصلي
+            📄 السيرة الذاتية ورسالة التقديم
           </summary>
           <div className="px-6 pb-6 space-y-4">
-            {app.cv_text && (
-              <pre className="whitespace-pre-wrap text-xs text-slate-700 leading-relaxed font-mono bg-slate-50 p-4 rounded-lg border border-slate-100">
-                {app.cv_text}
-              </pre>
-            )}
             {app.cover_letter && (
               <div>
-                <h4 className="font-bold text-slate-800 mb-2 font-cairo">خطاب التقديم</h4>
+                <h4 className="font-bold text-slate-800 mb-2 font-cairo">رسالة التقديم</h4>
                 <p className="whitespace-pre-wrap text-sm text-slate-700 font-cairo leading-relaxed bg-slate-50 p-4 rounded-lg border border-slate-100">
                   {app.cover_letter}
                 </p>
               </div>
+            )}
+            {app.cv_text && (
+              <div>
+                <h4 className="font-bold text-slate-800 mb-2 font-cairo">نص السيرة الذاتية</h4>
+                <pre className="whitespace-pre-wrap text-xs text-slate-700 leading-relaxed font-mono bg-slate-50 p-4 rounded-lg border border-slate-100">
+                  {app.cv_text}
+                </pre>
+              </div>
+            )}
+            {!app.cv_text && !app.cover_letter && (
+              <p className="text-sm text-slate-400 font-cairo">
+                المتقدم لم يرفق سيرة ذاتية أو رسالة تقديم.
+              </p>
             )}
           </div>
         </details>
