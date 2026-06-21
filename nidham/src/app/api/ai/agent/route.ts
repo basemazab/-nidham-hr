@@ -37,7 +37,7 @@ import {
   type EmployeeSignals,
   monthsBetween,
 } from "@/lib/retention";
-import { pickAgentModelLargeContext } from "@/lib/ai-models";
+import { pickAgentModel, pickAgentModelLargeContext } from "@/lib/ai-models";
 import { searchKnowledgeBase } from "@/lib/ai/memory";
 import { publishPagePost } from "@/lib/marketing-inbox/meta-client";
 import { publishLinkedInPost } from "@/lib/linkedin";
@@ -2506,18 +2506,19 @@ export async function POST(req: Request) {
   };
 
   // --------------------------------------------------------------------
-  // Stream the response — uses pickAgentModelLargeContext() which prefers
-  // Gemini Flash for the agent route because:
-  //   - File uploads dump 5-12k tokens of JSON into the message thread
-  //   - Tool calls + multi-turn confirmations stack history quickly
-  //   - The system prompt is large (~3k tokens of Arabic + tool docs)
-  // Groq's free tier caps gpt-oss-120b at 8k TPM per request, which 80-
-  // employee imports routinely exceed. Gemini's per-request budget is
-  // 1M+ tokens, so it's the safer default for tool-calling agents.
-  // For Marketing Studio etc. (small requests, latency matters more)
-  // the regular pickAgentModel() still picks Groq first.
+  // Pick the model by REQUEST SIZE so everyday chats stay reliable:
+  //   - Normal turns → pickAgentModel() = Groq gpt-oss-120b first. Groq's
+  //     free tier is 30 RPM (generous), so the assistant doesn't die mid-
+  //     conversation the way Gemini's tiny free-tier request quota does
+  //     (the "exceeded quota / limit: 20" failures users were hitting).
+  //   - Large turns (a file upload dumps 5-12k tokens of JSON, or a very
+  //     long thread) → pickAgentModelLargeContext() = Gemini first, which
+  //     has the per-request token headroom Groq's free tier lacks.
+  // Best of both: reliable everyday chat + capacity for big imports.
   // --------------------------------------------------------------------
-  const picked = pickAgentModelLargeContext();
+  const convoBlob = JSON.stringify(messages);
+  const isLargeRequest = convoBlob.length > 18000 || convoBlob.includes("📎 [ملف");
+  const picked = isLargeRequest ? pickAgentModelLargeContext() : pickAgentModel();
 
   const result = streamText({
     model: picked.model,
