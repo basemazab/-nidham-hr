@@ -8,7 +8,7 @@
 // resilient 4-model fallback chain and returns one complete reply — a dead
 // stream spinner is worse UX than a 3-8s full answer.
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, Component, type ReactNode } from "react";
 
 type ChatMsg = { role: "user" | "assistant"; text: string };
 
@@ -19,7 +19,7 @@ const SUGGESTIONS = [
   "عايز أقفل مرتبات الشهر — أعمل إيه؟",
 ];
 
-export function SupportChat() {
+function SupportChatInner() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [input, setInput] = useState("");
@@ -31,6 +31,43 @@ export function SupportChat() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, busy]);
 
+  async function runChat(history: ChatMsg[]) {
+    setBusy(true);
+    // Abort a hung request after 45s instead of spinning forever.
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 45000);
+    try {
+      const res = await fetch("/api/ai/support", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: history.slice(-10).map((m) => ({ role: m.role, content: m.text })),
+        }),
+        signal: controller.signal,
+      });
+      const json = (await res.json().catch(() => null)) as {
+        ok?: boolean;
+        reply?: string;
+        error?: string;
+      } | null;
+      if (res.ok && json?.ok && json.reply) {
+        setMessages((cur) => [...cur, { role: "assistant", text: json.reply! }]);
+      } else {
+        setError(json?.error || "حصلت مشكلة مؤقتة — جرّب تاني.");
+      }
+    } catch (e) {
+      const aborted = e instanceof Error && e.name === "AbortError";
+      setError(
+        aborted
+          ? "المساعد أخد وقت أطول من المتوقع — جرّب تاني."
+          : "مشكلة في الاتصال — جرّب تاني.",
+      );
+    } finally {
+      clearTimeout(timer);
+      setBusy(false);
+    }
+  }
+
   async function send(text: string) {
     const t = text.trim();
     if (!t || busy) return;
@@ -38,30 +75,15 @@ export function SupportChat() {
     setInput("");
     const next: ChatMsg[] = [...messages, { role: "user", text: t }];
     setMessages(next);
-    setBusy(true);
-    try {
-      const res = await fetch("/api/ai/support", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: next.slice(-10).map((m) => ({ role: m.role, content: m.text })),
-        }),
-      });
-      const json = (await res.json()) as {
-        ok?: boolean;
-        reply?: string;
-        error?: string;
-      };
-      if (res.ok && json.ok && json.reply) {
-        setMessages((cur) => [...cur, { role: "assistant", text: json.reply! }]);
-      } else {
-        setError(json.error || "حصلت مشكلة مؤقتة — جرّب تاني.");
-      }
-    } catch {
-      setError("مشكلة في الاتصال — جرّب تاني.");
-    } finally {
-      setBusy(false);
-    }
+    await runChat(next);
+  }
+
+  // Re-run the last turn after a failure — the user message is still the last
+  // item in the thread, so this adds no duplicate.
+  function retry() {
+    if (busy || messages.length === 0) return;
+    setError("");
+    void runChat(messages);
   }
 
   return (
@@ -133,8 +155,18 @@ export function SupportChat() {
               </div>
             )}
             {error && (
-              <div className="text-xs text-rose-600 font-cairo bg-rose-50 border border-rose-200 rounded-lg p-2">
-                ⚠️ {error}
+              <div className="text-xs text-rose-600 font-cairo bg-rose-50 border border-rose-200 rounded-lg p-2 flex items-center justify-between gap-2">
+                <span>⚠️ {error}</span>
+                {messages.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={retry}
+                    disabled={busy}
+                    className="px-2.5 py-1 rounded-lg bg-rose-600 text-white font-bold whitespace-nowrap disabled:opacity-50"
+                  >
+                    🔄 جرّب تاني
+                  </button>
+                )}
               </div>
             )}
             <div ref={bottomRef} />
@@ -165,5 +197,28 @@ export function SupportChat() {
         </div>
       )}
     </>
+  );
+}
+
+// Error boundary — the support widget must never crash the page it floats on.
+class SupportBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { failed: false };
+  }
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+  componentDidCatch() {}
+  render() {
+    return this.state.failed ? null : this.props.children;
+  }
+}
+
+export function SupportChat() {
+  return (
+    <SupportBoundary>
+      <SupportChatInner />
+    </SupportBoundary>
   );
 }

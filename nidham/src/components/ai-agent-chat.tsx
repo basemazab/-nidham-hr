@@ -18,7 +18,7 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, Component, type ReactNode } from "react";
 import type { UIMessage } from "ai";
 
 // Suggested prompts in a fresh chat. Mix of pure-Q&A (left to the
@@ -348,7 +348,7 @@ type ParsedFile = {
   text_summary?: string | null;
 };
 
-export function AIAgentChat() {
+function AIAgentChatInner() {
   const [input, setInput] = useState("");
   const [attached, setAttached] = useState<ParsedFile | null>(null);
   const [fileBusy, setFileBusy] = useState(false);
@@ -464,6 +464,19 @@ export function AIAgentChat() {
     sendMessage({ text: q });
   };
 
+  // Resend the last user message after a failure/cut-off. The whole
+  // conversation is kept in state, so the user just taps "retry" instead of
+  // re-typing — the assistant never strands them on a dead turn.
+  const retryLast = () => {
+    const lastUser = [...messages].reverse().find((m) => m.role === "user");
+    if (!lastUser) return;
+    const text = lastUser.parts
+      .map((p) => (p.type === "text" && "text" in p ? (p as { text: string }).text : ""))
+      .join("")
+      .trim();
+    if (text) sendMessage({ text });
+  };
+
   const isLoading = status === "submitted" || status === "streaming";
 
   return (
@@ -556,10 +569,17 @@ export function AIAgentChat() {
         )}
       </div>
 
-      {/* Error */}
+      {/* Error — friendly + one-tap retry; the conversation stays intact */}
       {error && (
-        <div className="px-4 py-2 bg-red-50 border-t border-red-200 text-red-700 text-xs font-cairo">
-          ⚠ {error.message}
+        <div className="px-4 py-3 bg-amber-50 border-t border-amber-200 text-amber-800 text-xs font-cairo flex items-center justify-between gap-3">
+          <span>⚠ حصل ضغط مؤقت على المساعد — محادثتك محفوظة، اضغط «جرّب تاني».</span>
+          <button
+            type="button"
+            onClick={retryLast}
+            className="px-3 py-1.5 rounded-lg bg-amber-600 text-white font-bold whitespace-nowrap hover:bg-amber-700 transition"
+          >
+            🔄 جرّب تاني
+          </button>
         </div>
       )}
 
@@ -673,6 +693,47 @@ export function AIAgentChat() {
         </button>
       </form>
     </div>
+  );
+}
+
+// ----------------------------------------------------------------------------
+// Error boundary — a render error in the agent chat must NEVER take the page
+// down. Falls back to a friendly recover card instead of a white screen.
+// ----------------------------------------------------------------------------
+class ChatErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { failed: false };
+  }
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+  componentDidCatch() {}
+  render() {
+    if (this.state.failed) {
+      return (
+        <div className="p-8 text-center font-cairo text-sm text-slate-600 bg-white rounded-2xl border border-slate-100">
+          😅 حصلت مشكلة مؤقتة في المساعد —{" "}
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="text-brand-cyan-dark font-bold underline"
+          >
+            حدّث الصفحة
+          </button>{" "}
+          وكمّل، محادثتك مش هتأثر على بياناتك.
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+export function AIAgentChat() {
+  return (
+    <ChatErrorBoundary>
+      <AIAgentChatInner />
+    </ChatErrorBoundary>
   );
 }
 
