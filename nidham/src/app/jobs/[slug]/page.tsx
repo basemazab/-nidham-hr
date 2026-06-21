@@ -49,20 +49,52 @@ export async function generateMetadata({ params }: PageProps) {
   const supabase = createPublicClient();
   const { data: job } = await supabase
     .from("public_jobs")
-    .select("title, department, location")
+    .select("title, department, location, salary_min, salary_max, job_type, company_id")
     .eq("slug", slug)
-    .single<{ title: string; department: string | null; location: string | null }>();
+    .single<{
+      title: string;
+      department: string | null;
+      location: string | null;
+      salary_min: number | null;
+      salary_max: number | null;
+      job_type: string | null;
+      company_id: string | null;
+    }>();
 
   if (!job) return { title: "وظيفة — نِظام" };
+
+  // Company name for the ad's brand row (best-effort).
+  let companyName = "";
+  if (job.company_id) {
+    const { data: c } = await supabase
+      .from("companies")
+      .select("name")
+      .eq("id", job.company_id)
+      .single<{ name: string }>();
+    companyName = c?.name ?? "";
+  }
+
   const parts = [job.title, job.department, job.location].filter(Boolean);
-  const encodedTitle = encodeURIComponent(job.title);
   const h = await headers();
   const origin = h.get("x-forwarded-host") || h.get("host") || "nidhamhr.com";
   const protocol = process.env.NODE_ENV === "development" ? "http" : "https";
   const base = `${protocol}://${origin}`;
-  // v=2 busts Facebook's per-URL image cache: the scraper permanently flagged
-  // the OLD url "corrupted" back when this endpoint returned an SVG.
-  const ogUrl = `${base}/api/og?title=${encodedTitle}&v=2`;
+
+  // Deterministic theme per job (hash the slug) → the set of ads looks varied
+  // and professional without any per-job storage.
+  const themeKeys = ["navy", "emerald", "royal", "light"];
+  const themeIdx =
+    Array.from(slug).reduce((a, ch) => a + ch.charCodeAt(0), 0) % themeKeys.length;
+  const salaryLabel = formatEGPRange(job.salary_min, job.salary_max);
+  const typeLabel = job.job_type ? (JOB_TYPE_LABELS[job.job_type] ?? null) : null;
+
+  // v=3 busts the scraper's per-URL image cache (the ad design changed).
+  const og = new URLSearchParams({ title: job.title, theme: themeKeys[themeIdx], v: "3" });
+  if (companyName) og.set("company", companyName);
+  if (salaryLabel) og.set("salary", salaryLabel);
+  if (job.location) og.set("location", job.location);
+  if (typeLabel) og.set("type", typeLabel);
+  const ogUrl = `${base}/api/og?${og.toString()}`;
   return {
     title: `${parts.join(" · ")} — نِظام`,
     description: `قدم على وظيفة ${job.title} من خلال منصة نِظام`,
