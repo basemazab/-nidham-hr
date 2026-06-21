@@ -16,6 +16,7 @@
 // shell itself never appears in the print output. Marked "use client"
 // because the print button uses window.print().
 
+import { useState } from "react";
 import Link from "next/link";
 import { DownloadPdfButton } from "@/components/download-pdf-button";
 
@@ -41,6 +42,10 @@ export function FormShell({
   preFilledFor,
   children,
 }: Props) {
+  // Lets HR click into the printed page and add/edit anything before printing.
+  // contentEditable is DOM-level, so it works for every form with zero per-form
+  // wiring; edits are captured by the print/PDF output.
+  const [editing, setEditing] = useState(false);
   return (
     <>
       {/* Print-only CSS. Applied to the document so the page itself
@@ -102,6 +107,17 @@ export function FormShell({
               )}
               <button
                 type="button"
+                onClick={() => setEditing((e) => !e)}
+                className={`px-4 py-2 rounded-xl border font-bold text-sm font-cairo transition no-print ${
+                  editing
+                    ? "bg-brand-cyan text-white border-brand-cyan"
+                    : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+                }`}
+              >
+                {editing ? "✓ تم التعديل" : "✏️ تعديل النموذج"}
+              </button>
+              <button
+                type="button"
                 onClick={() => window.print()}
                 className="px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 font-bold text-sm font-cairo transition no-print"
               >
@@ -120,12 +136,24 @@ export function FormShell({
               ✦ تم تعبئة النموذج تلقائياً ببيانات: {preFilledFor}
             </div>
           )}
+
+          {editing && (
+            <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-cyan-50 border border-cyan-200 text-brand-cyan-dark text-xs font-bold font-cairo">
+              ✏️ دوس على أي مكان في النموذج واكتب أو عدّل — تعديلاتك بتظهر في الطباعة والـPDF.
+            </div>
+          )}
         </div>
 
         {/* The actual printable A4 page */}
         <article
           id="nidham-form"
-          className="form-page shadow-2xl border border-slate-200 rounded-sm print:shadow-none print:border-0"
+          contentEditable={editing}
+          suppressContentEditableWarning
+          className={`form-page shadow-2xl rounded-sm border print:shadow-none print:border-0 ${
+            editing
+              ? "border-brand-cyan ring-2 ring-brand-cyan/40 outline-none"
+              : "border-slate-200"
+          }`}
         >
           {children}
         </article>

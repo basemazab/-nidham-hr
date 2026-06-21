@@ -404,52 +404,290 @@ export function pageReplyText(p: GuidePage): string {
   return `${p.icon} ${p.title}\n${p.what}\n\n${steps}${tip}`;
 }
 
+// ── Task how-tos: accurate, CODE-GROUNDED step-by-steps for "عايز أعمل كذا".
+// These are hand-written from the real flows so نِظّوم never hallucinates. ──
+export type GuideTask = {
+  keys: string[];
+  title: string;
+  steps: string[];
+  goto?: string;
+  note?: string;
+};
+
+export const TASKS: GuideTask[] = [
+  {
+    keys: ["اربط البصمه", "ربط البصمه", "ربط الجهاز", "اربط جهاز", "ربط جهاز", "جهاز بصمه", "zkteco", "اوصل البصمه", "الحضور التلقائي", "اضيف جهاز بصمه"],
+    title: "ربط جهاز البصمة",
+    steps: [
+      "روح: الإعدادات ← أجهزة البصمة.",
+      "سجّل الجهاز: اسمه + الرقم التسلسلي (SN) — تلاقيه في قائمة الجهاز: System Info ← SN.",
+      "في الجهاز نفسه: Comm ← Cloud Server Setup (أو ADMS) واكتب: Server = nidhamhr.com · Port = 443 · Domain/HTTPS = ON · Path = /iclock.",
+      "اعمل Restart للجهاز — أول ما يتصل يظهر «آخر اتصال»، وأول بصمة «آخر استلام».",
+      "جهازك مش ZKTeco؟ صدّر ملف الحضور Excel/CSV من برنامجه واستورده من «استيراد الحضور» — بيتقرأ أي تنسيق.",
+    ],
+    goto: "/dashboard/settings/devices",
+    note: "مهم جدًا: رقم الموظف على الجهاز (Enroll ID) لازم يساوي «كود الموظف» في النظام — وإلا مش هيعرف البصمة بتاعة مين.",
+  },
+  {
+    keys: ["اضيف موظف", "اضافه موظف", "موظف جديد", "ادخل موظف", "اضيف حد", "تعيين موظف"],
+    title: "إضافة موظف جديد",
+    steps: [
+      "روح: الموظفين.",
+      "اضغط ➕ «إضافة موظف» واملأ بياناته (شخصية، مرتب، تأمينات، بنك).",
+      "أو لو عددهم كبير: استورد كلهم دفعة من Excel/CSV.",
+      "حدّد «كود الموظف» بحيث يطابق رقمه على جهاز البصمة عشان الحضور يتربط تلقائي.",
+    ],
+    goto: "/dashboard/employees",
+  },
+  {
+    keys: ["استيراد موظفين", "رفع موظفين", "موظفين من excel", "اضيف موظفين كتير"],
+    title: "استيراد الموظفين من Excel",
+    steps: [
+      "روح: الموظفين ← استيراد.",
+      "ارفع ملف Excel/CSV ببيانات الموظفين.",
+      "راجع التطابق واعتمد — بيتضافوا دفعة واحدة.",
+    ],
+    goto: "/dashboard/employees",
+  },
+  {
+    keys: ["اعمل مرتبات", "عمل مرتبات", "كشف مرتب", "اطلع المرتبات", "مرتبات الشهر", "اعمل مرتب", "صرف المرتبات", "احسب المرتبات"],
+    title: "عمل كشف مرتبات لشهر",
+    steps: [
+      "الأول اعتمد حضور الشهر من «مراجعة الحضور».",
+      "روح: المرتبات ← اعمل دورة مرتب جديدة للشهر (بتحدد أيام العمل).",
+      "افتح الدورة — النظام بيحسب لكل موظف: الأساسي + البدلات − التأمينات − الضرائب ± تعديلات الحضور والأوفرتايم.",
+      "راجع الأرقام وعدّل أي بند، وبعدين «اعتمد» الدورة.",
+      "سجّل الدفع (تبقى «مدفوعة») واطبع قسيمة مرتب لكل موظف.",
+    ],
+    goto: "/dashboard/payroll",
+    note: "اعتماد الحضور قبل الدورة بيضمن إن الخصومات والأوفرتايم تتحسب صح تلقائي.",
+  },
+  {
+    keys: ["استيراد الحضور", "رفع الحضور", "ملف الحضور", "استورد بصمات", "ملف بصمه"],
+    title: "استيراد الحضور من ملف",
+    steps: [
+      "صدّر ملف الحضور (Excel/CSV) من برنامج جهاز البصمة.",
+      "روح: الحضور ← استيراد، وارفع الملف — الأعمدة بتتطابق تلقائي.",
+      "راجع النتيجة، وبعدها اعتمدها من «مراجعة الحضور».",
+    ],
+    goto: "/dashboard/attendance/import",
+  },
+  {
+    keys: ["اعتمد الحضور", "مراجعه الحضور", "راجع الحضور", "تعديل الحضور"],
+    title: "مراجعة واعتماد الحضور",
+    steps: [
+      "روح: الحضور ← مراجعة واعتماد.",
+      "راجع حضور/انصراف كل موظف وعدّل أي سجل غلط.",
+      "اعتمد — عشان المرتبات تاخد الأرقام الصح.",
+    ],
+    goto: "/dashboard/attendance/review",
+  },
+  {
+    keys: ["سلفه", "سلف", "اعمل سلفه", "اصرف سلفه", "قسط", "مقدم مرتب"],
+    title: "تسجيل سلفة لموظف",
+    steps: [
+      "روح: السلف والمرتجعات.",
+      "سجّل سلفة جديدة: الموظف، المبلغ، وعدد الأقساط.",
+      "القسط هيتخصم تلقائيًا من مرتبه كل شهر.",
+    ],
+    goto: "/dashboard/loans",
+  },
+  {
+    keys: ["نهايه الخدمه", "مكافاه", "حساب نهايه الخدمه", "مستحقات استقاله", "فصل موظف", "ترك الخدمه"],
+    title: "حساب مكافأة نهاية الخدمة",
+    steps: [
+      "روح: مكافأة نهاية الخدمة.",
+      "اختار الموظف وتاريخ ترك الخدمة وسببه.",
+      "النظام بيحسب المكافأة وباقي المستحقات بالقانون المصري.",
+    ],
+    goto: "/dashboard/eos-calculator",
+  },
+  {
+    keys: ["اكتب مذكره", "مذكره", "مستند رسمي", "خطاب رسمي", "صرف مستحقات", "اكتبلي مذكره"],
+    title: "كتابة مذكرة / مستند رسمي",
+    steps: [
+      "روح: مولّد المستندات الرسمية.",
+      "اكتب طلبك بالعامية (مثلاً: مذكرة لإدارة الحسابات بصرف مستحقات فلان).",
+      "اضغط «ولّد» — هيكتبها رسمية ويحسب أي مبالغ.",
+      "عدّل المعاينة لو حبيت، وحمّل PDF أو Excel.",
+    ],
+    goto: "/dashboard/memo-studio",
+    note: "ارفع شعار شركتك من «هوية الشركة» يظهر في ترويسة كل مذكرة.",
+  },
+  {
+    keys: ["شعار", "لوجو", "هويه الشركه", "ارفع شعار", "ترويسه"],
+    title: "رفع شعار الشركة",
+    steps: [
+      "روح: الإعدادات ← هوية الشركة.",
+      "ارفع صورة الشعار (PNG/JPG/SVG) — بيتصغّر تلقائي.",
+      "احفظ — هيظهر في ترويسة كل المستندات والنماذج.",
+    ],
+    goto: "/dashboard/settings/branding",
+  },
+  {
+    keys: ["اطبع عقد", "عقد عمل", "خطاب تعيين", "نموذج", "شهاده", "استماره", "اطبع نموذج", "فورم", "اطبع خطاب"],
+    title: "طباعة نموذج رسمي (عقد / خطاب / شهادة)",
+    steps: [
+      "روح: النماذج.",
+      "اختار النموذج المطلوب (عقد عمل، خطاب تعيين، شهادة…).",
+      "بيتعبّى تلقائي ببيانات شركتك — ولو فتحته من ملف موظف بيتعبّى ببياناته كمان.",
+      "تقدر تعدّل عليه بزر «تعديل»، وبعدها اطبع أو حمّل PDF.",
+    ],
+    goto: "/dashboard/forms",
+  },
+  {
+    keys: ["انشر وظيفه", "اعلان وظيفه", "توظيف", "وظيفه جديده", "استقبل متقدمين", "رابط تقديم"],
+    title: "نشر وظيفة واستقبال المتقدمين",
+    steps: [
+      "روح: الوظائف ← أنشئ وظيفة جديدة.",
+      "خلّيها «عامة/مفتوحة» وانشرها، وبعدها انسخ «رابط التقديم» وابعته.",
+      "المتقدمين بيوصلوا للنظام والـAI بيفرزهم ويرتّبهم بالـScore.",
+      "بيوصلك إشعار بكل متقدم جديد، يفتح صفحة الوظيفة بجدول المتقدمين.",
+    ],
+    goto: "/dashboard/jobs",
+  },
+  {
+    keys: ["حلل سيره ذاتيه", "فحص cv", "cv", "سيره ذاتيه", "افحص متقدم"],
+    title: "تحليل سيرة ذاتية بالـAI",
+    steps: [
+      "روح: تحليل السيرة الذاتية.",
+      "ارفع أو الصق السيرة الذاتية.",
+      "هتاخد تقييم + ملاحظات + مدى مناسبته للوظيفة.",
+    ],
+    goto: "/dashboard/jobs/cv-analyzer",
+  },
+  {
+    keys: ["اضيف عميل", "عميل جديد", "عملاء", "crm", "مبيعات"],
+    title: "إضافة عميل وإدارة المبيعات",
+    steps: [
+      "روح: العملاء.",
+      "أضف عميل وحدد حالته في خط الأنابيب (Pipeline).",
+      "سجّل تفاعلاتك معاه واربط عقوده.",
+    ],
+    goto: "/dashboard/customers",
+  },
+  {
+    keys: ["ادعو", "صلاحيه", "صلاحيات", "اضيف مدير", "اضيف مستخدم", "permission", "فريق العمل"],
+    title: "دعوة مستخدم / تحديد صلاحيات",
+    steps: [
+      "روح: الفريق والصلاحيات.",
+      "ادعُ زميل بإيميله وحدد صلاحيته (مدير/مشرف).",
+      "هيستلم دعوة يعمل بيها حساب.",
+    ],
+    goto: "/dashboard/team",
+    note: "الموظفين العاديين بيستخدموا تطبيق الموبايل مش لوحة التحكم.",
+  },
+  {
+    keys: ["عملاء محتملين", "واتساب", "تنقيب", "ابعت رساله", "outreach", "عملاء جدد"],
+    title: "التواصل مع عملاء محتملين عبر واتساب",
+    steps: [
+      "روح: العملاء المحتملين.",
+      "استورد عملاء أو ضيفهم.",
+      "اضغط زر واتساب جنب كل واحد — بتفتح المحادثة برسالة جاهزة (بتتغير لكل واحد).",
+    ],
+    goto: "/dashboard/outreach",
+  },
+  {
+    keys: ["امتثال", "غرامات", "مكتب العمل", "مخالفات", "درع الامتثال"],
+    title: "متابعة الامتثال وتجنّب الغرامات",
+    steps: [
+      "روح: درع الامتثال.",
+      "شوف المخاطر المرصودة وتعرّضك التقديري للغرامات.",
+      "اقفل كل بند عشان تحمي شركتك.",
+    ],
+    goto: "/dashboard/compliance-shield",
+  },
+  {
+    keys: ["ارفع مستند", "ترخيص", "سجل تجاري", "بطاقه ضريبيه", "مستندات الشركه"],
+    title: "رفع مستندات وتراخيص الشركة",
+    steps: [
+      "روح: المستندات والتراخيص.",
+      "ارفع الترخيص/المستند وحدد تاريخ انتهائه.",
+      "النظام هينبّهك قبل ما ينتهي.",
+    ],
+    goto: "/dashboard/documents",
+  },
+];
+
+function taskReply(t: GuideTask): GuideReply {
+  const steps = t.steps.map((s, i) => `${i + 1}. ${s}`).join("\n");
+  const note = t.note ? `\n\n💡 ${t.note}` : "";
+  return { text: `🛠️ ${t.title}\n\n${steps}${note}`, chips: TOPIC_CHIPS.slice(0, 3), goto: t.goto };
+}
+
+function scoreKeys(q: string, keys: string[]): number {
+  let s = 0;
+  for (const k of keys) {
+    const nk = norm(k);
+    if (nk && q.includes(nk)) s += nk.length; // longer match = stronger signal
+  }
+  return s;
+}
+
 export function respond(query: string): GuideReply {
   const q = norm(query);
   if (!q) return { text: "اكتبلي سؤالك وأنا أساعدك 🙂", chips: TOPIC_CHIPS };
 
-  let best: Intent | null = null;
-  let bestScore = 0;
-  for (const intent of INTENTS) {
-    let score = 0;
-    for (const k of intent.keys) {
-      const nk = norm(k);
-      if (nk && q.includes(nk)) score += nk.length; // longer keyword = stronger signal
-    }
-    if (score > bestScore) {
-      bestScore = score;
-      best = intent;
+  // Score the three layers, then prefer the most specific (task > special > page).
+  let bestTask: GuideTask | null = null;
+  let taskScore = 0;
+  for (const t of TASKS) {
+    const sc = scoreKeys(q, t.keys);
+    if (sc > taskScore) {
+      taskScore = sc;
+      bestTask = t;
     }
   }
 
-  if (!best || bestScore === 0) {
-    return {
-      text: "مش متأكد فهمت قصدك بالظبط 🤔 بس أقدر أساعدك في: الموظفين، الحضور، المرتبات، النماذج، العملاء، الامتثال وغيرهم. اكتب الموضوع اللي محتاجه، أو اختار من تحت 👇",
-      chips: TOPIC_CHIPS,
-    };
+  let bestSpecial: Intent | null = null;
+  let specialScore = 0;
+  let bestPage: Intent | null = null;
+  let pageScore = 0;
+  for (const it of INTENTS) {
+    const sc = scoreKeys(q, it.keys);
+    if (it.special) {
+      if (sc > specialScore) {
+        specialScore = sc;
+        bestSpecial = it;
+      }
+    } else if (it.page) {
+      if (sc > pageScore) {
+        pageScore = sc;
+        bestPage = it;
+      }
+    }
   }
 
-  if (best.special === "greet")
-    return { text: "أهلاً بيك! 👋 أنا نِظّوم، مرشدك في النظام. اسألني عن أي صفحة أو خد جولة سريعة.", chips: TOPIC_CHIPS };
-  if (best.special === "thanks")
-    return { text: "العفو 😊 أي وقت تحتاجني أنا هنا في الركن.", chips: TOPIC_CHIPS };
-  if (best.special === "who")
-    return {
-      text: "أنا نِظّوم 🤖 — مرشد نِظام. بمشي معاك صفحة بصفحة، أشرحلك كل حاجة، وأجاوب أسئلتك عن النظام — كله جوّاك من غير إنترنت ولا توقّف.",
-      chips: TOPIC_CHIPS,
-    };
-  if (best.special === "tour")
+  // An explicit tour request always wins.
+  if (bestSpecial?.special === "tour" && specialScore >= taskScore)
     return { text: "يلا نبدأ جولة سريعة في النظام! 🧭", chips: [], tour: true };
 
-  if (best.page) {
-    const page = GUIDE_PAGES.find((p) => p.match === best!.page);
-    if (page) {
+  // Actionable how-to wins when it matches at least as strongly as the rest.
+  if (bestTask && taskScore > 0 && taskScore >= pageScore && taskScore >= specialScore)
+    return taskReply(bestTask);
+
+  if (bestSpecial && specialScore > 0 && specialScore >= pageScore) {
+    if (bestSpecial.special === "greet")
+      return { text: "أهلاً بيك! 👋 أنا نِظّوم، مرشدك في النظام. قوللي عايز تعمل إيه (زي «عايز أربط البصمة») أو خد جولة سريعة.", chips: TOPIC_CHIPS };
+    if (bestSpecial.special === "thanks")
+      return { text: "العفو 😊 أي وقت تحتاجني أنا هنا في الركن.", chips: TOPIC_CHIPS };
+    if (bestSpecial.special === "who")
       return {
-        text: pageReplyText(page),
-        chips: ["افتح الصفحة دي ←", ...TOPIC_CHIPS.slice(0, 2)],
-        goto: page.match,
+        text: "أنا نِظّوم 🤖 — مرشد نِظام. قوللي «عايز أعمل كذا» وأديك الخطوات بالظبط، وأمشي معاك صفحة بصفحة — كله جوّاك من غير إنترنت ولا توقّف.",
+        chips: TOPIC_CHIPS,
       };
-    }
+    if (bestSpecial.special === "tour")
+      return { text: "يلا نبدأ جولة سريعة في النظام! 🧭", chips: [], tour: true };
   }
-  return { text: "اسألني عن أي صفحة وأنا أشرحهالك 🙂", chips: TOPIC_CHIPS };
+
+  if (bestPage?.page && pageScore > 0) {
+    const page = GUIDE_PAGES.find((p) => p.match === bestPage!.page);
+    if (page)
+      return { text: pageReplyText(page), chips: ["افتح الصفحة دي ←", ...TOPIC_CHIPS.slice(0, 2)], goto: page.match };
+  }
+
+  return {
+    text: "مش متأكد فهمت قصدك بالظبط 🤔 قوللي اللي عايز تعمله (مثلاً: «عايز أربط البصمة» أو «عايز أعمل مرتبات») وأديك الخطوات، أو اختار من تحت 👇",
+    chips: TOPIC_CHIPS,
+  };
 }

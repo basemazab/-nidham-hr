@@ -24,12 +24,21 @@ export function FormLetterhead({ company, reference, date, subtitle }: Props) {
       <div className="flex items-start justify-between gap-6">
         {/* Right: company identity */}
         <div className="flex items-center gap-4 flex-1 min-w-0">
-          {/* Logo placeholder — "ن" mark in a gold square */}
-          <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 flex items-center justify-center shadow-md shrink-0 print:shadow-none">
-            <span className="text-3xl font-black text-white font-display leading-none">
-              ن
-            </span>
-          </div>
+          {/* Company logo — the uploaded one if present, else the "ن" mark */}
+          {company.logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={company.logoUrl}
+              alt=""
+              className="w-16 h-16 rounded-lg object-contain shrink-0 bg-white print:shadow-none"
+            />
+          ) : (
+            <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 flex items-center justify-center shadow-md shrink-0 print:shadow-none">
+              <span className="text-3xl font-black text-white font-display leading-none">
+                ن
+              </span>
+            </div>
+          )}
           <div className="min-w-0">
             <div className="text-3xl font-black font-cairo text-slate-900 leading-tight">
               {company.name}

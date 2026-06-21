@@ -18,6 +18,8 @@ import { createClient } from "@/lib/supabase/server";
 export type FormCompany = {
   name: string;
   industry: string | null;
+  /** Company logo (base64 data URL) shown in the letterhead, if uploaded. */
+  logoUrl?: string | null;
   // Future-proof: when companies table grows extra letterhead fields
   // (address, commercial register, tax card) the resolver will pick
   // them up automatically.
@@ -80,13 +82,22 @@ export async function resolveFormContext(opts: {
   // Company (letterhead source)
   let company: FormCompany = { name: "—", industry: null };
   if (companyId) {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("companies")
-      .select("name, industry")
+      .select("name, industry, logo_url")
       .eq("id", companyId)
-      .maybeSingle<{ name: string; industry: string | null }>();
-    if (data) {
-      company = data;
+      .maybeSingle<{ name: string; industry: string | null; logo_url: string | null }>();
+    if (!error && data) {
+      company = { name: data.name, industry: data.industry, logoUrl: data.logo_url };
+    } else {
+      // logo_url column may not exist yet (migration 114 pending) — fall back to
+      // the name-only query so the letterhead never breaks before the migration.
+      const { data: basic } = await supabase
+        .from("companies")
+        .select("name, industry")
+        .eq("id", companyId)
+        .maybeSingle<{ name: string; industry: string | null }>();
+      if (basic) company = basic;
     }
   }
 
