@@ -26,6 +26,7 @@ type Application = {
   job_id: string;
   cv_text: string | null;
   cover_letter: string | null;
+  cv_pdf_url: string | null;
   source: string;
 
   ai_score: number | null;
@@ -108,6 +109,26 @@ export default async function ApplicationDetailPage({ params }: PageProps) {
       label: appQuestions.find((q) => q.id === id)?.label ?? "إجابة إضافية",
       value: String(v),
     }));
+  // Original CV file: stored as a path in a private bucket — mint a short-lived
+  // signed URL so HR can download it. (Legacy rows may hold a full URL.)
+  let cvDownloadUrl: string | null = null;
+  if (app.cv_pdf_url) {
+    if (app.cv_pdf_url.startsWith("http")) {
+      cvDownloadUrl = app.cv_pdf_url;
+    } else {
+      try {
+        const { createServiceClient } = await import("@/lib/supabase/service");
+        const svc = createServiceClient();
+        const { data: signed } = await svc.storage
+          .from("application-cvs")
+          .createSignedUrl(app.cv_pdf_url, 3600);
+        cvDownloadUrl = signed?.signedUrl ?? null;
+      } catch {
+        cvDownloadUrl = null;
+      }
+    }
+  }
+
   const here = `/dashboard/jobs/${id}/applications/${appId}`;
 
   const rerunAction = async () => {
@@ -420,6 +441,16 @@ export default async function ApplicationDetailPage({ params }: PageProps) {
             📄 السيرة الذاتية ورسالة التقديم
           </summary>
           <div className="px-6 pb-6 space-y-4">
+            {cvDownloadUrl && (
+              <a
+                href={cvDownloadUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-cyan-dark text-white text-sm font-bold font-cairo hover:brightness-110 transition"
+              >
+                ⬇ تحميل ملف الـ CV الأصلي
+              </a>
+            )}
             {app.cover_letter && (
               <div>
                 <h4 className="font-bold text-slate-800 mb-2 font-cairo">رسالة التقديم</h4>
@@ -436,7 +467,7 @@ export default async function ApplicationDetailPage({ params }: PageProps) {
                 </pre>
               </div>
             )}
-            {!app.cv_text && !app.cover_letter && (
+            {!app.cv_text && !app.cover_letter && !cvDownloadUrl && (
               <p className="text-sm text-slate-400 font-cairo">
                 المتقدم لم يرفق سيرة ذاتية أو رسالة تقديم.
               </p>

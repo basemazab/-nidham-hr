@@ -59,6 +59,33 @@ export async function POST(req: NextRequest) {
       answersClean[k] = stripCtrl(String(v ?? ""));
     }
 
+    // (أ) Store the ORIGINAL CV file in private storage so HR can download it,
+    // not just read the parsed text. Best-effort — never blocks the submit.
+    let cvUrl: string | null = null;
+    if (resumeFile && resumeFile.size > 0) {
+      try {
+        const { createServiceClient } = await import("@/lib/supabase/service");
+        const svc = createServiceClient();
+        const ext =
+          (resumeFile.name.split(".").pop() || "pdf")
+            .toLowerCase()
+            .replace(/[^a-z0-9]/g, "")
+            .slice(0, 8) || "pdf";
+        const path = `${jobSlug}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+        const buf = Buffer.from(await resumeFile.arrayBuffer());
+        const { error: upErr } = await svc.storage
+          .from("application-cvs")
+          .upload(path, buf, {
+            contentType: resumeFile.type || "application/octet-stream",
+            upsert: false,
+          });
+        if (!upErr) cvUrl = path;
+        else console.warn("[apply] CV upload failed:", upErr.message);
+      } catch (e) {
+        console.warn("[apply] CV upload error:", e);
+      }
+    }
+
     const supabase = createPublicClient();
 
     const { data: appId, error: rpcErr } = await supabase.rpc(
@@ -72,7 +99,7 @@ export async function POST(req: NextRequest) {
         p_location: stripCtrl(city).trim() || null,
         p_years_experience: null,
         p_cv_text: cvClean,
-        p_cv_pdf_url: null,
+        p_cv_pdf_url: cvUrl,
         p_cover_letter: coverClean,
         p_answers: answersClean,
       },
@@ -91,7 +118,7 @@ export async function POST(req: NextRequest) {
       const svc = createServiceClient();
       const { data: job } = await svc
         .from("jobs")
-        .select("id, company_id, title")
+        .select("id, company_id, title, application_form")
         .eq("slug", jobSlug)
         .maybeSingle();
       if (job) {
@@ -111,6 +138,46 @@ export async function POST(req: NextRequest) {
               link_url: `/dashboard/jobs/${job.id}`,
             })),
           );
+
+          // (ب) Email the FULL application to the HR team (best-effort).
+          try {
+            const { sendEmail, emailNewApplication } = await import("@/lib/email");
+            const site = (
+              process.env.NEXT_PUBLIC_SITE_URL || "https://www.nidhamhr.com"
+            ).replace(/\/$/, "");
+            const appUrl = `${site}/dashboard/jobs/${job.id}/applications/${appId}`;
+            const af = (job as Record<string, unknown>).application_form;
+            const qList = Array.isArray(af)
+              ? (af as { id: string; label: string }[])
+              : [];
+            const answerLines = Object.entries(answersClean)
+              .filter(([, v]) => v.trim())
+              .map(([qid, v]) => ({
+                label: qList.find((q) => q.id === qid)?.label ?? "إجابة إضافية",
+                value: v,
+              }));
+            for (const p of hrs as { id: string }[]) {
+              const { data: u } = await svc.auth.admin.getUserById(p.id);
+              const to = u?.user?.email;
+              if (to) {
+                await sendEmail(
+                  emailNewApplication({
+                    to,
+                    candidateName: fullName,
+                    jobTitle: job.title as string,
+                    email,
+                    phone,
+                    city,
+                    cover: coverClean,
+                    answers: answerLines,
+                    appUrl,
+                  }),
+                );
+              }
+            }
+          } catch (e) {
+            console.warn("[apply] HR email failed:", e);
+          }
         }
       }
     } catch {

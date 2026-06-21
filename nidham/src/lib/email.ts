@@ -235,6 +235,60 @@ export function emailMobileInvitation(opts: {
   };
 }
 
+export function emailNewApplication(opts: {
+  to: string;
+  candidateName: string;
+  jobTitle: string;
+  email: string;
+  phone: string;
+  city: string;
+  cover: string | null;
+  answers: { label: string; value: string }[];
+  appUrl: string;
+}): EmailInput {
+  const infoRows = [
+    ["الاسم", opts.candidateName],
+    ["البريد", opts.email],
+    ["الموبايل", opts.phone || "—"],
+    ["المدينة", opts.city || "—"],
+  ]
+    .map(
+      ([k, v]) =>
+        `<tr><td style="padding:6px 0;color:#64748b;width:90px;vertical-align:top;">${k}</td><td style="padding:6px 0;font-weight:700;color:#0f172a;">${escapeHtml(v)}</td></tr>`,
+    )
+    .join("");
+
+  const answersHtml = opts.answers.length
+    ? `<h3 style="margin:18px 0 8px;color:${BRAND_NAVY};font-size:15px;">إجابات المتقدم</h3>` +
+      opts.answers
+        .map(
+          (a) =>
+            `<p style="margin:0 0 8px;"><b style="color:${BRAND_NAVY};">${escapeHtml(a.label)}:</b> ${escapeHtml(a.value)}</p>`,
+        )
+        .join("")
+    : "";
+
+  const coverHtml = opts.cover
+    ? `<h3 style="margin:18px 0 8px;color:${BRAND_NAVY};font-size:15px;">رسالة التقديم</h3><p style="background:#f8fafc;border-right:4px solid ${BRAND_CYAN};padding:12px 16px;border-radius:8px;white-space:pre-wrap;">${escapeHtml(opts.cover)}</p>`
+    : "";
+
+  return {
+    to: opts.to,
+    subject: `🎯 متقدم جديد: ${opts.candidateName} — ${opts.jobTitle}`,
+    html: `
+      <h2 style="margin:0 0 4px;color:${BRAND_CYAN};font-size:20px;">متقدم جديد على وظيفة «${escapeHtml(opts.jobTitle)}»</h2>
+      <p style="color:#64748b;margin:0 0 16px;">وصلك طلب توظيف جديد — دي كل بياناته:</p>
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="font-size:14px;">${infoRows}</table>
+      ${coverHtml}
+      ${answersHtml}
+      <div style="text-align:center;margin:24px 0 4px;">
+        <a href="${opts.appUrl}" style="display:inline-block;background:${BRAND_NAVY};color:#fff;text-decoration:none;font-weight:700;padding:12px 28px;border-radius:10px;">افتح صفحة المتقدم (وحمّل الـCV) ←</a>
+      </div>
+    `,
+    text: `متقدم جديد: ${opts.candidateName} — ${opts.jobTitle}\nالبريد: ${opts.email}\nالموبايل: ${opts.phone}\nالمدينة: ${opts.city}\n\nافتح صفحة المتقدم: ${opts.appUrl}`,
+  };
+}
+
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, "&amp;")
