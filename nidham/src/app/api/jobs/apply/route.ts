@@ -26,10 +26,17 @@ export async function POST(req: NextRequest) {
 
     let cvText: string | null = null;
     if (resumeFile && resumeFile.size > 0) {
-      const { extractCvText } = await import("@/lib/pdf-extract");
-      cvText = await extractCvText(resumeFile);
+      // CV text extraction is BEST-EFFORT: a scanned PDF, an old .doc, or a
+      // parser hiccup must NEVER block the application itself. On any failure
+      // we submit without the parsed text (the RPC accepts a null CV).
+      try {
+        const { extractCvText } = await import("@/lib/pdf-extract");
+        cvText = await extractCvText(resumeFile);
+      } catch (e) {
+        console.warn("[apply] CV text extraction failed (submitting without it):", e);
+        cvText = null;
+      }
     }
-    // cvText is allowed to be null — the RPC accepts no-CV submissions
 
     const supabase = createPublicClient();
 

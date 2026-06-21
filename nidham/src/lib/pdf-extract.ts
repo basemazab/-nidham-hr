@@ -254,7 +254,9 @@ function extractFromStream(streamBytes: Uint8Array, filter: string | null): stri
 async function extractDocxText(file: File): Promise<string> {
   const mammoth = await import("mammoth");
   const arrayBuf = await file.arrayBuffer();
-  const result = await mammoth.extractRawText({ arrayBuffer: arrayBuf });
+  // Pass a Node Buffer — some mammoth builds don't recognise the `arrayBuffer`
+  // option and throw "Could not find file in options".
+  const result = await mammoth.extractRawText({ buffer: Buffer.from(arrayBuf) });
   const text = result.value.trim();
   if (!text || text.length < 10) {
     throw new Error(
