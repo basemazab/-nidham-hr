@@ -15,6 +15,7 @@ type Props = {
   jobId: string;
   jobSlug: string;
   questions: Question[];
+  companyName?: string;
 };
 
 const STEPS = ["البيانات الشخصية", "أسئلة الوظيفة", "السيرة الذاتية", "مراجعة وإرسال"];
@@ -29,7 +30,7 @@ type PersonalInfo = {
 
 type Answers = Record<string, string>;
 
-export function ApplyFormClient({ jobId, jobSlug, questions }: Props) {
+export function ApplyFormClient({ jobId, jobSlug, questions, companyName }: Props) {
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -167,7 +168,8 @@ export function ApplyFormClient({ jobId, jobSlug, questions }: Props) {
           تم استلام طلبك بنجاح 🎉
         </h2>
         <p className="text-white/60 font-cairo text-base sm:text-lg max-w-md mx-auto leading-relaxed mb-6">
-          شكراً لتقديمك. فريق الموارد البشرية هيراجع طلبك وهيتواصل معاك في أقرب فرصة.
+          شكرًا لتقديمك{companyName ? ` على وظيفة في ${companyName}` : ""}. فريق الموارد
+          البشرية هيراجع طلبك وهيتواصل معاك في أقرب فرصة — تابع بريدك الإلكتروني 📧
         </p>
         <div className="inline-block px-6 py-3 rounded-xl bg-white/[0.05] border border-white/10 text-white/50 text-sm font-cairo">
           رقم الطلب: <span className="font-mono text-white/70" dir="ltr">{appId?.slice(0, 8)}</span>
@@ -242,7 +244,7 @@ export function ApplyFormClient({ jobId, jobSlug, questions }: Props) {
               onChange={(e) => setPersonal({ ...personal, email: e.target.value })}
               placeholder="name@example.com"
               dir="ltr"
-              className="w-full px-4 py-3.5 rounded-xl bg-white/[0.06] border border-white/10 text-white text-sm placeholder-white/30 focus:border-[#c9a84c]/50 focus:ring-2 focus:ring-[#c9a84c]/10 outline-none transition text-right"
+              className="w-full px-4 py-3.5 rounded-xl bg-white/[0.06] border border-white/10 text-white text-sm placeholder-white/30 focus:border-[#c9a84c]/50 focus:ring-2 focus:ring-[#c9a84c]/10 outline-none transition"
             />
           </Field>
 
@@ -254,7 +256,7 @@ export function ApplyFormClient({ jobId, jobSlug, questions }: Props) {
                 onChange={(e) => setPersonal({ ...personal, phone: e.target.value })}
                 placeholder="01XXXXXXXXX"
                 dir="ltr"
-                className="w-full px-4 py-3.5 rounded-xl bg-white/[0.06] border border-white/10 text-white text-sm placeholder-white/30 focus:border-[#c9a84c]/50 focus:ring-2 focus:ring-[#c9a84c]/10 outline-none transition text-right"
+                className="w-full px-4 py-3.5 rounded-xl bg-white/[0.06] border border-white/10 text-white text-sm placeholder-white/30 focus:border-[#c9a84c]/50 focus:ring-2 focus:ring-[#c9a84c]/10 outline-none transition"
               />
             </Field>
             <Field label="المدينة">
@@ -472,6 +474,9 @@ export function ApplyFormClient({ jobId, jobSlug, questions }: Props) {
 
           <div className="bg-[#c9a84c]/5 border border-[#c9a84c]/20 rounded-xl p-4 text-sm text-white/60 font-cairo leading-relaxed">
             🤖 بالتقديم، أنت توافق على أن نِظام يستخدم الذكاء الاصطناعي لتحليل سيرتك الذاتية وإرسال ملخص ذكي للجهة المعلنة عن الوظيفة.
+          </div>
+          <div className="flex items-center justify-center gap-2 text-xs text-white/40 font-cairo">
+            🔒 بياناتك محمية وبتروح لصاحب الوظيفة بس — مش بتتنشر في أي مكان.
           </div>
         </div>
       )}

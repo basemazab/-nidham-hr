@@ -37,19 +37,55 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const supabase = createPublicClient();
   const { data: job } = await supabase
     .from("public_jobs")
-    .select("title, department, location")
+    .select("title, department, location, salary_min, salary_max, job_type, company_id")
     .eq("slug", jobSlug)
-    .single<{ title: string; department: string | null; location: string | null }>();
+    .single<{
+      title: string;
+      department: string | null;
+      location: string | null;
+      salary_min: number | null;
+      salary_max: number | null;
+      job_type: string | null;
+      company_id: string | null;
+    }>();
 
   if (!job) return { title: "تقديم على وظيفة — نِظام" };
-  const encodedTitle = encodeURIComponent(job.title);
+
+  let companyName = "";
+  if (job.company_id) {
+    const { data: c } = await supabase
+      .from("companies")
+      .select("name")
+      .eq("id", job.company_id)
+      .single<{ name: string }>();
+    companyName = c?.name ?? "";
+  }
+
   const h = await headers();
   const origin = h.get("x-forwarded-host") || h.get("host") || "nidhamhr.com";
   const protocol = process.env.NODE_ENV === "development" ? "http" : "https";
   const base = `${protocol}://${origin}`;
-  // v=2 busts Facebook's per-URL image cache: the scraper permanently flagged
-  // the OLD url "corrupted" back when this endpoint returned an SVG.
-  const ogUrl = `${base}/api/og?title=${encodedTitle}&v=2`;
+
+  // Same deterministic theme as the public job page (hash the slug) so the
+  // shared ad looks identical from both the job link and the apply link.
+  const themeKeys = ["navy", "emerald", "royal", "light"];
+  const themeIdx =
+    Array.from(jobSlug).reduce((a, ch) => a + ch.charCodeAt(0), 0) % themeKeys.length;
+  const salaryLabel =
+    job.salary_min != null && job.salary_max != null
+      ? `${job.salary_min.toLocaleString("ar-EG")} – ${job.salary_max.toLocaleString("ar-EG")} ج`
+      : job.salary_min != null
+        ? `من ${job.salary_min.toLocaleString("ar-EG")} ج`
+        : job.salary_max != null
+          ? `حتى ${job.salary_max.toLocaleString("ar-EG")} ج`
+          : null;
+  const typeLabel = job.job_type ? (JOB_TYPE_LABELS[job.job_type] ?? null) : null;
+  const og = new URLSearchParams({ title: job.title, theme: themeKeys[themeIdx], v: "3" });
+  if (companyName) og.set("company", companyName);
+  if (salaryLabel) og.set("salary", salaryLabel);
+  if (job.location) og.set("location", job.location);
+  if (typeLabel) og.set("type", typeLabel);
+  const ogUrl = `${base}/api/og?${og.toString()}`;
   return {
     title: `تقديم على ${job.title} — نِظام`,
     description: `قدم على وظيفة ${job.title} من خلال نِظام. خطوات بسيطة، CV، وأسئلة ذكية.`,
@@ -136,6 +172,7 @@ export default async function ApplyPage({ params }: PageProps) {
           jobId={job.id}
           jobSlug={job.slug}
           questions={questions as any}
+          companyName={company?.name ?? ""}
         />
       </div>
     </div>
