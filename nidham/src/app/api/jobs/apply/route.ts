@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
               title: `🎯 متقدم جديد: ${fullName}`,
               body: `قدّم على وظيفة «${job.title}»${phone ? ` — موبايل: ${phone}` : ""}${city ? ` — ${city}` : ""}`,
               type: "recruitment",
-              link_url: `/dashboard/jobs/${job.id}/applications`,
+              link_url: `/dashboard/jobs/${job.id}`,
             })),
           );
         }
