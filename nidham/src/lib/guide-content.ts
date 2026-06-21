@@ -338,3 +338,118 @@ export const TOUR: TourStop[] = [
     msg: "ده بيحميك من غرامات مكتب العمل والتأمينات. خلصنا الجولة — استكشف الباقي وأنا معاك! 🎉",
   },
 ];
+
+// ============================================================================
+// نِظّوم's conversational brain — rule-based intent matching. NO AI, NO keys,
+// NO network: it normalizes Arabic, scores the message against keyword intents,
+// and answers from the same page knowledge above. Instant + free + never fails.
+// ============================================================================
+
+// Arabic normalization: drop diacritics/tatweel, unify alef/ya/ta-marbuta/hamza
+// so "إجازة" / "اجازه" / "أجازة" all match the same intent.
+function norm(s: string): string {
+  return (s || "")
+    .toLowerCase()
+    .replace(/[ً-ْٰـ]/g, "")
+    .replace(/[إأآ]/g, "ا")
+    .replace(/ى/g, "ي")
+    .replace(/ة/g, "ه")
+    .replace(/ؤ/g, "و")
+    .replace(/ئ/g, "ي")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+type Intent = {
+  keys: string[];
+  page?: string;
+  special?: "tour" | "greet" | "thanks" | "who";
+};
+
+const INTENTS: Intent[] = [
+  { special: "greet", keys: ["سلام", "صباح", "مساء", "ازيك", "ازايك", "اهلا", "هاي", "هلا", "hi", "hello", "عامل ايه"] },
+  { special: "thanks", keys: ["شكرا", "تسلم", "ميرسي", "thanks", "thank"] },
+  { special: "who", keys: ["مين انت", "انت مين", "اسمك", "نظوم", "تعمل ايه", "بتعمل ايه"] },
+  { special: "tour", keys: ["جوله", "tour", "طوفني", "وريني النظام", "عرفني على النظام", "خدني في جوله"] },
+  { page: "/dashboard/employees", keys: ["موظف", "موظفين", "فريق", "employee", "اضيف حد", "اضافه موظف", "العاملين", "استيراد موظفين"] },
+  { page: "/dashboard/attendance/import", keys: ["استيراد الحضور", "رفع الحضور", "ملف بصمه", "ملف الحضور"] },
+  { page: "/dashboard/attendance", keys: ["حضور", "انصراف", "غياب", "تاخير", "attendance"] },
+  { page: "/dashboard/payroll", keys: ["مرتب", "مرتبات", "راتب", "رواتب", "payroll", "تامينات", "ضرايب", "اوفرتايم", "كشف مرتب"] },
+  { page: "/dashboard/loans", keys: ["سلفه", "سلف", "قسط", "اقساط", "loan"] },
+  { page: "/dashboard/eos-calculator", keys: ["نهايه الخدمه", "مكافاه", "مكافات", "ترك الخدمه", "استقاله"] },
+  { page: "/dashboard/customers", keys: ["عميل", "عملاء", "crm", "مبيعات", "pipeline", "زباين"] },
+  { page: "/dashboard/contracts", keys: ["عقد", "عقود", "تجديد عقد"] },
+  { page: "/dashboard/memo-studio", keys: ["مذكره", "مذكرات", "خطاب", "صرف مستحقات", "مستند رسمي", "اكتبلي"] },
+  { page: "/dashboard/forms", keys: ["نموذج", "نماذج", "فورم", "خطاب تعيين", "شهاده", "عقد عمل", "استماره"] },
+  { page: "/dashboard/jobs", keys: ["وظيفه", "وظايف", "توظيف", "متقدم", "سيره ذاتيه", "cv", "تقديم", "اعلان وظيفه"] },
+  { page: "/dashboard/compliance-shield", keys: ["امتثال", "غرامه", "غرامات", "مكتب العمل", "مخالفه", "قانون العمل"] },
+  { page: "/dashboard/documents", keys: ["مستندات", "تراخيص", "ترخيص", "سجل تجاري", "بطاقه ضريبيه"] },
+  { page: "/dashboard/settings/branding", keys: ["لوجو", "شعار", "هويه", "ترويسه", "logo"] },
+  { page: "/dashboard/settings/devices", keys: ["جهاز", "بصمه", "zkteco", "اجهزه", "ماكينه"] },
+  { page: "/dashboard/team", keys: ["صلاحيه", "صلاحيات", "ادعو", "permission", "role", "مستخدم جديد"] },
+  { page: "/dashboard/subscription", keys: ["اشتراك", "خطه", "باقه", "سعر", "تجديد الاشتراك"] },
+  { page: "/dashboard/reports", keys: ["تقرير", "تقارير", "report", "تصدير", "excel"] },
+  { page: "/dashboard/intelligence", keys: ["تحليلات", "معدل دوران", "احصاءات", "مؤشرات", "ذكاء"] },
+  { page: "/dashboard/outreach", keys: ["عملاء محتملين", "تنقيب", "واتساب", "outreach"] },
+  { page: "/dashboard/marketing", keys: ["تسويق", "اعلان", "حمله", "ايميل تسويقي", "سوشيال", "marketing"] },
+];
+
+export const TOPIC_CHIPS = ["إزاي أضيف موظف؟", "إزاي أعمل مرتبات؟", "أربط جهاز البصمة", "خدني في جولة 🧭"];
+
+export type GuideReply = { text: string; chips: string[]; goto?: string; tour?: boolean };
+
+export function pageReplyText(p: GuidePage): string {
+  const steps = p.steps.map((s, i) => `${i + 1}. ${s}`).join("\n");
+  const tip = p.tip ? `\n\n💡 ${p.tip}` : "";
+  return `${p.icon} ${p.title}\n${p.what}\n\n${steps}${tip}`;
+}
+
+export function respond(query: string): GuideReply {
+  const q = norm(query);
+  if (!q) return { text: "اكتبلي سؤالك وأنا أساعدك 🙂", chips: TOPIC_CHIPS };
+
+  let best: Intent | null = null;
+  let bestScore = 0;
+  for (const intent of INTENTS) {
+    let score = 0;
+    for (const k of intent.keys) {
+      const nk = norm(k);
+      if (nk && q.includes(nk)) score += nk.length; // longer keyword = stronger signal
+    }
+    if (score > bestScore) {
+      bestScore = score;
+      best = intent;
+    }
+  }
+
+  if (!best || bestScore === 0) {
+    return {
+      text: "مش متأكد فهمت قصدك بالظبط 🤔 بس أقدر أساعدك في: الموظفين، الحضور، المرتبات، النماذج، العملاء، الامتثال وغيرهم. اكتب الموضوع اللي محتاجه، أو اختار من تحت 👇",
+      chips: TOPIC_CHIPS,
+    };
+  }
+
+  if (best.special === "greet")
+    return { text: "أهلاً بيك! 👋 أنا نِظّوم، مرشدك في النظام. اسألني عن أي صفحة أو خد جولة سريعة.", chips: TOPIC_CHIPS };
+  if (best.special === "thanks")
+    return { text: "العفو 😊 أي وقت تحتاجني أنا هنا في الركن.", chips: TOPIC_CHIPS };
+  if (best.special === "who")
+    return {
+      text: "أنا نِظّوم 🤖 — مرشد نِظام. بمشي معاك صفحة بصفحة، أشرحلك كل حاجة، وأجاوب أسئلتك عن النظام — كله جوّاك من غير إنترنت ولا توقّف.",
+      chips: TOPIC_CHIPS,
+    };
+  if (best.special === "tour")
+    return { text: "يلا نبدأ جولة سريعة في النظام! 🧭", chips: [], tour: true };
+
+  if (best.page) {
+    const page = GUIDE_PAGES.find((p) => p.match === best!.page);
+    if (page) {
+      return {
+        text: pageReplyText(page),
+        chips: ["افتح الصفحة دي ←", ...TOPIC_CHIPS.slice(0, 2)],
+        goto: page.match,
+      };
+    }
+  }
+  return { text: "اسألني عن أي صفحة وأنا أشرحهالك 🙂", chips: TOPIC_CHIPS };
+}
