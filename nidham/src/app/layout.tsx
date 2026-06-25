@@ -1,7 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Tajawal, Cairo, Reem_Kufi } from "next/font/google";
-import { Suspense, type ReactNode } from "react";
+import { Suspense } from "react";
 import { Toaster } from "sonner";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import { UrlToasts } from "@/components/url-toasts";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -233,7 +234,7 @@ export default function RootLayout({
           <PWAInstaller />
           {/* Floating WhatsApp CTA — يظهر على كل الصفحات العامة */}
           <a
-            href="https://wa.me/201055356622?text=أهلاً، شفت موقع نِظام وعايز أسأل عن النظام"
+            href="https://wa.me/201055356622?text=أهلاً، شفت موقع نِظام وعايز أسأل عن ال��ظام"
             target="_blank"
             rel="noopener noreferrer"
             className="fixed bottom-20 left-4 sm:left-6 z-50 w-14 h-14 rounded-full bg-[#25D366] hover:bg-[#20bd5a] shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 flex items-center justify-center text-white text-2xl"
@@ -245,6 +246,7 @@ export default function RootLayout({
           </a>
           </AppProviders>
         </ThemeProvider>
+        <SpeedInsights />
       </body>
     </html>
   );
