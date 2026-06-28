@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { ApplicantMessageTemplates } from "./applicant-message-templates";
 import {
   rerunScreening,
   updateApplicationStatus,
@@ -83,15 +84,19 @@ function looksLikeCorruptText(text: string): boolean {
   return realWords / tokens.length < 0.12;
 }
 
-// Normalize an Egyptian phone to wa.me international form (digits, no +).
-// 01012345678 → 201012345678 · +20… / 0020… / 20… handled too.
-function waNumber(raw: string): string {
-  let d = (raw || "").replace(/\D/g, "");
-  if (d.startsWith("00")) d = d.slice(2);
-  if (d.startsWith("20")) return d;
-  if (d.startsWith("0")) return "20" + d.slice(1);
-  if (d.length === 10 && d.startsWith("1")) return "20" + d;
-  return d;
+// Format the stored interview datetime → a plain Arabic wall-clock string
+// ("DD/MM/YYYY الساعة H:MM ص/م") by reading the ISO parts directly — no Date
+// timezone math, so it shows exactly the slot HR picked. Empty when unset.
+function formatInterviewWhen(iso: string | null): string {
+  if (!iso) return "";
+  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/);
+  if (!m) return "";
+  const [, y, mo, d, hh, mi] = m;
+  let h = parseInt(hh, 10);
+  const ampm = h < 12 ? "ص" : "م";
+  h = h % 12;
+  if (h === 0) h = 12;
+  return `${d}/${mo}/${y} الساعة ${h}:${mi} ${ampm}`;
 }
 
 export default async function ApplicationDetailPage({ params }: PageProps) {
@@ -135,24 +140,10 @@ export default async function ApplicationDetailPage({ params }: PageProps) {
       if (co?.name) companyName = co.name;
     }
   }
-  // Professional, ready-to-send WhatsApp message to invite the candidate to
-  // schedule an interview — personalized with company + role + first name.
+  // First name + the interview slot HR may have set (formatted as a plain
+  // Arabic wall-clock). Both feed the WhatsApp message templates card below.
   const firstName = (cand?.full_name ?? "").trim().split(/\s+/)[0] || "حضرتك";
-  const interviewMsg =
-    `السلام عليكم ${firstName} 👋\n\n` +
-    `معاك فريق الموارد البشرية في ${companyName}.\n` +
-    `شكرًا لتقديمك على وظيفة «${job?.title ?? ""}» — سيرتك الذاتية لفتت انتباهنا 🌟\n\n` +
-    `حابين نحدّد معاك موعد مقابلة. ياريت تقولنا الأيام والمواعيد اللي تناسبك خلال الأيام الجاية.\n\n` +
-    `في انتظار ردك، وشكرًا.`;
-
-  // Professional, kind REJECTION message — warm and respectful, keeps the door
-  // open for the future. Same personalization (company + role + first name).
-  const rejectionMsg =
-    `السلام عليكم ${firstName} 🌟\n\n` +
-    `معاك فريق الموارد البشرية في ${companyName}.\n` +
-    `بنشكرك جدًا على اهتمامك ووقتك في التقديم على وظيفة «${job?.title ?? ""}».\n\n` +
-    `بعد دراسة طلبك بعناية، اخترنا نمضي مع مرشحين أقرب لمتطلبات الوظيفة في الوقت الحالي — وده مش تقليل من خبرتك أو مؤهلاتك إطلاقًا.\n\n` +
-    `هنحتفظ ببياناتك، ولو ظهرت فرصة مناسبة قدّام هنتواصل معاك. نتمنّالك كل التوفيق في مشوارك المهني 🙏`;
+  const interviewWhen = formatInterviewWhen(app.interview_at);
 
   // Hide garbage cv_text (old broken-font extractions stored before the smart
   // extractor) — show a "download the original file" note instead.
@@ -274,27 +265,6 @@ export default async function ApplicationDetailPage({ params }: PageProps) {
                     📱 {cand.phone}
                   </a>
                 )}
-                {cand?.phone && (
-                  <a
-                    href={`https://wa.me/${waNumber(cand.phone)}?text=${encodeURIComponent(interviewMsg)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-3 py-1 rounded-full text-xs font-bold bg-[#25D366]/10 text-[#0b6b4f] border border-[#25D366]/40 hover:bg-[#25D366]/20 transition inline-flex items-center gap-1"
-                  >
-                    💬 واتساب — دعوة لمقابلة
-                  </a>
-                )}
-                {cand?.phone && (
-                  <a
-                    href={`https://wa.me/${waNumber(cand.phone)}?text=${encodeURIComponent(rejectionMsg)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600 border border-slate-300 hover:bg-slate-200 transition inline-flex items-center gap-1"
-                    title="رسالة اعتذار محترمة للمتقدم غير المناسب"
-                  >
-                    ✉️ واتساب — رسالة اعتذار
-                  </a>
-                )}
                 {cand?.linkedin_url && (
                   <a
                     href={cand.linkedin_url}
@@ -325,6 +295,15 @@ export default async function ApplicationDetailPage({ params }: PageProps) {
             </div>
           </div>
         </div>
+
+        {/* Ready-to-send WhatsApp message templates (invite w/ date+address, etc.) */}
+        <ApplicantMessageTemplates
+          phone={cand?.phone ?? null}
+          firstName={firstName}
+          companyName={companyName}
+          jobTitle={job?.title ?? ""}
+          defaultWhen={interviewWhen}
+        />
 
         {/* Candidate's own answers to the job's custom questions */}
         {answerEntries.length > 0 && (
