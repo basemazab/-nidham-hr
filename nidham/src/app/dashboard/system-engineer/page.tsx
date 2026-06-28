@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireHRPage } from "@/lib/permissions";
 import { EngineerClient } from "./engineer-client";
-import { createDevRequest } from "./actions";
+import { createDevRequest, runScheduledNow } from "./actions";
 
 export const metadata = {
   title: "مهندس النظام | الإعدادات",
@@ -28,7 +28,7 @@ const STATUS_UI: Record<string, { label: string; cls: string }> = {
 export default async function SystemEngineerPage({
   searchParams,
 }: {
-  searchParams: Promise<{ created?: string; error?: string }>;
+  searchParams: Promise<{ created?: string; error?: string; ran?: string }>;
 }) {
   const { supabase, profile } = await requireHRPage();
   const sp = await searchParams;
@@ -70,8 +70,31 @@ export default async function SystemEngineerPage({
         </div>
       )}
 
+      {sp.ran && (
+        <div className="mb-4 p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-sm text-emerald-800 font-cairo">
+          ✅ تم تشغيل النشر المجدول — اتنشر {sp.ran.split("_")[0]} بوست
+          {sp.ran.split("_")[1] && sp.ran.split("_")[1] !== "0"
+            ? ` · فشل ${sp.ran.split("_")[1]}`
+            : ""}
+          . اعمل «أعد الفحص» فوق للتأكد.
+        </div>
+      )}
+
       {/* Live health check */}
       <EngineerClient />
+
+      {/* Manual run — safety valve when the daily Vercel cron is late/stalled */}
+      <form action={runScheduledNow} className="mt-4">
+        <button
+          type="submit"
+          className="px-4 py-2 rounded-lg bg-slate-800 text-white text-sm font-bold font-cairo hover:bg-slate-900 transition"
+        >
+          🔄 شغّل النشر المجدول الآن (لينكدإن + سوشيال)
+        </button>
+        <p className="text-[11px] text-slate-400 font-cairo mt-1.5">
+          لو الكرون التلقائي اتأخر، اضغط ده عشان تنشر البوستات المتأخرة فورًا.
+        </p>
+      </form>
 
       {/* New request */}
       <section className="mt-8 p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">

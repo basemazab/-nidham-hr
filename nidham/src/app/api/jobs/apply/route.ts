@@ -39,12 +39,15 @@ export async function POST(req: NextRequest) {
 
     let cvText: string | null = null;
     if (resumeFile && resumeFile.size > 0) {
-      // CV text extraction is BEST-EFFORT: a scanned PDF, an old .doc, or a
-      // parser hiccup must NEVER block the application itself. On any failure
-      // we submit without the parsed text (the RPC accepts a null CV).
+      // BEST-EFFORT: a parser hiccup must NEVER block the application. We use
+      // the SMART extractor (local parser → Gemini OCR fallback when the local
+      // output is garbage/empty, or the file is an image) so HR never sees the
+      // binary-salad the byte parser produced on awkward PDFs. Returns null if
+      // no clean text could be read — then we just rely on the stored original
+      // file instead of persisting garbage.
       try {
-        const { extractCvText } = await import("@/lib/pdf-extract");
-        cvText = await extractCvText(resumeFile);
+        const { extractCvTextSmart } = await import("@/lib/cv-extract");
+        cvText = await extractCvTextSmart(resumeFile);
       } catch (e) {
         console.warn("[apply] CV text extraction failed (submitting without it):", e);
         cvText = null;

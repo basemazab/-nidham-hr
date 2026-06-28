@@ -71,6 +71,29 @@ const STATUS_OPTIONS: ApplicationStatus[] = [
   "withdrawn",
 ];
 
+// True when stored cv_text is garbage (a broken-font PDF the byte parser
+// mangled before the smart extractor existed). Real CVs are full of ≥4-letter
+// words; salad has almost none. Used to HIDE garbage at display time so old
+// rows render cleanly too (HR downloads the original file instead).
+function looksLikeCorruptText(text: string): boolean {
+  const tokens = text.split(/\s+/).filter(Boolean);
+  if (tokens.length < 20) return false;
+  let realWords = 0;
+  for (const t of tokens) if (/\p{L}{4,}/u.test(t)) realWords += 1;
+  return realWords / tokens.length < 0.12;
+}
+
+// Normalize an Egyptian phone to wa.me international form (digits, no +).
+// 01012345678 → 201012345678 · +20… / 0020… / 20… handled too.
+function waNumber(raw: string): string {
+  let d = (raw || "").replace(/\D/g, "");
+  if (d.startsWith("00")) d = d.slice(2);
+  if (d.startsWith("20")) return d;
+  if (d.startsWith("0")) return "20" + d.slice(1);
+  if (d.length === 10 && d.startsWith("1")) return "20" + d;
+  return d;
+}
+
 export default async function ApplicationDetailPage({ params }: PageProps) {
   const { id, appId } = await params;
 
@@ -94,6 +117,38 @@ export default async function ApplicationDetailPage({ params }: PageProps) {
 
   const cand = app.candidates;
   const job = app.jobs;
+
+  // Company name → personalizes the WhatsApp interview-invite ("تناسب كل شركة").
+  let companyName = "شركتنا";
+  {
+    const { data: prof } = await supabase
+      .from("profiles")
+      .select("company_id")
+      .eq("id", user.id)
+      .maybeSingle<{ company_id: string }>();
+    if (prof?.company_id) {
+      const { data: co } = await supabase
+        .from("companies")
+        .select("name")
+        .eq("id", prof.company_id)
+        .maybeSingle<{ name: string | null }>();
+      if (co?.name) companyName = co.name;
+    }
+  }
+  // Professional, ready-to-send WhatsApp message to invite the candidate to
+  // schedule an interview — personalized with company + role + first name.
+  const firstName = (cand?.full_name ?? "").trim().split(/\s+/)[0] || "حضرتك";
+  const interviewMsg =
+    `السلام عليكم ${firstName} 👋\n\n` +
+    `معاك فريق الموارد البشرية في ${companyName}.\n` +
+    `شكرًا لتقديمك على وظيفة «${job?.title ?? ""}» — سيرتك الذاتية لفتت انتباهنا 🌟\n\n` +
+    `حابين نحدّد معاك موعد مقابلة. ياريت تقولنا الأيام والمواعيد اللي تناسبك خلال الأيام الجاية.\n\n` +
+    `في انتظار ردك، وشكرًا.`;
+
+  // Hide garbage cv_text (old broken-font extractions stored before the smart
+  // extractor) — show a "download the original file" note instead.
+  const cvTextOk = !!app.cv_text && !looksLikeCorruptText(app.cv_text);
+  const cvTextCorrupt = !!app.cv_text && !cvTextOk;
   // The candidate's answers to the job's custom questions — stored but, until
   // now, never shown. Map answer keys → question labels via application_form.
   const appQuestions: { id: string; label: string }[] = Array.isArray(job?.application_form)
@@ -202,6 +257,16 @@ export default async function ApplicationDetailPage({ params }: PageProps) {
                     dir="ltr"
                   >
                     📱 {cand.phone}
+                  </a>
+                )}
+                {cand?.phone && (
+                  <a
+                    href={`https://wa.me/${waNumber(cand.phone)}?text=${encodeURIComponent(interviewMsg)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1 rounded-full text-xs font-bold bg-[#25D366]/10 text-[#0b6b4f] border border-[#25D366]/40 hover:bg-[#25D366]/20 transition inline-flex items-center gap-1"
+                  >
+                    💬 واتساب — دعوة لمقابلة
                   </a>
                 )}
                 {cand?.linkedin_url && (
@@ -459,12 +524,21 @@ export default async function ApplicationDetailPage({ params }: PageProps) {
                 </p>
               </div>
             )}
-            {app.cv_text && (
+            {cvTextOk && (
               <div>
                 <h4 className="font-bold text-slate-800 mb-2 font-cairo">نص السيرة الذاتية</h4>
                 <pre className="whitespace-pre-wrap text-xs text-slate-700 leading-relaxed font-mono bg-slate-50 p-4 rounded-lg border border-slate-100">
                   {app.cv_text}
                 </pre>
+              </div>
+            )}
+            {cvTextCorrupt && (
+              <div>
+                <h4 className="font-bold text-slate-800 mb-2 font-cairo">نص السيرة الذاتية</h4>
+                <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-4 font-cairo leading-relaxed">
+                  ⚠ ملف الـCV ده تنسيقه الداخلي مش بيتقري كنص (خط/تشفير غير قياسي).
+                  {cvDownloadUrl ? " حمّل الملف الأصلي من زرّ «تحميل ملف الـCV الأصلي» فوق لعرضه كامل." : " اطلب من المتقدم يبعت الـCV كـ PDF نصّي أو صورة واضحة."}
+                </p>
               </div>
             )}
             {!app.cv_text && !app.cover_letter && !cvDownloadUrl && (

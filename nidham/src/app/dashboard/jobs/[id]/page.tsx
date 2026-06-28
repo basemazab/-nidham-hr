@@ -105,13 +105,17 @@ export default async function JobDetailPage({ params }: PageProps) {
   const job = jobRes.data;
   const apps = appsRes.data ?? [];
 
-  // Build the public URL when this job is published
+  // Build the public URL when this job is published. Points at the JOB DETAILS
+  // page (/jobs/[slug]) — NOT the bare apply form — so anyone who opens the
+  // shared link reads the role (description, requirements, salary, location)
+  // first, then hits the prominent "قدم دلوقتي" button to the form. The details
+  // page also renders the rich OG share card.
   let publicUrl: string | null = null;
   if (job.is_public && job.status === "open" && job.slug) {
     const h = await headers();
     const host = h.get("host") ?? "";
     const proto = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
-    publicUrl = `${proto}://${host}/apply/${job.slug}`;
+    publicUrl = `${proto}://${host}/jobs/${job.slug}`;
   }
 
   // Funnel stats

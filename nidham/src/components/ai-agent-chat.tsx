@@ -148,6 +148,25 @@ function ToolOutputSummary({
   if (!output || typeof output !== "object") return null;
   const o = output as Record<string, unknown>;
 
+  // ── DETERMINISTIC TRUTH CARDS (model-independent) ──
+  // Models sometimes claim "تم النشر بنجاح" even when the tool FAILED or only
+  // returned a preview. These cards show the REAL tool result no matter what the
+  // prose says, so the user always sees the ground truth.
+  if (o.ok === true && o.preview === true) {
+    return (
+      <div className="mt-2 p-3 rounded-xl bg-amber-50 border border-amber-200 font-cairo text-sm text-amber-800">
+        📝 دي معاينة بس — <b>لسه ماتنفذتش</b>. راجعها وأكّد عشان تتنفّذ فعلًا.
+      </div>
+    );
+  }
+  if (o.ok === false && typeof o.error === "string" && o.error) {
+    return (
+      <div className="mt-2 p-3 rounded-xl bg-red-50 border border-red-200 font-cairo text-sm text-red-700">
+        ⚠ العملية <b>ماتمّتش</b>: {o.error}
+      </div>
+    );
+  }
+
   if (toolName === "execute_payroll_period" && o.ok === true) {
     const url = String(o.url ?? "");
     const empCount = Number(o.employee_count ?? 0);

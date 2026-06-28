@@ -178,6 +178,7 @@ const NAV_ITEMS: readonly NavItem[] = [
   { href: "/dashboard/intelligence",      label: "ذكاء الأعمال",    icon: "🧠", section: "reports", feature: "employees" },
   { href: "/dashboard/analytics",          label: "لوحة التحليلات",  icon: "📊", section: "reports", feature: "employees" },
   { href: "/dashboard/reports/attendance", label: "تقرير الحضور",    icon: "📋", section: "reports", feature: "attendance" },
+  { href: "/dashboard/reports/board-attendance", label: "تقرير مجلس الإدارة", icon: "🏛", section: "reports", feature: "attendance" },
   { href: "/dashboard/reports/bridge",     label: "Bridge ✦",        icon: "✦",  section: "reports", feature: "bridge_analytics" },
   { href: "/dashboard/audit-log",          label: "سجل النشاط",      icon: "🗂", section: "reports", visibleTo: ["admin"], feature: "audit_log" },
 

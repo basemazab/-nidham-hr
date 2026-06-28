@@ -47,7 +47,7 @@ export async function GET(req: Request) {
   const supabase = createServiceClient();
   const nowIso = new Date().toISOString();
 
-  const { data: due, error } = await supabase
+  const { data: dueRows, error } = await supabase
     .from("marketing_sequence_enrollments")
     .select("id, company_id, sequence_id, conversation_id, current_step")
     .eq("status", "active")
@@ -55,12 +55,16 @@ export async function GET(req: Request) {
     .limit(300)
     .returns<Enrollment[]>();
 
+  // DO NOT early-return on error/empty here. The LinkedIn + social schedulers
+  // piggyback at the END of this handler (Vercel Hobby caps crons at 2). Most
+  // tenants have NO active drip sequences, so the old early-return on an empty
+  // result was silently skipping LinkedIn publishing EVERY day — scheduled
+  // posts piled up "pending" and مهندس النظام reported «الكرون واقف». Log any
+  // error, treat as empty, and fall through so the piggybacks always run.
   if (error) {
-    return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+    console.error("[cron] sequences query failed:", error.message);
   }
-  if (!due || due.length === 0) {
-    return NextResponse.json({ ok: true, due: 0, ranAt: nowIso });
-  }
+  const due = dueRows ?? [];
 
   // Caches to avoid N+1 lookups.
   const stepsBySeq = new Map<string, StepRow[]>();

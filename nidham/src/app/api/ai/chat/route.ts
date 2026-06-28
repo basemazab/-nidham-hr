@@ -2,7 +2,7 @@ import { streamText } from "ai";
 import { createClient } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { searchKnowledgeBase } from "@/lib/ai/memory";
-import { pickAgentModelLargeContext } from "@/lib/ai-models";
+import { pickAgentModelLargeContext, friendlyAiError } from "@/lib/ai-models";
 
 // Model is picked dynamically via pickAgentModelLargeContext() to enable
 // multi-provider fallback (Gemini → Groq) instead of hard-coding Gemini.
@@ -367,5 +367,15 @@ export async function POST(req: Request) {
     messages,
   });
 
-  return result.toUIMessageStreamResponse();
+  // Never leak a raw provider error ("Request too large ... Limit 8000")
+  // into the chat bubble — map it to a short Arabic message instead.
+  return result.toUIMessageStreamResponse({
+    onError: (error) => {
+      console.error(
+        "[ai-chat] stream error:",
+        error instanceof Error ? error.message : String(error),
+      );
+      return friendlyAiError(error);
+    },
+  });
 }

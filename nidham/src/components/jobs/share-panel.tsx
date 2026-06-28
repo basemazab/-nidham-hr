@@ -62,7 +62,7 @@ export function SharePanel({ jobTitle, department, location, jobType, salaryMin,
 
   const copyLink = async () => {
     if (!url) {
-      setHint("لازم تنشر الوظيفة الأول (خليها «عامة» وحالتها «مفتوحة») عشان يبقى ليها رابط تقديم تنسخه.");
+      setHint("لازم تنشر الوظيفة الأول (خليها «عامة» وحالتها «مفتوحة») عشان يبقى ليها رابط تنسخه.");
       setTimeout(() => setHint(null), 6000);
       return;
     }
@@ -133,7 +133,7 @@ export function SharePanel({ jobTitle, department, location, jobType, salaryMin,
           className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 text-slate-700 text-xs font-bold font-cairo hover:bg-slate-50 transition"
         >
           {copied ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
-          {copied ? "تم النسخ" : "نسخ رابط التقديم"}
+          {copied ? "تم النسخ" : "نسخ رابط الوظيفة"}
         </button>
 
         <button

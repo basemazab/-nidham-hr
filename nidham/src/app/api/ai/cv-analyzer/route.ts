@@ -19,7 +19,6 @@ import { generateObject, generateText } from "ai";
 import { createClient } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { callWithFallback, pickAgentModelLargeContext } from "@/lib/ai-models";
-import { extractPdfText } from "@/lib/pdf-extract";
 import {
   cvAnalysisSchema,
   buildCvAnalysisPrompt,
@@ -28,6 +27,20 @@ import {
 
 export const maxDuration = 60;
 const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
+
+// A PDF can render fine yet carry a CORRUPT internal text layer (broken
+// font/encoding) → extraction returns letter-salad. Detect it so we tell the
+// user the fix instead of scoring garbage. Real CVs are full of ≥4-letter
+// words (any language); corrupt salad has almost none.
+function looksLikeCorruptText(text: string): boolean {
+  const tokens = text.split(/\s+/).filter(Boolean);
+  if (tokens.length < 20) return false;
+  let realWords = 0;
+  for (const t of tokens) {
+    if (/\p{L}{4,}/u.test(t)) realWords++;
+  }
+  return realWords / tokens.length < 0.12;
+}
 
 export async function POST(req: Request) {
   const supabase = await createClient();
@@ -88,19 +101,12 @@ export async function POST(req: Request) {
     if (isText) {
       cvText = (await file.text()).trim();
     } else if (isPdf || isImage) {
-      // 1) PDFs: try the local byte-level extractor FIRST — instant, free,
-      //    and immune to model overload. Most CVs are text PDFs; only scanned
-      //    ones fall through to the AI OCR below.
-      if (isPdf) {
-        try {
-          const local = await extractPdfText(file);
-          if (local && local.length >= 200) cvText = local;
-        } catch {
-          // scanned / unusual PDF → OCR below
-        }
-      }
-
-      if (!cvText) {
+      // ALWAYS read the file with Gemini multimodal — the byte-level PDF parser
+      // mangles many real CVs (subsetted fonts / positioned glyphs → letter-
+      // salad like "HME D M OSH IER PER"), which would poison the screening
+      // score. Gemini reads text AND scanned PDFs accurately. Volume is low
+      // (deliberate, rate-limited), so the cost is negligible vs. accuracy.
+      {
         if (!process.env.GEMINI_API_KEY) {
           return Response.json({ error: "AI configuration missing — GEMINI_API_KEY" }, { status: 500 });
         }
@@ -118,7 +124,7 @@ export async function POST(req: Request) {
                   content: [
                     {
                       type: "text",
-                      text: "استخرج كل النص المكتوب في السيرة الذاتية المرفقة كما هو حرفيًا، بدون تلخيص أو تعليق.",
+                      text: "اقرأ السيرة الذاتية المرفقة من شكلها المرئي على الصفحة (زي ما العين بتشوفها بالظبط)، واكتب كل النص الظاهر فيها كما تراه: الاسم، بيانات التواصل، الخبرات، التعليم، المهارات. لو فيه طبقة نص داخلية تالفة أو رموز مش مفهومة، تجاهلها واعتمد على المرئي بس. بدون تلخيص أو تعليق.",
                     },
                     {
                       type: "file",
@@ -153,6 +159,17 @@ export async function POST(req: Request) {
 
   if (cvText.length < 30) {
     return Response.json({ error: "نص السيرة الذاتية قصير أو فاضي — تأكد من الملف." }, { status: 400 });
+  }
+  // Don't score garbage: if extraction came back corrupt (broken PDF text
+  // layer), tell the user the exact fix instead of returning a fake 0/100.
+  if (looksLikeCorruptText(cvText)) {
+    return Response.json(
+      {
+        error:
+          "الملف ده طبقة النص الداخلية فيه تالفة — بيظهر صح بس النص اللي جواه مكسور، فمش هينفع نحلّله صح. الحل الأسرع: ارفع الـCV كصورة (لقطة شاشة أو صورة واضحة بالموبايل) أو الصق نصه مباشرة — وهيتقرا تمام.",
+      },
+      { status: 422 },
+    );
   }
   if (cvText.length > 20000) cvText = cvText.slice(0, 20000);
 

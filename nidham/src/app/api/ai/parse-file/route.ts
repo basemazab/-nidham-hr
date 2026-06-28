@@ -20,8 +20,12 @@
 // V2 may unify these.
 
 import * as XLSX from "xlsx";
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { generateObject } from "ai";
+import {
+  multimodalModelChain,
+  isRetryableError,
+  isQuotaError,
+} from "@/lib/ai-models";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/rate-limit";
@@ -451,41 +455,47 @@ async function parsePdfWithGemini(file: File): Promise<Response> {
     );
   }
 
-  const google = createGoogleGenerativeAI({
-    apiKey: process.env.GEMINI_API_KEY,
-  });
-
-  let object: z.infer<typeof pdfSchema>;
-  try {
-    const result = await generateObject({
-      model: google("gemini-2.5-flash"),
-      schema: pdfSchema,
-      temperature: 0.1,
-      system: PDF_SYSTEM_INSTRUCTIONS,
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: `استخرج البيانات من الـ PDF المرفق (${file.name}). صنّف نوعه واستخرج كل الصفوف.`,
-            },
-            {
-              type: "file",
-              data: pdfBytes,
-              mediaType: "application/pdf",
-            },
-          ],
-        },
-      ],
-    });
-    object = result.object;
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
+  // Try flash → flash-lite (separate quota buckets), no same-model retries.
+  let object: z.infer<typeof pdfSchema> | null = null;
+  let lastErr: unknown = null;
+  for (const { model } of multimodalModelChain()) {
+    try {
+      const result = await generateObject({
+        model,
+        schema: pdfSchema,
+        temperature: 0.1,
+        maxRetries: 0,
+        system: PDF_SYSTEM_INSTRUCTIONS,
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: `استخرج البيانات من الـ PDF المرفق (${file.name}). صنّف نوعه واستخرج كل الصفوف.`,
+              },
+              { type: "file", data: pdfBytes, mediaType: "application/pdf" },
+            ],
+          },
+        ],
+      });
+      object = result.object;
+      break;
+    } catch (err) {
+      lastErr = err;
+      if (!isRetryableError(err)) break;
+    }
+  }
+  if (!object) {
+    const msg = lastErr instanceof Error ? lastErr.message : String(lastErr);
+    if (isQuotaError(lastErr)) {
+      return Response.json(
+        { error: "حصة قراءة الملفات المجانية خلصت دلوقتي 🙏 — جرّب بعد شوية، أو حوّل الملف لـ Excel/CSV." },
+        { status: 429 },
+      );
+    }
     return Response.json(
-      {
-        error: `الـ AI ما قدرش يقرا الـ PDF — جرب ملف تاني أو حوّله لـ Excel. (${msg.slice(0, 150)})`,
-      },
+      { error: `الـ AI ما قدرش يقرا الـ PDF — جرب ملف تاني أو حوّله لـ Excel. (${msg.slice(0, 150)})` },
       { status: 500 },
     );
   }
@@ -633,41 +643,46 @@ async function parseImageWithGemini(file: File): Promise<Response> {
   const mediaType =
     file.type.startsWith("image/") ? file.type : "image/jpeg";
 
-  const google = createGoogleGenerativeAI({
-    apiKey: process.env.GEMINI_API_KEY,
-  });
-
-  let object: z.infer<typeof imageSchema>;
-  try {
-    const result = await generateObject({
-      model: google("gemini-2.5-flash"),
-      schema: imageSchema,
-      temperature: 0.1,
-      system: IMAGE_SYSTEM_INSTRUCTIONS,
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: `حلل الصورة دي (${file.name}) واستخرج كل المعلومات منها.`,
-            },
-            {
-              type: "file",
-              data: imageBytes,
-              mediaType,
-            },
-          ],
-        },
-      ],
-    });
-    object = result.object;
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
+  let object: z.infer<typeof imageSchema> | null = null;
+  let lastErr: unknown = null;
+  for (const { model } of multimodalModelChain()) {
+    try {
+      const result = await generateObject({
+        model,
+        schema: imageSchema,
+        temperature: 0.1,
+        maxRetries: 0,
+        system: IMAGE_SYSTEM_INSTRUCTIONS,
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: `حلل الصورة دي (${file.name}) واستخرج كل المعلومات منها.`,
+              },
+              { type: "file", data: imageBytes, mediaType },
+            ],
+          },
+        ],
+      });
+      object = result.object;
+      break;
+    } catch (err) {
+      lastErr = err;
+      if (!isRetryableError(err)) break;
+    }
+  }
+  if (!object) {
+    const msg = lastErr instanceof Error ? lastErr.message : String(lastErr);
+    if (isQuotaError(lastErr)) {
+      return Response.json(
+        { error: "حصة قراءة الملفات المجانية خلصت دلوقتي 🙏 — جرّب بعد شوية." },
+        { status: 429 },
+      );
+    }
     return Response.json(
-      {
-        error: `الـ AI ما قدرش يقرا الصورة — جرب صورة أوضح أو ملف تاني. (${msg.slice(0, 150)})`,
-      },
+      { error: `الـ AI ما قدرش يقرا الصورة — جرب صورة أوضح أو ملف تاني. (${msg.slice(0, 150)})` },
       { status: 500 },
     );
   }

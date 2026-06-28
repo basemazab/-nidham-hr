@@ -16,13 +16,15 @@
 // JSON so the page can show a preview + confirm table; a separate
 // server action handles the actual INSERT.
 
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { generateObject } from "ai";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/rate-limit";
-
-const MODEL = "gemini-2.5-flash";
+import {
+  multimodalModelChain,
+  isRetryableError,
+  isQuotaError,
+} from "@/lib/ai-models";
 const MAX_BYTES = 5 * 1024 * 1024; // 5 MB -- Gemini accepts up to 20
 
 // Schema we want the model to return. Every field except full_name
@@ -181,52 +183,64 @@ export async function POST(req: Request) {
     return Response.json({ error: `فشل قراءة الملف: ${msg}` }, { status: 400 });
   }
 
-  try {
-    const google = createGoogleGenerativeAI({
-      apiKey: process.env.GEMINI_API_KEY,
-    });
+  // Send the PDF directly as a file part. Gemini handles OCR / text
+  // extraction internally — works on text-based and scanned PDFs alike.
+  // Try flash, then flash-lite (a SEPARATE free-tier quota bucket) with NO
+  // same-model retries — retrying an exhausted model just burns time.
+  const chain = multimodalModelChain();
+  let lastErr: unknown = null;
+  for (const { model } of chain) {
+    try {
+      const { object } = await generateObject({
+        model,
+        schema: responseSchema,
+        temperature: 0.1, // deterministic-ish
+        maxRetries: 0,
+        system: SYSTEM_INSTRUCTIONS,
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: `استخرج بيانات الموظفين من الـ PDF المرفق (${fileName}).`,
+              },
+              { type: "file", data: pdfBytes, mediaType: "application/pdf" },
+            ],
+          },
+        ],
+      });
+      return Response.json({
+        ok: true,
+        employees: object.employees,
+        notes: object.notes,
+        fileSize: pdfBytes.length,
+      });
+    } catch (err) {
+      lastErr = err;
+      console.warn(
+        "parse-pdf failed:",
+        err instanceof Error ? err.message : String(err),
+      );
+      // Bad file / schema mismatch won't be fixed by another model — stop.
+      if (!isRetryableError(err)) break;
+    }
+  }
 
-    // Send the PDF directly as a file part. Gemini handles the OCR /
-    // text extraction internally -- works on text-based and scanned
-    // PDFs alike.
-    const { object } = await generateObject({
-      model: google(MODEL),
-      schema: responseSchema,
-      temperature: 0.1, // deterministic-ish
-      system: SYSTEM_INSTRUCTIONS,
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: `استخرج بيانات الموظفين من الـ PDF المرفق (${fileName}).`,
-            },
-            {
-              type: "file",
-              data: pdfBytes,
-              mediaType: "application/pdf",
-            },
-          ],
-        },
-      ],
-    });
-
-    return Response.json({
-      ok: true,
-      employees: object.employees,
-      notes: object.notes,
-      fileSize: pdfBytes.length,
-    });
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-     
-    console.warn("parse-pdf failed:", msg);
+  const msg = lastErr instanceof Error ? lastErr.message : String(lastErr);
+  if (isQuotaError(lastErr)) {
     return Response.json(
       {
-        error: `الـ AI ما قدرش يقرا الملف -- جرب ملف تاني أو استخدم Excel: ${msg.slice(0, 200)}`,
+        error:
+          "حصة قراءة ملفات الـPDF المجانية خلصت دلوقتي 🙏 — أسرع حل: استورد من ملف Excel/CSV (مش محتاج AI خالص). والـPDF هيرجع يشتغل لما الحصة تتجدد (خلال ساعات).",
       },
-      { status: 500 },
+      { status: 429 },
     );
   }
+  return Response.json(
+    {
+      error: `الـ AI ما قدرش يقرا الملف -- جرب ملف تاني أو استخدم Excel: ${msg.slice(0, 200)}`,
+    },
+    { status: 500 },
+  );
 }

@@ -37,7 +37,7 @@ import {
   type EmployeeSignals,
   monthsBetween,
 } from "@/lib/retention";
-import { pickAgentModel, pickAgentModelLargeContext } from "@/lib/ai-models";
+import { pickAgentModelStreaming, friendlyAiError } from "@/lib/ai-models";
 import { searchKnowledgeBase } from "@/lib/ai/memory";
 import { publishPagePost } from "@/lib/marketing-inbox/meta-client";
 import { publishLinkedInPost } from "@/lib/linkedin";
@@ -229,6 +229,11 @@ bulk_import_* (لأن مفيش بيانات منظمة).
 
 ## قواعد الرد العامة
 
+- 🚨 **الصدق المطلق في تنفيذ الإجراءات (أهم قاعدة):** ممنوع منعًا باتًا تقول إن أي إجراء "اتعمل / اتنشر / اتحفظ / اتعدّل / اتعتمد" إلا لو إنت **فعلًا ناديت الأداة المخصصة ورجعتلك نتيجة نجاح صريحة**. القاعدة الحاسمة:
+  • **النشر يبقى "تمّ" فقط لما الأداة ترجع رابط حقيقي**: نشر فيسبوك = لازم post_url رجع من publish_job_to_facebook_page؛ نشر لينكدإن = لازم post_url من publish_job_to_linkedin؛ إنشاء وظيفة = لازم apply_url من create_job_posting. **مفيش رابط = ماتمّش، قوله كده.**
+  • نتيجة فيها preview أو confirmation_prompt = **مسودة لسه ماتنفذتش** — اعرضها واطلب تأكيد، وممنوع تقول إنها اتعملت.
+  • نتيجة فيها error (نجاح=false) = **العملية فشلت** — قول للمستخدم إنها ماتمّتش والسبب بالعربي (مثلاً «صفحة الفيسبوك مش مربوطة» / «لينكدإن محتاج إعادة ربط»)، **وادّيله رابط الوظيفة ينشره بنفسه**.
+  • **متدّعيش نجاح من دماغك أبدًا** — ده بيضيّع على المستخدم متقدمين ووظائف.
 - **العربي المصري الواضح** — مفيش فصحى.
 - لما بترجع نتائج tool، استعمل الأرقام الفعلية اللي رجعت لك،
   مش أرقام افتراضية.
@@ -2516,9 +2521,26 @@ export async function POST(req: Request) {
   //     has the per-request token headroom Groq's free tier lacks.
   // Best of both: reliable everyday chat + capacity for big imports.
   // --------------------------------------------------------------------
-  const convoBlob = JSON.stringify(messages);
-  const isLargeRequest = convoBlob.length > 18000 || convoBlob.includes("📎 [ملف");
-  const picked = isLargeRequest ? pickAgentModelLargeContext() : pickAgentModel();
+  // MODEL CHOICE: this agent ALWAYS runs on Gemini (1M-token context).
+  //
+  // Why not Groq, even gpt-oss-20b (12k TPM)? The route's FIXED overhead is
+  // ~8.5k tokens BEFORE any conversation — the big Arabic system prompt (it
+  // enumerates all 21 tools) + 21 tool schemas the SDK serializes into the
+  // request. We measured this from the original failure: a one-line message
+  // already "Requested 9005" tokens. On top of that, a tool-using turn re-sends
+  // the whole payload on EACH of up to 10 steps, and tool results accumulate —
+  // so even a request that starts under 12k balloons past it mid-loop and Groq
+  // rejects with "Request too large". Groq's free per-request cap simply can't
+  // host a 21-tool agent. Gemini's 1M budget can, with room to spare.
+  //
+  // pickAgentModelStreaming = Gemini 2.5 Flash-LITE first (1M context, but a
+  // LARGER free-tier daily quota than flash AND a separate quota bucket from CV
+  // screening / the chat route, so they don't drain each other), Groq gpt-oss-
+  // 20b as a last-resort fallback. (streamText pins one model per request, so on
+  // a quota error the onError net below shows a friendly retry message rather
+  // than the raw provider error — and the user/client retries.)
+  // --------------------------------------------------------------------
+  const picked = pickAgentModelStreaming();
 
   const result = streamText({
     model: picked.model,
@@ -2537,5 +2559,18 @@ export async function POST(req: Request) {
     temperature: 0.2,
   });
 
-  return result.toUIMessageStreamResponse();
+  // Safety net: if the picked provider still errors mid-stream (quota,
+  // overload, or an estimate that under-counted), map it to a short Arabic
+  // message. Without this, streamText leaks the raw provider error
+  // ("Request too large for model openai/gpt-oss-120b ... Limit 8000") straight
+  // into the chat bubble. The real error is logged server-side for debugging.
+  return result.toUIMessageStreamResponse({
+    onError: (error) => {
+      console.error(
+        "[ai-agent] stream error:",
+        error instanceof Error ? error.message : String(error),
+      );
+      return friendlyAiError(error);
+    },
+  });
 }

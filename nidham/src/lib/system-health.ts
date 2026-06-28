@@ -130,20 +130,24 @@ export async function runSystemHealth(
 
   // ── 7) Scheduler freshness (daily cron) ──
   try {
-    const twoHoursAgo = new Date(Date.now() - 2 * 3600_000).toISOString();
+    // The publisher runs in the DAILY cron, so a post legitimately waits up to
+    // ~24h after its scheduled time before the next run picks it up. Only flag
+    // "cron stopped" when a post is overdue beyond a full daily cycle (+2h
+    // margin = 26h) — that means the cron genuinely missed a run.
+    const staleThreshold = new Date(Date.now() - 26 * 3600_000).toISOString();
     const { data: overdue } = await supabase
       .from("linkedin_scheduled_posts")
       .select("id")
       .eq("company_id", companyId)
       .eq("status", "pending")
-      .lt("scheduled_at", twoHoursAgo);
+      .lt("scheduled_at", staleThreshold);
     const { data: failed } = await supabase
       .from("linkedin_scheduled_posts")
       .select("id, error")
       .eq("company_id", companyId)
       .eq("status", "failed");
     if ((overdue?.length ?? 0) > 0) {
-      checks.push({ key: "cron", label: "الجدولة اليومية (Cron)", status: "fail", detail: `${overdue!.length} بوست معاده فات بساعتين+ ولسه منتظر — الكرون اليومي غالبًا واقف`, fix: "افحص Vercel → Crons، أو شغّل /api/cron/linkedin-posts يدويًا" });
+      checks.push({ key: "cron", label: "الجدولة اليومية (Cron)", status: "fail", detail: `${overdue!.length} بوست فات معاده بأكتر من يوم ولسه منتظر — الكرون اليومي غالبًا واقف`, fix: "افحص Vercel → Crons، أو شغّل /api/cron/linkedin-posts يدويًا" });
     } else if ((failed?.length ?? 0) > 0) {
       checks.push({ key: "cron", label: "الجدولة اليومية (Cron)", status: "warn", detail: `${failed!.length} بوست فشل نشره — آخر سبب: ${(failed![0].error || "").slice(0, 80)}` });
     } else {

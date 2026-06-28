@@ -18,7 +18,17 @@ type Props = {
   companyName?: string;
 };
 
-const STEPS = ["البيانات الشخصية", "أسئلة الوظيفة", "السيرة الذاتية", "مراجعة وإرسال"];
+// The job-questions step only EXISTS when the job actually has custom
+// questions. A job with none must NOT show the candidate an empty
+// "أسئلة الوظيفة" step ("مفيش أسئلة محددة…") — we filter it out so the wizard
+// is a clean 3 steps instead of 4. Steps are keyed (not index-numbered) so
+// adding/removing the questions step never desyncs the render/validation.
+const STEP_DEFS = [
+  { key: "personal", label: "البيانات الشخصية" },
+  { key: "questions", label: "أسئلة الوظيفة" },
+  { key: "resume", label: "السيرة الذاتية" },
+  { key: "review", label: "مراجعة وإرسال" },
+] as const;
 const STORAGE_KEY_PREFIX = "nidham_apply_";
 
 type PersonalInfo = {
@@ -52,6 +62,12 @@ export function ApplyFormClient({ jobId, jobSlug, questions, companyName }: Prop
 
   const storageKey = `${STORAGE_KEY_PREFIX}${jobId}`;
 
+  // Active steps for THIS job: drop the questions step when there are none.
+  const steps = STEP_DEFS.filter(
+    (s) => s.key !== "questions" || questions.length > 0,
+  );
+  const currentKey = steps[step]?.key ?? "personal";
+
   // Load from localStorage on mount
   useEffect(() => {
     try {
@@ -61,7 +77,12 @@ export function ApplyFormClient({ jobId, jobSlug, questions, companyName }: Prop
         if (data.personal) setPersonal(data.personal);
         if (data.answers) setAnswers(data.answers);
         if (data.coverMessage) setCoverMessage(data.coverMessage);
-        if (typeof data.step === "number" && data.step > 0) setStep(data.step);
+        if (typeof data.step === "number" && data.step > 0) {
+          // Clamp: a job with no questions has one fewer step, so an old saved
+          // index could overflow.
+          const maxStep = (questions.length > 0 ? 4 : 3) - 1;
+          setStep(Math.min(data.step, maxStep));
+        }
       }
     } catch { /* ignore */ }
   }, [storageKey]);
@@ -77,40 +98,34 @@ export function ApplyFormClient({ jobId, jobSlug, questions, companyName }: Prop
     } catch { /* ignore */ }
   }, [personal, answers, coverMessage, step, questions, storageKey, submitted]);
 
-  const validateStep = useCallback((s: number): boolean => {
+  const validateStep = useCallback((key: string): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (s === 0) {
+    if (key === "personal") {
       if (!personal.full_name.trim()) newErrors.full_name = "الاسم الكامل مطلوب";
       if (!personal.email.trim()) newErrors.email = "البريد الإلكتروني مطلوب";
       else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(personal.email))
         newErrors.email = "البريد الإلكتروني غير صحيح";
     }
 
-    if (s === 1) {
+    if (key === "questions") {
       for (const q of questions) {
         if (q.required) {
           const val = answers[q.id]?.trim();
-          if (!val) {
-            newErrors[q.id] = q.required ? "هذا السؤال مطلوب" : "";
-          }
+          if (!val) newErrors[q.id] = "هذا السؤال مطلوب";
         }
       }
     }
 
-    if (s === 2) {
-      if (!resumeFile && !coverMessage) {
-        // Either CV or cover is fine, but at least one file upload
-      }
-    }
+    // "resume" + "review": nothing is strictly required.
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }, [personal, answers, resumeFile, coverMessage, questions]);
+  }, [personal, answers, questions]);
 
   const next = () => {
-    if (validateStep(step)) {
-      setStep(Math.min(step + 1, STEPS.length - 1));
+    if (validateStep(currentKey)) {
+      setStep(Math.min(step + 1, steps.length - 1));
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
@@ -122,7 +137,7 @@ export function ApplyFormClient({ jobId, jobSlug, questions, companyName }: Prop
   };
 
   const handleSubmit = async () => {
-    if (!validateStep(step)) return;
+    if (!validateStep(currentKey)) return;
     setSubmitting(true);
 
     try {
@@ -183,8 +198,8 @@ export function ApplyFormClient({ jobId, jobSlug, questions, companyName }: Prop
       {/* Progress bar */}
       <div className="mb-8 sm:mb-10">
         <div className="flex items-center justify-between mb-3">
-          {STEPS.map((label, i) => (
-            <div key={i} className="flex flex-col items-center" style={{ width: `${100 / STEPS.length}%` }}>
+          {steps.map((s, i) => (
+            <div key={s.key} className="flex flex-col items-center" style={{ width: `${100 / steps.length}%` }}>
               <div
                 className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold font-cairo transition-all duration-500 ${
                   i < step
@@ -201,7 +216,7 @@ export function ApplyFormClient({ jobId, jobSlug, questions, companyName }: Prop
                   i <= step ? "text-white/70" : "text-white/30"
                 }`}
               >
-                {label}
+                {s.label}
               </span>
             </div>
           ))}
@@ -209,7 +224,7 @@ export function ApplyFormClient({ jobId, jobSlug, questions, companyName }: Prop
         <div className="relative h-1 bg-white/[0.06] rounded-full overflow-hidden">
           <div
             className="absolute inset-y-0 right-0 bg-gradient-to-l from-[#c9a84c] to-[#c9a84c]/60 rounded-full transition-all duration-500"
-            style={{ width: `${(step / (STEPS.length - 1)) * 100}%` }}
+            style={{ width: `${(step / (steps.length - 1)) * 100}%` }}
           />
         </div>
       </div>
@@ -221,8 +236,8 @@ export function ApplyFormClient({ jobId, jobSlug, questions, companyName }: Prop
         </div>
       )}
 
-      {/* Step 0: Personal Info */}
-      {step === 0 && (
+      {/* Step: Personal Info */}
+      {currentKey === "personal" && (
         <div className="space-y-5 animate-fadeIn">
           <h2 className="text-xl sm:text-2xl font-black font-cairo text-white mb-1">البيانات الشخصية</h2>
           <p className="text-white/40 text-sm font-cairo mb-6">الخطوة الأولى: معلومات التواصل الأساسية</p>
@@ -272,17 +287,11 @@ export function ApplyFormClient({ jobId, jobSlug, questions, companyName }: Prop
         </div>
       )}
 
-      {/* Step 1: Job-specific questions */}
-      {step === 1 && (
+      {/* Step: Job-specific questions (only rendered when the job has any) */}
+      {currentKey === "questions" && (
         <div className="space-y-5 animate-fadeIn">
           <h2 className="text-xl sm:text-2xl font-black font-cairo text-white mb-1">أسئلة الوظيفة</h2>
           <p className="text-white/40 text-sm font-cairo mb-6">جاوب على الأسئلة دي عشان نساعد الـ HR يفهم خبراتك</p>
-
-          {questions.length === 0 && (
-            <p className="text-white/30 text-sm font-cairo text-center py-8">
-              مفيش أسئلة محددة للوظيفة دي — تقدر تتخطى الخطوة دي.
-            </p>
-          )}
 
           {questions.map((q) => (
             <div key={q.id}>
@@ -378,8 +387,8 @@ export function ApplyFormClient({ jobId, jobSlug, questions, companyName }: Prop
         </div>
       )}
 
-      {/* Step 2: Resume upload */}
-      {step === 2 && (
+      {/* Step: Resume upload */}
+      {currentKey === "resume" && (
         <div className="space-y-5 animate-fadeIn">
           <h2 className="text-xl sm:text-2xl font-black font-cairo text-white mb-1">السيرة الذاتية</h2>
           <p className="text-white/40 text-sm font-cairo mb-6">ارفعلنا الـ CV بتاعك — PDF أو Word</p>
@@ -444,8 +453,8 @@ export function ApplyFormClient({ jobId, jobSlug, questions, companyName }: Prop
         </div>
       )}
 
-      {/* Step 3: Review */}
-      {step === 3 && (
+      {/* Step: Review */}
+      {currentKey === "review" && (
         <div className="space-y-5 animate-fadeIn">
           <h2 className="text-xl sm:text-2xl font-black font-cairo text-white mb-1">مراجعة وإرسال</h2>
           <p className="text-white/40 text-sm font-cairo mb-6">تأكد من صحة بياناتك قبل الإرسال</p>
@@ -495,7 +504,7 @@ export function ApplyFormClient({ jobId, jobSlug, questions, companyName }: Prop
           <div />
         )}
 
-        {step < STEPS.length - 1 ? (
+        {step < steps.length - 1 ? (
           <button
             type="button"
             onClick={next}

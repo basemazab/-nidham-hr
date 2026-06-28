@@ -102,6 +102,12 @@ const PAGES: Capture[] = [
   },
   { name: "11-bridge-analytics", pathOrResolver: "/dashboard/reports/bridge" },
   { name: "12-ai-assistant", pathOrResolver: "/dashboard/ai" },
+  { name: "13-compliance-shield", pathOrResolver: "/dashboard/compliance-shield", optional: true },
+  { name: "14-memo-studio", pathOrResolver: "/dashboard/memo-studio", optional: true },
+  { name: "15-intelligence", pathOrResolver: "/dashboard/intelligence", optional: true },
+  // Public marketing pages (no tenant data → zero PII risk, always clean).
+  { name: "16-home", pathOrResolver: "/" },
+  { name: "17-pricing", pathOrResolver: "/pricing" },
 ];
 
 const VIEWPORTS = {

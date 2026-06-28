@@ -22,6 +22,37 @@ export async function runHealthAction(): Promise<
   }
 }
 
+// Manually publish all DUE scheduled posts now (LinkedIn + social). A safety
+// valve for when Vercel's daily cron is late/stalled — the admin triggers the
+// exact same work the cron does, on demand. Runs with the service role.
+export async function runScheduledNow(): Promise<void> {
+  await requireHR();
+  const { createServiceClient } = await import("@/lib/supabase/service");
+  const svc = createServiceClient();
+
+  let posted = 0;
+  let failed = 0;
+  try {
+    const { runScheduledLinkedInPosts } = await import("@/lib/linkedin-scheduler");
+    const r = await runScheduledLinkedInPosts(svc);
+    posted += r?.posted ?? 0;
+    failed += r?.failed ?? 0;
+  } catch {
+    /* best-effort */
+  }
+  try {
+    const { publishDueSocialPosts } = await import("@/lib/social-scheduler");
+    const r = await publishDueSocialPosts(svc);
+    posted += r?.published ?? 0;
+    failed += r?.failed ?? 0;
+  } catch {
+    /* best-effort */
+  }
+
+  revalidatePath("/dashboard/system-engineer");
+  redirect(`/dashboard/system-engineer?ran=${posted}_${failed}`);
+}
+
 // File a bug report / feature request with a fresh diagnostics snapshot
 // attached — so whoever implements it starts with full context.
 export async function createDevRequest(form: FormData): Promise<void> {
