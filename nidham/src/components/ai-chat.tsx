@@ -22,6 +22,9 @@ const SUGGESTED_QUESTIONS: { q: string; cat: "law" | "data" | "general" }[] = [
 export function AIChat() {
   const [input, setInput] = useState("");
   const [messageSources, setMessageSources] = useState<Map<string, KBSource[]>>(new Map());
+  const [attached, setAttached] = useState<File | null>(null);
+  const [attachError, setAttachError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const lastUserQueryRef = useRef<string>("");
 
   const { messages, sendMessage, status, error } = useChat({
@@ -45,12 +48,46 @@ export function AIChat() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, status]);
 
+  const onPickFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) {
+      setAttached(null);
+      return;
+    }
+    const okType = f.type.startsWith("image/") || f.type === "application/pdf";
+    if (!okType) {
+      setAttachError("الملف لازم يكون صورة أو PDF");
+      setAttached(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+    if (f.size > 5 * 1024 * 1024) {
+      setAttachError("الملف كبير — الحد الأقصى 5 ميجا");
+      setAttached(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+    setAttachError("");
+    setAttached(f);
+  };
+
+  const clearAttachment = () => {
+    setAttached(null);
+    setAttachError("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || status !== "ready") return;
+    if ((!input.trim() && !attached) || status !== "ready") return;
     lastUserQueryRef.current = input.trim();
-    sendMessage({ text: input });
+    const files = fileInputRef.current?.files ?? undefined;
+    sendMessage({
+      text: input.trim() || "اقرأ الملف المرفق وحلّله.",
+      files: files && files.length > 0 ? files : undefined,
+    });
     setInput("");
+    clearAttachment();
   };
 
   const handleSuggestionClick = (q: string) => {
@@ -103,6 +140,7 @@ export function AIChat() {
             {messages.map((m) => {
               const textParts = m.parts.filter((p) => p.type === "text");
               const content = textParts.map((p) => ("text" in p ? p.text : "")).join("");
+              const fileParts = m.parts.filter((p) => p.type === "file");
               const sources = messageSources.get(m.id);
               return (
                 <div
@@ -119,15 +157,46 @@ export function AIChat() {
                     {m.role === "user" ? "أ" : "🤖"}
                   </div>
                   <div className={`flex flex-col gap-2 ${m.role === "user" ? "items-end" : "items-start"}`}>
-                    <div
-                      className={`max-w-[80%] px-4 py-3 rounded-2xl font-cairo text-sm leading-relaxed whitespace-pre-wrap ${
-                        m.role === "user"
-                          ? "bg-brand-cyan/10 text-slate-800 rounded-tr-sm"
-                          : "bg-slate-50 text-slate-800 rounded-tl-sm"
-                      }`}
-                    >
-                      {content}
-                    </div>
+                    {fileParts.length > 0 && (
+                      <div className="flex flex-wrap gap-2 max-w-[80%]">
+                        {fileParts.map((p, fi) => {
+                          const url = "url" in p && typeof p.url === "string" ? p.url : "";
+                          const mt =
+                            "mediaType" in p && typeof p.mediaType === "string" ? p.mediaType : "";
+                          const name =
+                            "filename" in p && typeof p.filename === "string" && p.filename
+                              ? p.filename
+                              : "ملف";
+                          return mt.startsWith("image/") && url ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              key={fi}
+                              src={url}
+                              alt={name}
+                              className="max-h-44 rounded-xl border border-slate-200"
+                            />
+                          ) : (
+                            <span
+                              key={fi}
+                              className="inline-flex items-center gap-1 text-xs font-cairo bg-white border border-slate-200 rounded-lg px-2 py-1 text-slate-600"
+                            >
+                              📎 {name}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    )}
+                    {content && (
+                      <div
+                        className={`max-w-[80%] px-4 py-3 rounded-2xl font-cairo text-sm leading-relaxed whitespace-pre-wrap ${
+                          m.role === "user"
+                            ? "bg-brand-cyan/10 text-slate-800 rounded-tr-sm"
+                            : "bg-slate-50 text-slate-800 rounded-tl-sm"
+                        }`}
+                      >
+                        {content}
+                      </div>
+                    )}
                     {m.role !== "user" && sources && sources.length > 0 && (
                       <div className="max-w-md rounded-xl border border-amber-200 bg-amber-50/50 px-3 py-2 text-xs font-cairo shadow-sm">
                         <div className="mb-1 text-[10px] font-bold text-amber-700">📚 المستندات المرجعية</div>
@@ -174,26 +243,61 @@ export function AIChat() {
       )}
 
       {/* Input */}
-      <form
-        onSubmit={handleSubmit}
-        className="flex items-center gap-2 p-3 border-t border-slate-100 bg-slate-50/50"
-      >
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="اسألني أي حاجة... (قانون العمل، بيانات شركتك، كتابة، ترجمة، أفكار)"
-          disabled={isLoading}
-          className="flex-1 px-4 py-3 rounded-xl border border-slate-200 focus:border-brand-cyan focus:ring-2 focus:ring-brand-cyan/20 outline-none text-slate-900 font-cairo disabled:opacity-60"
-        />
-        <button
-          type="submit"
-          disabled={isLoading || !input.trim()}
-          className="px-5 py-3 rounded-xl bg-gradient-to-r from-brand-cyan to-brand-cyan-dark text-white font-bold font-cairo disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg transition shadow-md"
-        >
-          {isLoading ? "..." : "ابعت"}
-        </button>
-      </form>
+      <div className="border-t border-slate-100 bg-slate-50/50">
+        {(attached || attachError) && (
+          <div className="px-3 pt-2 flex items-center gap-2 flex-wrap">
+            {attached && (
+              <span className="inline-flex items-center gap-2 text-xs font-cairo bg-white border border-slate-200 rounded-lg px-2 py-1 text-slate-600">
+                📎 {attached.name}
+                <button
+                  type="button"
+                  onClick={clearAttachment}
+                  className="text-red-400 hover:text-red-600"
+                  aria-label="إزالة الملف"
+                >
+                  ✕
+                </button>
+              </span>
+            )}
+            {attachError && (
+              <span className="text-xs text-red-500 font-cairo">⚠ {attachError}</span>
+            )}
+          </div>
+        )}
+        <form onSubmit={handleSubmit} className="flex items-center gap-2 p-3">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,application/pdf"
+            onChange={onPickFile}
+            className="hidden"
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isLoading}
+            title="أرفِق صورة أو PDF"
+            className="px-3 py-3 rounded-xl border border-slate-200 text-slate-500 hover:bg-white hover:text-brand-cyan transition disabled:opacity-50"
+          >
+            📎
+          </button>
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="اسألني أي حاجة... (قانون العمل، بيانات شركتك، كتابة، ترجمة، أفكار)"
+            disabled={isLoading}
+            className="flex-1 px-4 py-3 rounded-xl border border-slate-200 focus:border-brand-cyan focus:ring-2 focus:ring-brand-cyan/20 outline-none text-slate-900 font-cairo disabled:opacity-60"
+          />
+          <button
+            type="submit"
+            disabled={isLoading || (!input.trim() && !attached)}
+            className="px-5 py-3 rounded-xl bg-gradient-to-r from-brand-cyan to-brand-cyan-dark text-white font-bold font-cairo disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg transition shadow-md"
+          >
+            {isLoading ? "..." : "ابعت"}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

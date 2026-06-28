@@ -1,36 +1,83 @@
-import { streamText } from "ai";
+import { streamText, type ModelMessage } from "ai";
 import { createClient } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { searchKnowledgeBase } from "@/lib/ai/memory";
-import { pickAgentModelLargeContext, friendlyAiError } from "@/lib/ai-models";
+import {
+  pickAgentModelLargeContext,
+  multimodalModelChain,
+  friendlyAiError,
+} from "@/lib/ai-models";
 
-// Model is picked dynamically via pickAgentModelLargeContext() to enable
-// multi-provider fallback (Gemini → Groq) instead of hard-coding Gemini.
+// Model is picked dynamically: pickAgentModelLargeContext() for text turns
+// (multi-provider fallback), or a Gemini VISION model when the turn carries an
+// attached image/PDF (the default chain — Nara — can't read files).
 
-type UIMessagePart = { type: string; text?: string };
+type UIMessagePart = {
+  type: string;
+  text?: string;
+  url?: string;
+  mediaType?: string;
+  filename?: string;
+};
 type IncomingMessage = {
   role: "user" | "assistant" | "system";
   parts?: UIMessagePart[];
   content?: string;
 };
 
-function normalizeMessages(raw: unknown): { role: "user" | "assistant" | "system"; content: string }[] {
+type TextPart = { type: "text"; text: string };
+type FilePart = { type: "file"; data: string; mediaType: string };
+type NormalizedMessage = {
+  role: "user" | "assistant" | "system";
+  content: string | Array<TextPart | FilePart>;
+};
+
+// Only images + PDFs are accepted as attachments — what Gemini reads visually.
+function isAllowedFile(mediaType: string | undefined): boolean {
+  if (!mediaType) return false;
+  return mediaType.startsWith("image/") || mediaType === "application/pdf";
+}
+
+function normalizeMessages(raw: unknown): NormalizedMessage[] {
   if (!Array.isArray(raw)) return [];
   return raw
     .filter((m): m is IncomingMessage => m && typeof m === "object" && "role" in m)
-    .map((m) => {
-      let content = "";
+    .map((m): NormalizedMessage => {
+      let text = "";
+      const files: FilePart[] = [];
       if (Array.isArray(m.parts)) {
-        content = m.parts
-          .filter((p) => p && p.type === "text" && typeof p.text === "string")
-          .map((p) => p.text!)
-          .join("");
+        for (const p of m.parts) {
+          if (!p || typeof p !== "object") continue;
+          if (p.type === "text" && typeof p.text === "string") {
+            text += p.text;
+          } else if (
+            p.type === "file" &&
+            typeof p.url === "string" &&
+            isAllowedFile(p.mediaType)
+          ) {
+            files.push({ type: "file", data: p.url, mediaType: p.mediaType as string });
+          }
+        }
       } else if (typeof m.content === "string") {
-        content = m.content;
+        text = m.content;
       }
-      return { role: m.role, content };
+      if (files.length > 0) {
+        const parts: Array<TextPart | FilePart> = [];
+        parts.push({ type: "text", text: text.trim() || "اقرأ الملف المرفق وحلّله." });
+        parts.push(...files);
+        return { role: m.role, content: parts };
+      }
+      return { role: m.role, content: text };
     })
-    .filter((m) => m.content.length > 0);
+    .filter((m) =>
+      typeof m.content === "string" ? m.content.length > 0 : m.content.length > 0,
+    );
+}
+
+function hasFileContent(messages: NormalizedMessage[]): boolean {
+  return messages.some(
+    (m) => Array.isArray(m.content) && m.content.some((p) => p.type === "file"),
+  );
 }
 
 export const maxDuration = 30;
@@ -341,7 +388,16 @@ export async function POST(req: Request) {
   // Inject knowledge base context (RAG) for the user's latest question
   let kbMatchDocs: { id: string; title: string; source_type: string }[] = [];
   try {
-    const lastUserMsg = [...messages].reverse().find((m) => m.role === "user")?.content;
+    const lastUserContent = [...messages].reverse().find((m) => m.role === "user")?.content;
+    const lastUserMsg =
+      typeof lastUserContent === "string"
+        ? lastUserContent
+        : Array.isArray(lastUserContent)
+          ? lastUserContent
+              .filter((p): p is TextPart => p.type === "text")
+              .map((p) => p.text)
+              .join(" ")
+          : "";
     if (lastUserMsg && profile.company_id) {
       const kbDocs = await searchKnowledgeBase(profile.company_id, lastUserMsg, 3);
       if (kbDocs && kbDocs.length > 0) {
@@ -365,12 +421,28 @@ export async function POST(req: Request) {
     // KB search is non-critical — don't crash the chat
   }
 
-  const picked = pickAgentModelLargeContext();
+  // A turn with an attached image/PDF MUST go to a vision-capable model
+  // (Gemini); the default large-context chain (Nara) can't read files.
+  let model = pickAgentModelLargeContext().model;
+  if (hasFileContent(messages)) {
+    const vision = multimodalModelChain()[0];
+    if (!vision) {
+      return new Response(
+        JSON.stringify({
+          error: "قراءة الملفات محتاجة GEMINI_API_KEY — ضيفه في إعدادات Vercel.",
+        }),
+        { status: 400 },
+      );
+    }
+    model = vision.model;
+  }
 
   const result = streamText({
-    model: picked.model,
+    model,
     system: systemPrompt,
-    messages,
+    // Runtime shape is valid CoreMessages (string, or text+file parts); the cast
+    // bridges our narrower NormalizedMessage union to the SDK's ModelMessage.
+    messages: messages as ModelMessage[],
   });
 
   // Never leak a raw provider error ("Request too large ... Limit 8000")
