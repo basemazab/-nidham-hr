@@ -1,5 +1,15 @@
 # PROJECT MAP — Nidham HR
 
+> ## ⚡ START HERE — Current state (2026-06-28)
+> **Live branch = `main`** (force-synced to the live nidhamhr.com code on 2026-06-28). An older parallel `dashboard/recruitment/` experiment (Jun 15–19) is archived on branch `archive/main-recruitment-jun19` — ignore it. The **live recruitment flow lives under `dashboard/jobs/[id]/`** (jobs, applications, cv-analyzer, cv-translator, job-description).
+>
+> - **Deploy:** `npx vercel --prod --yes` from repo root (`nidham-hr/`, Vercel Root Directory = `nidham`); domains auto-follow. **Also `git push` to `main`** to keep GitHub in sync — historically deploys went to Vercel *without* pushing, which left GitHub 97 commits behind. Don't repeat that.
+> - **Secrets:** every real key lives in Vercel env (sealed). `.env.local` is gitignored — never commit keys. NaraRouter key is read as `NARA_API_KEY || KEY_nara`.
+> - **AI:** multi-provider fallback in `lib/ai-models.ts` (Gemini + Groq + NaraRouter). The 21-tool agent (`api/ai/agent/route.ts`) uses `streamText`, which **pins ONE model with no mid-stream fallback** → keep its model on a reliable tool-caller; `onError` maps failures to a friendly Arabic message. The **نِظّوم** in-system guide (`lib/guide-content.ts`) is 100% deterministic — **NO AI, never add keys/models to it**.
+> - **CV intake:** `lib/cv-extract.ts` = cheap local parser → Gemini OCR fallback when output is garbage/empty/image. The applicant page **gates corrupt text** (shows a download note instead of binary salad).
+> - **Open issues (NOT yet fixed):** (1) Facebook/LinkedIn auto-publish from the agent doesn't actually post (FB page likely not connected; LinkedIn `/v2/ugcPosts` likely deprecated → migrate to `/rest/posts`) — deterministic "truth cards" in `ai-agent-chat.tsx` now surface the real error in the UI. (2) CV analyzer occasional timeout. (3) Agent sometimes returns "حصل خطأ مؤقت" (Gemini overload + no in-stream fallback).
+> - **Owner's working style:** get it right the **first** time — diagnose fully + verify behavior BEFORE shipping; no deploy→discover→re-fix loops. **Reply in Egyptian Arabic.**
+
 ## [TECH_STACK]
 
 | Layer | Technology | Version |
@@ -8,7 +18,7 @@
 | **UI** | React, Tailwind CSS v4, lucide-react | 19.2.4 |
 | **Language** | TypeScript | — |
 | **AI SDK** | `ai` + `@ai-sdk/react` + fallback chain | 6.0.180 / 3.0.182 |
-| **AI Providers** | Groq (gpt-oss-120b/20b, Llama 4 Scout) → Gemini Flash Lite | — |
+| **AI Providers** | Gemini (flash/flash-lite) + Groq (gpt-oss-120b/20b, Scout) + NaraRouter — deduped fallback chain | — |
 | **Embeddings** | Gemini `gemini-embedding-001` (768-dim) | — |
 | **Database** | Supabase (PostgreSQL + pgvector) | — |
 | **Auth** | Supabase SSR (email, autoconfirm) | — |
@@ -46,7 +56,7 @@ User → nidhamhr.com
   └── /blog → 15 static articles (Egypt labor law, payroll, etc.)
 ```
 
-**AI Fallback Chain:** Groq 120B → Groq 20B → Llama 4 Scout → Gemini Flash Lite
+**AI Fallback Chain (`lib/ai-models.ts`):** single deduped chain via `availableModels()` — NaraRouter / Gemini Flash Lite (agent default) → Gemini Flash → Groq 20B → Groq 120B → Groq Scout. Pickers: `pickAgentModel` (support tools), `pickAgentModelStreaming` (21-tool agent, Gemini-first), `pickAgentModelLargeContext` (Nara-first, non-tool), `multimodalModelChain` (file/CV OCR). `streamText` has no mid-stream fallback — `onError` → friendly Arabic.
 
 ## [ARCHITECTURE]
 
@@ -70,7 +80,7 @@ src/
 └── tests/                  # e2e, integration, load, uat
 
 db/
-└── migrations/             # 78 SQL migration files (001→078)
+└── migrations/             # 119 SQL migration files (up to 115_application_cvs_bucket)
 ```
 
 **Key patterns:**
