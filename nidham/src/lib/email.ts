@@ -242,6 +242,7 @@ export function emailNewApplication(opts: {
   email: string;
   phone: string;
   city: string;
+  age?: string | null;
   cover: string | null;
   answers: { label: string; value: string }[];
   appUrl: string;
@@ -251,6 +252,7 @@ export function emailNewApplication(opts: {
     ["البريد", opts.email],
     ["الموبايل", opts.phone || "—"],
     ["المدينة", opts.city || "—"],
+    ...(opts.age ? [["السن", `${opts.age} سنة`]] : []),
   ]
     .map(
       ([k, v]) =>
@@ -285,7 +287,7 @@ export function emailNewApplication(opts: {
         <a href="${opts.appUrl}" style="display:inline-block;background:${BRAND_NAVY};color:#fff;text-decoration:none;font-weight:700;padding:12px 28px;border-radius:10px;">افتح صفحة المتقدم (وحمّل الـCV) ←</a>
       </div>
     `,
-    text: `متقدم جديد: ${opts.candidateName} — ${opts.jobTitle}\nالبريد: ${opts.email}\nالموبايل: ${opts.phone}\nالمدينة: ${opts.city}\n\nافتح صفحة المتقدم: ${opts.appUrl}`,
+    text: `متقدم جديد: ${opts.candidateName} — ${opts.jobTitle}\nالبريد: ${opts.email}\nالموبايل: ${opts.phone}\nالمدينة: ${opts.city}${opts.age ? `\nالسن: ${opts.age} سنة` : ""}\n\nافتح صفحة المتقدم: ${opts.appUrl}`,
   };
 }
 

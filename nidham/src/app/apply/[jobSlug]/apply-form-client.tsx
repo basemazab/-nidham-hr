@@ -36,6 +36,7 @@ type PersonalInfo = {
   email: string;
   phone: string;
   city: string;
+  age: string;
 };
 
 type Answers = Record<string, string>;
@@ -54,6 +55,7 @@ export function ApplyFormClient({ jobId, jobSlug, questions, companyName }: Prop
     email: "",
     phone: "",
     city: "",
+    age: "",
   });
 
   const [answers, setAnswers] = useState<Answers>({});
@@ -74,7 +76,9 @@ export function ApplyFormClient({ jobId, jobSlug, questions, companyName }: Prop
       const saved = localStorage.getItem(storageKey);
       if (saved) {
         const data = JSON.parse(saved);
-        if (data.personal) setPersonal(data.personal);
+        // Merge over defaults so a draft saved before a field existed (e.g. age)
+        // doesn't make that input uncontrolled.
+        if (data.personal) setPersonal((prev) => ({ ...prev, ...data.personal }));
         if (data.answers) setAnswers(data.answers);
         if (data.coverMessage) setCoverMessage(data.coverMessage);
         if (typeof data.step === "number" && data.step > 0) {
@@ -147,6 +151,7 @@ export function ApplyFormClient({ jobId, jobSlug, questions, companyName }: Prop
       formData.append("email", personal.email);
       formData.append("phone", personal.phone);
       formData.append("city", personal.city);
+      formData.append("age", personal.age);
       formData.append("answers", JSON.stringify(answers));
       formData.append("cover_message", coverMessage);
       if (resumeFile) {
@@ -281,6 +286,19 @@ export function ApplyFormClient({ jobId, jobSlug, questions, companyName }: Prop
                 onChange={(e) => setPersonal({ ...personal, city: e.target.value })}
                 placeholder="القاهرة"
                 className="w-full px-4 py-3.5 rounded-xl bg-white/[0.06] border border-white/10 text-white text-sm font-cairo placeholder-white/30 focus:border-[#c9a84c]/50 focus:ring-2 focus:ring-[#c9a84c]/10 outline-none transition"
+              />
+            </Field>
+            <Field label="السن">
+              <input
+                type="number"
+                inputMode="numeric"
+                min={14}
+                max={80}
+                value={personal.age}
+                onChange={(e) => setPersonal({ ...personal, age: e.target.value.replace(/\D/g, "").slice(0, 2) })}
+                placeholder="مثال: 28"
+                dir="ltr"
+                className="w-full px-4 py-3.5 rounded-xl bg-white/[0.06] border border-white/10 text-white text-sm placeholder-white/30 focus:border-[#c9a84c]/50 focus:ring-2 focus:ring-[#c9a84c]/10 outline-none transition"
               />
             </Field>
           </div>
@@ -465,6 +483,7 @@ export function ApplyFormClient({ jobId, jobSlug, questions, companyName }: Prop
               <ReviewRow label="البريد" value={personal.email} />
               <ReviewRow label="الموبايل" value={personal.phone || "—"} />
               <ReviewRow label="المدينة" value={personal.city || "—"} />
+              <ReviewRow label="السن" value={personal.age ? `${personal.age} سنة` : "—"} />
             </ReviewSection>
 
             {questions.length > 0 && (

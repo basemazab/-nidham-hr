@@ -24,6 +24,7 @@ export async function POST(req: NextRequest) {
     const email = formData.get("email") as string;
     const phone = (formData.get("phone") as string) || "";
     const city = (formData.get("city") as string) || "";
+    const ageRaw = (formData.get("age") as string) || "";
     const answersRaw = formData.get("answers") as string;
     const coverMessage = (formData.get("cover_message") as string) || "";
     const resumeFile = formData.get("resume") as File | null;
@@ -61,6 +62,14 @@ export async function POST(req: NextRequest) {
     for (const [k, v] of Object.entries(answers)) {
       answersClean[k] = stripCtrl(String(v ?? ""));
     }
+    // Applicant age (optional) — keep a sane number only; stored inside the
+    // answers jsonb under a reserved "__age__" key (no DB migration needed) so
+    // HR sees it in the summary email AND on the applicant page.
+    const ageDigits = ageRaw.replace(/\D/g, "").slice(0, 3);
+    const ageNum = ageDigits ? parseInt(ageDigits, 10) : NaN;
+    const ageClean =
+      Number.isFinite(ageNum) && ageNum >= 14 && ageNum <= 80 ? String(ageNum) : null;
+    if (ageClean) answersClean["__age__"] = ageClean;
 
     // (أ) Store the ORIGINAL CV file in private storage so HR can download it,
     // not just read the parsed text. Best-effort — never blocks the submit.
@@ -154,7 +163,7 @@ export async function POST(req: NextRequest) {
               ? (af as { id: string; label: string }[])
               : [];
             const answerLines = Object.entries(answersClean)
-              .filter(([, v]) => v.trim())
+              .filter(([qid, v]) => v.trim() && !qid.startsWith("__"))
               .map(([qid, v]) => ({
                 label: qList.find((q) => q.id === qid)?.label ?? "إجابة إضافية",
                 value: v,
@@ -171,6 +180,7 @@ export async function POST(req: NextRequest) {
                     email,
                     phone,
                     city,
+                    age: ageClean,
                     cover: coverClean,
                     answers: answerLines,
                     appUrl,

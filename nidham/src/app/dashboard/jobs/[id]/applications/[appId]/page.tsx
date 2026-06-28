@@ -145,6 +145,15 @@ export default async function ApplicationDetailPage({ params }: PageProps) {
     `حابين نحدّد معاك موعد مقابلة. ياريت تقولنا الأيام والمواعيد اللي تناسبك خلال الأيام الجاية.\n\n` +
     `في انتظار ردك، وشكرًا.`;
 
+  // Professional, kind REJECTION message — warm and respectful, keeps the door
+  // open for the future. Same personalization (company + role + first name).
+  const rejectionMsg =
+    `السلام عليكم ${firstName} 🌟\n\n` +
+    `معاك فريق الموارد البشرية في ${companyName}.\n` +
+    `بنشكرك جدًا على اهتمامك ووقتك في التقديم على وظيفة «${job?.title ?? ""}».\n\n` +
+    `بعد دراسة طلبك بعناية، اخترنا نمضي مع مرشحين أقرب لمتطلبات الوظيفة في الوقت الحالي — وده مش تقليل من خبرتك أو مؤهلاتك إطلاقًا.\n\n` +
+    `هنحتفظ ببياناتك، ولو ظهرت فرصة مناسبة قدّام هنتواصل معاك. نتمنّالك كل التوفيق في مشوارك المهني 🙏`;
+
   // Hide garbage cv_text (old broken-font extractions stored before the smart
   // extractor) — show a "download the original file" note instead.
   const cvTextOk = !!app.cv_text && !looksLikeCorruptText(app.cv_text);
@@ -155,11 +164,16 @@ export default async function ApplicationDetailPage({ params }: PageProps) {
     ? (job!.application_form as { id: string; label: string }[])
     : [];
   const candAnswers = app.answers ?? {};
+  // Applicant age — stored by the apply route under the reserved "__age__" key
+  // inside answers (no DB column needed). Shown in the hero meta line below.
+  const applicantAge =
+    (candAnswers as Record<string, string>)["__age__"]?.toString().trim() || null;
   // Show EVERY answer the candidate gave — map to its question label when we
   // can, otherwise show it anyway (jobs created via the AI agent store no
   // question list, so we must NOT depend on a label match to display data).
+  // Reserved keys (prefixed "__", e.g. __age__) are meta, not Q&A — skip them.
   const answerEntries = Object.entries(candAnswers)
-    .filter(([, v]) => (v ?? "").toString().trim())
+    .filter(([id, v]) => !id.startsWith("__") && (v ?? "").toString().trim())
     .map(([id, v]) => ({
       label: appQuestions.find((q) => q.id === id)?.label ?? "إجابة إضافية",
       value: String(v),
@@ -231,6 +245,7 @@ export default async function ApplicationDetailPage({ params }: PageProps) {
                 {typeof cand?.years_experience === "number" &&
                   ` · ${cand.years_experience} سنين خبرة`}
                 {cand?.location && ` · ${cand.location}`}
+                {applicantAge && ` · 🎂 ${applicantAge} سنة`}
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <span className={`px-3 py-1 rounded-full text-xs font-bold border ${STATUS_CLASSES[app.status]} font-cairo`}>
@@ -267,6 +282,17 @@ export default async function ApplicationDetailPage({ params }: PageProps) {
                     className="px-3 py-1 rounded-full text-xs font-bold bg-[#25D366]/10 text-[#0b6b4f] border border-[#25D366]/40 hover:bg-[#25D366]/20 transition inline-flex items-center gap-1"
                   >
                     💬 واتساب — دعوة لمقابلة
+                  </a>
+                )}
+                {cand?.phone && (
+                  <a
+                    href={`https://wa.me/${waNumber(cand.phone)}?text=${encodeURIComponent(rejectionMsg)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600 border border-slate-300 hover:bg-slate-200 transition inline-flex items-center gap-1"
+                    title="رسالة اعتذار محترمة للمتقدم غير المناسب"
+                  >
+                    ✉️ واتساب — رسالة اعتذار
                   </a>
                 )}
                 {cand?.linkedin_url && (
