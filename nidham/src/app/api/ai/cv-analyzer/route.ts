@@ -24,23 +24,10 @@ import {
   buildCvAnalysisPrompt,
   type JobForCv,
 } from "@/lib/recruitment";
+import { looksLikeCorruptText } from "@/lib/cv-corrupt";
 
 export const maxDuration = 60;
 const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
-
-// A PDF can render fine yet carry a CORRUPT internal text layer (broken
-// font/encoding) → extraction returns letter-salad. Detect it so we tell the
-// user the fix instead of scoring garbage. Real CVs are full of ≥4-letter
-// words (any language); corrupt salad has almost none.
-function looksLikeCorruptText(text: string): boolean {
-  const tokens = text.split(/\s+/).filter(Boolean);
-  if (tokens.length < 20) return false;
-  let realWords = 0;
-  for (const t of tokens) {
-    if (/\p{L}{4,}/u.test(t)) realWords++;
-  }
-  return realWords / tokens.length < 0.12;
-}
 
 export async function POST(req: Request) {
   const supabase = await createClient();

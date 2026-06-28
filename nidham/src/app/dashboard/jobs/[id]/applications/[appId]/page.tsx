@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ApplicantMessageTemplates } from "./applicant-message-templates";
+import { looksLikeCorruptText } from "@/lib/cv-corrupt";
 import {
   rerunScreening,
   updateApplicationStatus,
@@ -72,17 +73,8 @@ const STATUS_OPTIONS: ApplicationStatus[] = [
   "withdrawn",
 ];
 
-// True when stored cv_text is garbage (a broken-font PDF the byte parser
-// mangled before the smart extractor existed). Real CVs are full of ≥4-letter
-// words; salad has almost none. Used to HIDE garbage at display time so old
-// rows render cleanly too (HR downloads the original file instead).
-function looksLikeCorruptText(text: string): boolean {
-  const tokens = text.split(/\s+/).filter(Boolean);
-  if (tokens.length < 20) return false;
-  let realWords = 0;
-  for (const t of tokens) if (/\p{L}{4,}/u.test(t)) realWords += 1;
-  return realWords / tokens.length < 0.12;
-}
+// Corrupt-text detection is shared in @/lib/cv-corrupt (imported above) so the
+// display gate matches what the apply route / analyzer use.
 
 // Format the stored interview datetime → a plain Arabic wall-clock string
 // ("DD/MM/YYYY الساعة H:MM ص/م") by reading the ISO parts directly — no Date

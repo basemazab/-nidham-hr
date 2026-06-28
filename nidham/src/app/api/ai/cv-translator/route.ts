@@ -19,24 +19,10 @@ import {
   cvTranslationSchema,
   buildCvTranslationPrompt,
 } from "@/lib/cv-translator";
+import { looksLikeCorruptText } from "@/lib/cv-corrupt";
 
 export const maxDuration = 60;
 const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
-
-// A PDF can render fine visually yet carry a CORRUPT internal text layer (broken
-// font/encoding) — extraction then returns letter-salad ("HME D M OSH IER PER").
-// Detect that so we give the user an actionable message instead of translating
-// garbage. Heuristic: real CVs (any language) are full of words with ≥4 letters;
-// corrupt salad has almost none.
-function looksLikeCorruptText(text: string): boolean {
-  const tokens = text.split(/\s+/).filter(Boolean);
-  if (tokens.length < 20) return false; // too short to judge confidently
-  let realWords = 0;
-  for (const t of tokens) {
-    if (/\p{L}{4,}/u.test(t)) realWords++; // 4+ consecutive letters, any script
-  }
-  return realWords / tokens.length < 0.12;
-}
 
 export async function POST(req: Request) {
   const supabase = await createClient();

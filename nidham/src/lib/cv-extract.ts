@@ -12,17 +12,10 @@
 import { generateText } from "ai";
 import { extractCvText } from "@/lib/pdf-extract";
 import { multimodalModelChain, isRetryableError } from "@/lib/ai-models";
+// Corrupt-text detection lives in ONE shared module so every CV flow agrees.
+import { looksLikeCorruptText } from "./cv-corrupt";
 
-// A PDF can render fine yet carry a corrupt text layer → extraction returns
-// letter-salad. Real CVs (any language) are full of ≥4-letter words; salad has
-// almost none. (Same heuristic the CV translator/analyzer use.)
-export function looksLikeCorruptText(text: string): boolean {
-  const tokens = text.split(/\s+/).filter(Boolean);
-  if (tokens.length < 20) return false;
-  let realWords = 0;
-  for (const t of tokens) if (/\p{L}{4,}/u.test(t)) realWords += 1;
-  return realWords / tokens.length < 0.12;
-}
+export { looksLikeCorruptText };
 
 async function ocrFileWithGemini(
   file: File,
