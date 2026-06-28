@@ -191,11 +191,19 @@ export async function GET(req: Request) {
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
             <div style={{ width: 8, height: 42, borderRadius: 4, backgroundColor: t.accent }} />
             <div style={{ display: "flex", flexDirection: "column" }}>
-              <div style={{ fontSize: 32, fontWeight: 700, color: t.brand }}>
-                {company || "نظام"}
-              </div>
-              <div style={{ fontSize: 13, color: t.site, letterSpacing: 4 }}>
-                {company ? "عبر نِظام · NIDHAM HR" : "NIDHAM HR"}
+              <RtlLine
+                text={company || "نظام"}
+                style={{
+                  fontSize: 32,
+                  fontWeight: 700,
+                  color: t.brand,
+                  justifyContent: "flex-start",
+                  flexWrap: "nowrap",
+                  gap: 8,
+                }}
+              />
+              <div style={{ display: "flex", fontSize: 13, color: t.site, letterSpacing: 4 }}>
+                NIDHAM HR
               </div>
             </div>
           </div>
@@ -242,7 +250,7 @@ export async function GET(req: Request) {
                     fontWeight: 700,
                   }}
                 >
-                  {c}
+                  <RtlLine text={c} style={{ gap: 8, flexWrap: "nowrap" }} />
                 </div>
               ))}
             </div>
