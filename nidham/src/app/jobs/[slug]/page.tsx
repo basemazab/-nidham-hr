@@ -88,10 +88,10 @@ export async function generateMetadata({ params }: PageProps) {
   const salaryLabel = formatEGPRange(job.salary_min, job.salary_max);
   const typeLabel = job.job_type ? (JOB_TYPE_LABELS[job.job_type] ?? null) : null;
 
-  // v=4 busts the scraper's + CDN per-URL image cache (RTL word-order fix:
-  // company name + chips were rendering reversed in the ad image).
-  const og = new URLSearchParams({ title: job.title, theme: themeKeys[themeIdx], v: "4" });
+  // v=5 busts the scraper's + CDN per-URL image cache (added the company logo).
+  const og = new URLSearchParams({ title: job.title, theme: themeKeys[themeIdx], v: "5" });
   if (companyName) og.set("company", companyName);
+  if (job.company_id) og.set("cid", job.company_id);
   if (salaryLabel) og.set("salary", salaryLabel);
   if (job.location) og.set("location", job.location);
   if (typeLabel) og.set("type", typeLabel);

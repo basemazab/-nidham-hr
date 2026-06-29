@@ -153,6 +153,35 @@ const fontsPromise = Promise.all([
   fetch(new URL("./Tajawal-Regular.ttf", import.meta.url)).then((r) => r.arrayBuffer()),
 ]);
 
+// Company logo lives as a data URL in companies.logo_url. We fetch it edge-safely
+// via a plain Supabase REST call (no client import) using the public anon key,
+// then render it INLINE (Satori draws raster data URLs without a network fetch,
+// so a missing/odd logo can never break the ad). SVG is skipped on purpose —
+// Satori's raster path is the safe one. Returns null on anything unexpected.
+async function fetchCompanyLogo(cid: string | null): Promise<string | null> {
+  if (!cid || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cid)) {
+    return null;
+  }
+  const base = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  if (!base || !key) return null;
+  try {
+    const r = await fetch(
+      `${base}/rest/v1/companies?id=eq.${cid}&select=logo_url&limit=1`,
+      { headers: { apikey: key, Authorization: `Bearer ${key}` } },
+    );
+    if (!r.ok) return null;
+    const rows = (await r.json()) as { logo_url?: string | null }[];
+    const logo = rows?.[0]?.logo_url;
+    if (typeof logo === "string" && /^data:image\/(png|jpe?g|webp);base64,/i.test(logo)) {
+      return logo;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const title = (searchParams.get("title") || "تقديم على وظيفة").slice(0, 80);
@@ -161,6 +190,7 @@ export async function GET(req: Request) {
   const location = (searchParams.get("location") || "").slice(0, 40);
   const jobType = (searchParams.get("type") || "").slice(0, 30);
   const t = THEMES[searchParams.get("theme") || "navy"] ?? THEMES.navy;
+  const cid = searchParams.get("cid");
 
   const chips = [
     salary ? `💰 ${salary}` : "",
@@ -168,7 +198,10 @@ export async function GET(req: Request) {
     jobType ? `🕐 ${jobType}` : "",
   ].filter(Boolean);
 
-  const [bold, regular] = await fontsPromise;
+  const [[bold, regular], logo] = await Promise.all([
+    fontsPromise,
+    fetchCompanyLogo(cid),
+  ]);
 
   return new ImageResponse(
     (
@@ -189,7 +222,25 @@ export async function GET(req: Request) {
         {/* Top brand row */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            <div style={{ width: 8, height: 42, borderRadius: 4, backgroundColor: t.accent }} />
+            {logo ? (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: "#ffffff",
+                  borderRadius: 14,
+                  padding: 8,
+                  height: 64,
+                  width: 64,
+                }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={logo} width={48} height={48} style={{ objectFit: "contain" }} />
+              </div>
+            ) : (
+              <div style={{ width: 8, height: 42, borderRadius: 4, backgroundColor: t.accent }} />
+            )}
             <div style={{ display: "flex", flexDirection: "column" }}>
               <RtlLine
                 text={company || "نظام"}
