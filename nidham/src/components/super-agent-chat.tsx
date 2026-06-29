@@ -62,14 +62,14 @@ const TOOL_LABELS: Record<string, { running: string; done: string; icon: string 
 };
 
 // ─── Suggested actions ───────────────────────────────────────────────────────
-const SUGGESTED: { q: string; cat: "tool" | "law" | "data"; icon: string }[] = [
+const SUGGESTED: { q: string; cat: "tool" | "law" | "data" | "general"; icon: string }[] = [
+  { q: "اكتبلي إعلان وظيفة جذّاب لمحاسب", cat: "general", icon: "✍️" },
   { q: "اقفل مرتبات الموظفين الشهريين", cat: "tool", icon: "💰" },
+  { q: "لخّصلي الملف أو الصورة دي", cat: "general", icon: "📄" },
   { q: "مين يستحق زيادة دلوقتي؟", cat: "tool", icon: "📈" },
-  { q: "كام موظف نشط عندي؟", cat: "data", icon: "👥" },
-  { q: "اعرضلي طلبات الإجازة المعلقة", cat: "tool", icon: "📋" },
+  { q: "ترجم النص ده لإنجليزي", cat: "general", icon: "🌐" },
   { q: "حلل الحضور الشهر ده", cat: "data", icon: "📊" },
   { q: "ايه حقوقي في الإجازة الاعتيادية؟", cat: "law", icon: "⚖️" },
-  { q: "في حد ممكن يستقيل قريب؟", cat: "tool", icon: "🎯" },
   { q: "ضريبة الدخل على ٨٠٠٠ ج كام؟", cat: "law", icon: "🧮" },
 ];
 
@@ -369,17 +369,17 @@ export function SuperAgentChat() {
           <div className="flex h-full flex-col items-center justify-center text-center">
             <div className="mb-3 text-6xl">🤖</div>
             <h2 className="mb-1 text-2xl font-black font-cairo text-slate-800">
-              أنا نِظام — المساعد الخارق
+              أنا نِظام — مساعدك الذكي
             </h2>
             <p className="mb-1 max-w-lg text-sm font-cairo leading-relaxed text-slate-500">
-              بقدر أستورد الموظفين من Excel، أحلل الصور والعقود،
-              أقفل المرتبات، وأدير طلبات الإجازة — <strong className="text-amber-700">كأني موظف back-office كامل</strong>.
+              اسألني <strong className="text-amber-700">أي حاجة</strong> — كتابة، ترجمة، أفكار، شرح، برمجة.
+              وكمان بقفل المرتبات، أحلل الصور والعقود، وأدير الموظفين والإجازات كأني موظف back-office كامل.
             </p>
             <p className="mb-1 text-[11px] font-cairo text-cyan-600">
               🖱 اسحب وأفلت أي ملف هنا · 📸 صور مستندات · 📊 Excel و PDF
             </p>
             <p className="mb-6 text-[11px] font-cairo text-slate-400">
-              متخصص في قانون العمل المصري والتأمينات الاجتماعية
+              مساعد عام + خبير في قانون العمل المصري والتأمينات
             </p>
 
             {/* Quick action grid */}
@@ -552,7 +552,7 @@ export function SuperAgentChat() {
               ? attached.is_image
                 ? "اطلب من الـ AI يحلل الصورة دي..."
                 : "اطلب من الـ AI يعمل بالملف ده إيه..."
-              : "اطلب أي حاجة — رتبات، موظفين، حضور، تحليلات..."
+              : "اسألني أي حاجة — كتابة، ترجمة، أفكار، أو مرتبات وموظفين وحضور..."
           }
           disabled={isLoading}
           className="flex-1 rounded-xl border border-slate-200 px-4 py-3 font-cairo text-slate-900 outline-none transition focus:border-brand-cyan focus:ring-2 focus:ring-brand-cyan/20 disabled:opacity-60"
