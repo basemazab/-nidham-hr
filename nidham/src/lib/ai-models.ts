@@ -98,6 +98,14 @@ function getNaraProvider() {
   });
 }
 function naraModelInfo(): AgentModelInfo | null {
+  // DISABLED 2026-06-29 (opt-in via NARA_ENABLED). NaraRouter's free tier began
+  // gating calls behind "telegram_required: Please bind your Telegram account at
+  // /settings to continue" and returned that text AS the model completion — so it
+  // leaked to USERS on every AI feature that routed to Nara (memo, CV analyzer,
+  // chat). Returning null makes everything fall back to the proven free providers
+  // (Gemini/Groq). Re-enable only after binding Telegram on the Nara account:
+  // set NARA_ENABLED=1 in the env.
+  if (!process.env.NARA_ENABLED) return null;
   const nara = getNaraProvider();
   if (!nara) return null;
   return { provider: "nara", modelName: NARA_MODEL, model: nara.chat(NARA_MODEL) };
