@@ -10,6 +10,21 @@
 > - **Open issues (NOT yet fixed):** (1) Facebook/LinkedIn auto-publish from the agent doesn't actually post (FB page likely not connected; LinkedIn `/v2/ugcPosts` likely deprecated → migrate to `/rest/posts`) — deterministic "truth cards" in `ai-agent-chat.tsx` now surface the real error in the UI. (2) CV analyzer occasional timeout. (3) Agent sometimes returns "حصل خطأ مؤقت" (Gemini overload + no in-stream fallback).
 > - **Owner's working style:** get it right the **first** time — diagnose fully + verify behavior BEFORE shipping; no deploy→discover→re-fix loops. **Reply in Egyptian Arabic.**
 
+## 🔎 Fast-diagnosis map (symptom → root cause → where to look)
+
+The owner wants issues caught & fixed FAST. When he reports a symptom, match it here first:
+
+| Symptom | Most likely cause | Fix / where |
+|---|---|---|
+| Weird user-facing message on an AI feature ("telegram_required / bind your X / continue at /settings") | A 3rd-party AI **provider's gate returned AS the completion** — NOT our code, NOT a browser/extension | Check `lib/ai-models.ts` providers/keys FIRST. NaraRouter did exactly this → disabled behind the `NARA_ENABLED` gate (2026-06-29). |
+| Uploaded CV shows as symbol-salad / boxes | Broken-font PDF text layer; the word-ratio detector gets fooled by the embedded font/MIT license dump | `lib/cv-corrupt.ts` (shared `looksLikeCorruptText` — counts U+FFFD + font-license signatures) → routes to Gemini OCR / display gate |
+| Arabic in a GENERATED IMAGE (job ad / OG) reversed or jumbled | Satori (next/og) has **no bidi** — direct Arabic renders word-reversed | Wrap EVERY Arabic string in the `RtlLine` word-reverse helper (`api/og/route.tsx`); bump `v=` in the job page's og URL to bust CDN/scraper caches |
+| "I changed the assistant but see no difference" | There are **multiple chat components**. The MAIN one on `/dashboard/ai` = `SuperAgentChat` → `/api/ai/agent`. (`AIChat` → `/api/ai/chat` is a secondary chat.) | Confirm WHICH component the user actually opens before editing |
+| AI stops / "Request too large" / quota | Fallback chain in `ai-models.ts` (Gemini/Groq). `streamText` pins ONE model — no mid-stream fallback | Keep the agent on a reliable model; `onError` → friendly Arabic |
+| GitHub behind / fresh clone missing latest | Deploys go to Vercel **without** auto-pushing git | ALWAYS `git push origin fix/h-tier-dev:main` after `vercel --prod` |
+| 404 in prod but works locally | `.vercelignore` bare `build`/`out`/`dist` patterns silently drop route segments | Scope the ignore patterns precisely |
+| `/api/v1/*` returns empty / hidden data | anon client + RLS hides everything (no session) | Use `createServiceClient` + explicit `company_id` |
+
 ## [TECH_STACK]
 
 | Layer | Technology | Version |
